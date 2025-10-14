@@ -1,0 +1,379 @@
+// ============================================
+// Smart Loading Screen - Smart Farm Theme
+// ============================================
+
+.loading-wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #33691E 100%);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+// ============================================
+// Gradient Overlay for Depth
+// ============================================
+.gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(76, 175, 80, 0.15) 0%,
+    rgba(27, 94, 32, 0.8) 70%,
+    rgba(27, 94, 32, 1) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+// ============================================
+// Ambient Glow Particles
+// ============================================
+.particle-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  bottom: -20px;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, rgba(165, 214, 167, 0.8) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: float-up 10s ease-in infinite;
+  box-shadow: 0 0 8px rgba(165, 214, 167, 0.6);
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-50vh) translateX(20px) scale(1.2);
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(-30px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+// ============================================
+// Animation Container (Lottie Layers)
+// ============================================
+.animation-container {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+
+  @media (max-width: 768px) {
+    width: 300px;
+    height: 300px;
+  }
+
+  @media (max-width: 480px) {
+    width: 250px;
+    height: 250px;
+  }
+}
+
+.animation-layer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  ::ng-deep .lottie-container {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.pulse-layer {
+  width: 100%;
+  height: 100%;
+  opacity: 0.7;
+  filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.4));
+  animation: pulse-glow 3s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.4));
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 35px rgba(76, 175, 80, 0.6));
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+.sprout-layer {
+  width: 70%;
+  height: 70%;
+  filter: drop-shadow(0 4px 20px rgba(76, 175, 80, 0.6));
+  z-index: 2;
+}
+
+.glow-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glow-pulse 2s ease-in-out infinite;
+  z-index: 0;
+
+  @media (max-width: 768px) {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+// ============================================
+// Loading Content (Text & Progress)
+// ============================================
+.loading-content {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 40px;
+  animation: fade-in-up 1s ease-out 0.5s backwards;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  animation: bounce-gentle 2s ease-in-out infinite;
+
+  @media (max-width: 480px) {
+    font-size: 2rem;
+  }
+}
+
+@keyframes bounce-gentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.loading-message {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+  font-family: 'Roboto', sans-serif;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+    padding: 0 1rem;
+  }
+}
+
+// ============================================
+// Custom Progress Ring
+// ============================================
+.progress-ring {
+  position: relative;
+  display: inline-block;
+}
+
+.progress-ring-svg {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  stroke-dasharray: 164;
+  stroke-dashoffset: 0;
+  animation: progress-spin 2s linear infinite;
+}
+
+@keyframes progress-spin {
+  0% {
+    stroke-dashoffset: 164;
+  }
+  50% {
+    stroke-dashoffset: 82;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+// ============================================
+// Network Dots Animation (IoT Theme)
+// ============================================
+.network-dots {
+  position: absolute;
+  bottom: 80px;
+  width: 200px;
+  height: 60px;
+  z-index: 2;
+
+  @media (max-width: 480px) {
+    bottom: 60px;
+    transform: scale(0.8);
+  }
+}
+
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #A5D6A7;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(165, 214, 167, 0.8);
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+
+.dot-1 {
+  left: 20px;
+  top: 50%;
+  animation-delay: 0s;
+}
+
+.dot-2 {
+  left: 50%;
+  top: 20%;
+  animation-delay: 0.3s;
+}
+
+.dot-3 {
+  right: 20px;
+  top: 50%;
+  animation-delay: 0.6s;
+}
+
+@keyframes dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
+}
+
+.connection {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #A5D6A7, transparent);
+  opacity: 0;
+  animation: connection-flash 2s ease-in-out infinite;
+}
+
+.connection-1 {
+  left: 30px;
+  top: 50%;
+  width: 70px;
+  transform: rotate(-20deg);
+  animation-delay: 0.5s;
+}
+
+.connection-2 {
+  left: 50%;
+  top: 30%;
+  width: 70px;
+  transform: rotate(20deg);
+  animation-delay: 0.8s;
+}
+
+.connection-3 {
+  left: 30px;
+  bottom: 30%;
+  width: 140px;
+  transform: rotate(0deg);
+  animation-delay: 1.1s;
+}
+
+@keyframes connection-flash {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+// ============================================
+// Accessibility & Print
+// ============================================
+@media (prefers-reduced-motion: reduce) {
+  .particle,
+  .pulse-layer,
+  .glow-effect,
+  .loading-icon,
+  .dot,
+  .connection,
+  .progress-ring-circle {
+    animation: none !important;
+  }
+}
+
+@media print {
+  .loading-wrapper {
+    display: none;
+  }
+}
+

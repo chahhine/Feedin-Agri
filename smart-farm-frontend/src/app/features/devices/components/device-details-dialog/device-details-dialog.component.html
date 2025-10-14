@@ -1,0 +1,206 @@
+<div class="device-details-dialog">
+  <div class="dialog-header">
+    <div class="device-info">
+      <mat-icon class="device-icon">{{ getDeviceTypeIcon(device.device_type || '') }}</mat-icon>
+      <div class="device-title">
+        <h2>{{ device.name }}</h2>
+        <p class="device-subtitle">{{ device.location }}</p>
+      </div>
+    </div>
+    <div class="device-status">
+      <mat-chip [color]="getStatusColor(device.status)" selected>
+        <mat-icon class="status-icon">{{ getStatusIcon(device.status) }}</mat-icon>
+        {{ languageService.t()('devices.status') }}: {{ languageService.t()('dashboard.deviceStatus.' + device.status) }}
+      </mat-chip>
+    </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <mat-tab-group class="device-tabs">
+    <!-- Device Information Tab -->
+    <mat-tab [label]="languageService.t()('devices.information')">
+      <div class="tab-content">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>{{ languageService.t()('devices.basicInfo') }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-list>
+              <mat-list-item>
+                <mat-icon matListItemIcon>fingerprint</mat-icon>
+                <div matListItemTitle>{{ languageService.t()('devices.deviceId') }}</div>
+                <div matListItemLine>{{ device.device_id }}</div>
+              </mat-list-item>
+
+              <mat-list-item *ngIf="device.device_type">
+                <mat-icon matListItemIcon>{{ getDeviceTypeIcon(device.device_type) }}</mat-icon>
+                <div matListItemTitle>{{ languageService.t()('devices.deviceType') }}</div>
+                <div matListItemLine>{{ languageService.t()('devices.deviceTypes.' + device.device_type) }}</div>
+              </mat-list-item>
+
+              <mat-list-item *ngIf="device.description">
+                <mat-icon matListItemIcon>description</mat-icon>
+                <div matListItemTitle>{{ languageService.t()('devices.description') }}</div>
+                <div matListItemLine>{{ device.description }}</div>
+              </mat-list-item>
+
+              <mat-list-item *ngIf="device.ip_address">
+                <mat-icon matListItemIcon>router</mat-icon>
+                <div matListItemTitle>{{ languageService.t()('devices.ipAddress') }}</div>
+                <div matListItemLine>{{ device.ip_address }}</div>
+              </mat-list-item>
+
+              <mat-list-item *ngIf="device.mac_address">
+                <mat-icon matListItemIcon>network_check</mat-icon>
+                <div matListItemTitle>{{ languageService.t()('devices.macAddress') }}</div>
+                <div matListItemLine>{{ device.mac_address }}</div>
+              </mat-list-item>
+
+              <mat-list-item *ngIf="device.firmware_version">
+                <mat-icon matListItemIcon>memory</mat-icon>
+                <div matListItemTitle>{{ languageService.t()('devices.firmwareVersion') }}</div>
+                <div matListItemLine>{{ device.firmware_version }}</div>
+              </mat-list-item>
+
+              <mat-list-item>
+                <mat-icon matListItemIcon>schedule</mat-icon>
+                <div matListItemTitle>{{ languageService.t()('devices.lastSeen') }}</div>
+                <div matListItemLine>{{ formatDate(device.last_seen) }}</div>
+              </mat-list-item>
+
+              <mat-list-item>
+                <mat-icon matListItemIcon>calendar_today</mat-icon>
+                <div matListItemTitle>{{ languageService.t()('devices.createdAt') }}</div>
+                <div matListItemLine>{{ formatDate(device.created_at) }}</div>
+              </mat-list-item>
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Sensors Tab -->
+    <mat-tab [label]="languageService.t()('devices.sensors')">
+      <div class="tab-content">
+        <div *ngIf="isLoadingSensors" class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>{{ languageService.t()('common.loading') }}</p>
+        </div>
+
+        <div *ngIf="!isLoadingSensors && sensors.length === 0" class="no-data">
+          <mat-icon>sensors_off</mat-icon>
+          <h3>{{ languageService.t()('devices.noSensors') }}</h3>
+          <p>{{ languageService.t()('devices.noSensorsDescription') }}</p>
+        </div>
+
+        <div *ngIf="!isLoadingSensors && sensors.length > 0" class="sensors-grid">
+          <mat-card *ngFor="let sensor of sensors" class="sensor-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar>{{ getSensorTypeIcon(sensor.type) }}</mat-icon>
+              <mat-card-title>{{ sensor.type }}</mat-card-title>
+              <mat-card-subtitle>{{ sensor.location || languageService.t()('common.none') }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="sensor-info">
+                <div class="sensor-detail">
+                  <span class="label">{{ languageService.t()('devices.sensorId') }}:</span>
+                  <span class="value">{{ sensor.sensor_id }}</span>
+                </div>
+                <div class="sensor-detail">
+                  <span class="label">{{ languageService.t()('devices.unit') }}:</span>
+                  <span class="value">{{ sensor.unit }}</span>
+                </div>
+                <div class="sensor-detail" *ngIf="sensor.min_critical !== undefined">
+                  <span class="label">{{ languageService.t()('devices.minCritical') }}:</span>
+                  <span class="value">{{ sensor.min_critical }}</span>
+                </div>
+                <div class="sensor-detail" *ngIf="sensor.max_critical !== undefined">
+                  <span class="label">{{ languageService.t()('devices.maxCritical') }}:</span>
+                  <span class="value">{{ sensor.max_critical }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Statistics Tab -->
+    <mat-tab [label]="languageService.t()('devices.statistics')">
+      <div class="tab-content">
+        <div *ngIf="isLoadingStats" class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>{{ languageService.t()('common.loading') }}</p>
+        </div>
+
+        <div *ngIf="!isLoadingStats && deviceStatistics" class="stats-grid">
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-card-title>{{ languageService.t()('devices.uptime') }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-value">{{ deviceStatistics.uptime || 'N/A' }}</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-card-title>{{ languageService.t()('devices.dataTransmitted') }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-value">{{ deviceStatistics.dataTransmitted || 'N/A' }}</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-card-title>{{ languageService.t()('devices.lastRestart') }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-value">{{ formatDate(deviceStatistics.lastRestart) }}</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <div *ngIf="!isLoadingStats && !deviceStatistics" class="no-data">
+          <mat-icon>analytics</mat-icon>
+          <h3>{{ languageService.t()('devices.noStatistics') }}</h3>
+          <p>{{ languageService.t()('devices.noStatisticsDescription') }}</p>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <mat-divider></mat-divider>
+
+  <div class="dialog-actions">
+    <div class="action-buttons">
+      <button mat-button (click)="onRestart()" [matTooltip]="languageService.t()('devices.restartDevice')">
+        <mat-icon>restart_alt</mat-icon>
+        {{ languageService.t()('devices.restart') }}
+      </button>
+
+      <button mat-button (click)="onUpdateFirmware()" [matTooltip]="languageService.t()('devices.updateFirmware')">
+        <mat-icon>system_update</mat-icon>
+        {{ languageService.t()('devices.updateFirmware') }}
+      </button>
+    </div>
+
+    <div class="dialog-buttons">
+      <button mat-button (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        {{ languageService.t()('common.edit') }}
+      </button>
+
+      <button mat-button (click)="onDelete()" color="warn">
+        <mat-icon>delete</mat-icon>
+        {{ languageService.t()('common.delete') }}
+      </button>
+
+      <button mat-button (click)="onClose()">
+        {{ languageService.t()('common.close') }}
+      </button>
+    </div>
+  </div>
+</div>

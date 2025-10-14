@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Farm Device Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #ef5350;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53935;
+        }
+
+        .btn-success {
+            background: #66bb6a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #4caf50;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        input[type="text"],
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .view-toggle button {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .view-toggle button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Table View */
+        .table-view {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 2px solid #ddd;
+        }
+
+        th:hover {
+            background: #efefef;
+        }
+
+        th.sortable::after {
+            content: ' ⇅';
+            font-size: 12px;
+            opacity: 0.5;
+        }
+
+        th.sorted-asc::after {
+            content: ' ↑';
+            opacity: 1;
+        }
+
+        th.sorted-desc::after {
+            content: ' ↓';
+            opacity: 1;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            color: #555;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .status-chip {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .status-inactive {
+            background: #ffcccc;
+            color: #c62828;
+        }
+
+        .status-offline {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+
+        .status-maintenance {
+            background: #e1bee7;
+            color: #6a1b9a;
+        }
+
+        /* Card View */
+        .card-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .device-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .device-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .device-info {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .device-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .card-actions button {
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid #f0f0f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+            z-index: 2000;
+        }
+
+        .toast.success {
+            background: #4caf50;
+        }
+
+        .toast.error {
+            background: #ef5350;
+        }
+
+        .toast.warning {
+            background: #ff9800;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .sensor-list {
+            margin-top: 15px;
+        }
+
+        .sensor-item {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .sensor-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .sensor-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .card-view {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-group {
+                flex-direction: column;
+            }
+
+            input[type="text"],
+            select {
+                width: 100%;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌾 IoT Farm Device Management</h1>
+            <p>Manage and monitor your smart farm devices</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="app.openAddDeviceModal()">
+                + Add Device
+            </button>
+            <button class="btn-secondary" onclick="app.refreshDevices()">
+                🔄 Refresh
+            </button>
+            <button class="btn-secondary" onclick="app.exportDevices()">
+                📥 Export
+            </button>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-group">
+                <input type="text" id="searchInput" placeholder="Search devices..." onkeyup="app.searchDevices()">
+                <select id="statusFilter" onchange="app.filterDevices()">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="offline">Offline</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+                <select id="typeFilter" onchange="app.filterDevices()">
+                    <option value="">All Types</option>
+                    <option value="sensor">Sensor</option>
+                    <option value="controller">Controller</option>
+                    <option value="gateway">Gateway</option>
+                    <option value="actuator">Actuator</option>
+                </select>
+            </div>
+            <div class="view-toggle">
+                <button class="active" onclick="app.switchView('table')">📊 Table</button>
+                <button onclick="app.switchView('card')">🎴 Cards</button>
+            </div>
+        </div>
+
+        <div id="deviceContainer"></div>
+    </div>
+
+    <!-- Device Details Modal -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="detailsTitle">Device Details</div>
+                <button class="modal-close" onclick="app.closeModal('detailsModal')">×</button>
+            </div>
+            <div class="modal-body" id="detailsBody"></div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Device Modal -->
+    <div class="modal" id="deviceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="deviceModalTitle">Add Device</div>
+                <button class="modal-close" onclick="app.closeModal('deviceModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="deviceForm" onsubmit="app.saveDevice(event)">
+                    <div class="form-group">
+                        <label>Device Name *</label>
+                        <input type="text" id="deviceName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Device Type *</label>
+                        <select id="deviceType" required>
+                            <option value="">Select Type</option>
+                            <option value="sensor">Sensor</option>
+                            <option value="controller">Controller</option>
+                            <option value="gateway">Gateway</option>
+                            <option value="actuator">Actuator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Location *</label>
+                        <input type="text" id="deviceLocation" required>
+                    </div>
+                    <div class="form-group">
+                        <label>MAC Address</label>
+                        <input type="text" id="deviceMac" placeholder="00:00:00:00:00:00">
+                    </div>
+                    <div class="form-group">
+                        <label>IP Address</label>
+                        <input type="text" id="deviceIp" placeholder="192.168.1.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Firmware Version</label>
+                        <input type="text" id="deviceFirmware" placeholder="1.0.0">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="deviceDescription"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="app.closeModal('deviceModal')">Cancel</button>
+                <button class="btn-primary" onclick="document.getElementById('deviceForm').dispatchEvent(new Event('submit'))">Save Device</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Device Model & Data Structure
+        // ============================================
+
+        class Device {
+            constructor(data = {}) {
+                this.id = data.id || this.generateId();
+                this.name = data.name || '';
+                this.type = data.type || 'sensor'; // sensor, controller, gateway, actuator
+                this.location = data.location || '';
+                this.status = data.status || 'active'; // active, inactive, offline, maintenance
+                this.macAddress = data.macAddress || '';
+                this.ipAddress = data.ipAddress || '';
+                this.firmwareVersion = data.firmwareVersion || '1.0.0';
+                this.description = data.description || '';
+                this.batteryLevel = data.batteryLevel || 100;
+                this.signalStrength = data.signalStrength || 95;
+                this.lastSeen = data.lastSeen || new Date();
+                this.createdAt = data.createdAt || new Date();
+                this.sensors = data.sensors || [];
+                this.metadata = data.metadata || {};
+            }
+
+            generateId() {
+                return `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            }
+
+            getStatusColor() {
+                const colors = {
+                    'active': '#4caf50',
+                    'inactive': '#f44336',
+                    'offline': '#ffc107',
+                    'maintenance': '#9c27b0'
+                };
+                return colors[this.status] || '#999';
+            }
+
+            addSensor(sensor) {
+                this.sensors.push(sensor);
+            }
+
+            getHealthScore() {
+                const batteryHealth = this.batteryLevel / 100;
+                const signalHealth = this.signalStrength / 100;
+                const statusHealth = this.status === 'active' ? 1 : this.status === 'offline' ? 0.2 : 0.5;
+                return Math.round(((batteryHealth + signalHealth + statusHealth) / 3) * 100);
+            }
+
+            toJSON() {
+                return {
+                    id: this.id,
+                    name: this.name,
+                    type: this.type,
+                    location: this.location,
+                    status: this.status,
+                    macAddress: this.macAddress,
+                    ipAddress: this.ipAddress,
+                    firmwareVersion: this.firmwareVersion,
+                    description: this.description,
+                    batteryLevel: this.batteryLevel,
+                    signalStrength: this.signalStrength,
+                    lastSeen: this.lastSeen,
+                    createdAt: this.createdAt,
+                    sensors: this.sensors,
+                    metadata: this.metadata
+                };
+            }
+        }
+
+        class Sensor {
+            constructor(data = {}) {
+                this.id = data.id || this.generateId();
+                this.name = data.name || '';
+                this.type = data.type || 'temperature'; // temperature, humidity, soil_moisture, light, etc.
+                this.value = data.value || 0;
+                this.unit = data.unit || '';
+                this.lastUpdated = data.lastUpdated || new Date();
+            }
+
+            generateId() {
+                return `sensor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            }
+
+            toJSON() {
+                return {
+                    id: this.id,
+                    name: this.name,
+                    type: this.type,
+                    value: this.value,
+                    unit: this.unit,
+                    lastUpdated: this.lastUpdated
+                };
+            }
+        }
+
+        // ============================================
+        // Device Manager Application
+        // ============================================
+
+        class DeviceManager {
+            constructor() {
+                this.devices = [];
+                this.filteredDevices = [];
+                this.currentView = 'table';
+                this.sortColumn = null;
+                this.sortDirection = 'asc';
+                this.editingDevice = null;
+                this.init();
+            }
+
+            init() {
+                this.loadSampleData();
+                this.render();
+                this.setupEventListeners();
+            }
+
+            loadSampleData() {
+                // Sample data for demonstration
+                const sampleDevices = [
+                    {
+                        name: 'Temperature Sensor A',
+                        type: 'sensor',
+                        location: 'Greenhouse 1',
+                        status: 'active',
+                        macAddress: '00:1a:2b:3c:4d:5e',
+                        ipAddress: '192.168.1.10',
+                        firmwareVersion: '2.1.3',
+                        description: 'Main greenhouse temperature monitoring',
+                        batteryLevel: 92,
+                        signalStrength: 98,
+                        sensors: [
+                            new Sensor({ name: 'Temp', type: 'temperature', value: 24.5, unit: '°C' }),
+                            new Sensor({ name: 'Humidity', type: 'humidity', value: 65, unit: '%' })
+                        ]
+                    },
+                    {
+                        name: 'Soil Moisture Sensor',
+                        type: 'sensor',
+                        location: 'Field B',
+                        status: 'active',
+                        macAddress: '00:1a:2b:3c:4d:5f',
+                        ipAddress: '192.168.1.11',
+                        firmwareVersion: '1.8.2',
+                        description: 'Soil moisture monitoring for irrigation control',
+                        batteryLevel: 45,
+                        signalStrength: 72,
+                        sensors: [
+                            new Sensor({ name: 'Moisture', type: 'soil_moisture', value: 45, unit: '%' })
+                        ]
+                    },
+                    {
+                        name: 'Irrigation Controller',
+                        type: 'controller',
+                        location: 'Main Building',
+                        status: 'active',
+                        macAddress: '00:1a:2b:3c:4d:60',
+                        ipAddress: '192.168.1.100',
+                        firmwareVersion: '3.0.1',
+                        description: 'Central irrigation system controller',
+                        batteryLevel: 100,
+                        signalStrength: 99,
+                        sensors: []
+                    },
+                    {
+                        name: 'Weather Station',
+                        type: 'gateway',
+                        location: 'North Field',
+                        status: 'offline',
+                        macAddress: '00:1a:2b:3c:4d:61',
+                        ipAddress: '192.168.1.50',
+                        firmwareVersion: '1.5.0',
+                        description: 'Weather monitoring gateway',
+                        batteryLevel: 15,
+                        signalStrength: 28,
+                        sensors: []
+                    },
+                    {
+                        name: 'Water Pump Actuator',
+                        type: 'actuator',
+                        location: 'Reservoir',
+                        status: 'active',
+                        macAddress: '00:1a:2b:3c:4d:62',
+                        ipAddress: '192.168.1.40',
+                        firmwareVersion: '2.2.0',
+                        description: 'Main water pump control',
+                        batteryLevel: 88,
+                        signalStrength: 85,
+                        sensors: []
+                    },
+                    {
+                        name: 'LED Growth Light',
+                        type: 'actuator',
+                        location: 'Greenhouse 2',
+                        status: 'maintenance',
+                        macAddress: '00:1a:2b:3c:4d:63',
+                        ipAddress: '192.168.1.41',
+                        firmwareVersion: '1.3.5',
+                        description: 'Supplemental growth lighting system',
+                        batteryLevel: 100,
+                        signalStrength: 91,
+                        sensors: []
+                    }
+                ];
+
+                this.devices = sampleDevices.map(data => new Device(data));
+                this.filteredDevices = [...this.devices];
+            }
+
+            setupEventListeners() {
+                // Auto-refresh every 30 seconds (simulated)
+                setInterval(() => {
+                    this.simulateDeviceUpdates();
+                }, 30000);
+            }
+
+            simulateDeviceUpdates() {
+                // Simulate random device status updates
+                this.devices.forEach(device => {
+                    if (Math.random() > 0.8) {
+                        device.batteryLevel = Math.max(0, device.batteryLevel - Math.random() * 5);
+                        device.signalStrength = Math.max(0, Math.min(100, device.signalStrength + (Math.random() - 0.5) * 10));
+                        device.lastSeen = new Date();
+                    }
+                });
+                this.render();
+            }
+
+            switchView(view) {
+                this.currentView = view;
+                document.querySelectorAll('.view-toggle button').forEach((btn, idx) => {
+                    btn.classList.toggle('active', (idx === 0 && view === 'table') || (idx === 1 && view === 'card'));
+                });
+                this.render();
+            }
+
+            searchDevices() {
+                const query = document.getElementById('searchInput').value.toLowerCase();
+                this.filterDevices(query);
+            }
+
+            filterDevices(query = null) {
+                const searchQuery = query || document.getElementById('searchInput').value.toLowerCase();
+                const statusFilter = document.getElementById('statusFilter').value;
+                const typeFilter = document.getElementById('typeFilter').value;
+
+                this.filteredDevices = this.devices.filter(device => {
+                    const matchesSearch = !searchQuery ||
+                        device.name.toLowerCase().includes(searchQuery) ||
+                        device.location.toLowerCase().includes(searchQuery) ||
+                        device.macAddress.toLowerCase().includes(searchQuery) ||
+                        device.ipAddress.toLowerCase().includes(searchQuery);
+
+                    const matchesStatus = !statusFilter || device.status === statusFilter;
+                    const matchesType = !typeFilter || device.type === typeFilter;
+
+                    return matchesSearch && matchesStatus && matchesType;
+                });
+
+                this.render();
+            }
+
+            sortDevices(column) {
+                if (this.sortColumn === column) {
+                    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.sortColumn = column;
+                    this.sortDirection = 'asc';
+                }
+
+                this.filteredDevices.sort((a, b) => {
+                    let aVal = a[column];
+                    let bVal = b[column];
+
+                    if (typeof aVal === 'string') {
+                        aVal = aVal.toLowerCase();
+                        bVal = bVal.toLowerCase();
+                    }
+
+                    if (this.sortDirection === 'asc') {
+                        return aVal > bVal ? 1 : -1;
+                    } else {
+                        return aVal < bVal ? 1 : -1;
+                    }
+                });
+
+                this.render();
+            }
+
+            render() {
+                const container = document.getElementById('deviceContainer');
+
+                if (this.filteredDevices.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <div class="empty-state-title">No Devices Found</div>
+                            <p>Create your first device to get started</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (this.currentView === 'table') {
+                    this.renderTableView(container);
+                } else {
+                    this.renderCardView(container);
+                }
+            }
+
+            renderTableView(container) {
+                let html = '<div class="table-view"><table><thead><tr>';
+
+                const columns = ['name', 'type', 'location', 'status', 'batteryLevel', 'signalStrength', 'ipAddress', ''];
+                columns.forEach(col => {
+                    if (col === '') {
+                        html += '<th>Actions</th>';
+                    } else {
+                        const label = col.charAt(0).toUpperCase() + col.slice(1);
+                        html += `<th class="sortable ${this.sortColumn === col ? 'sorted-' + this.sortDirection : ''}" onclick="app.sortDevices('${col}')">${label}</th>`;
+                    }
+                });
+
+                html += '</tr></thead><tbody>';
+
+                this.filteredDevices.forEach(device => {
+                    const statusChip = `<span class="status-chip status-${device.status}">${device.status}</span>`;
+                    html += `
+                        <tr>
+                            <td>${device.name}</td>
+                            <td>${device.type.charAt(0).toUpperCase() + device.type.slice(1)}</td>
+                            <td>${device.location}</td>
+                            <td>${statusChip}</td>
+                            <td>${device.batteryLevel}%</td>
+                            <td>${device.signalStrength}%</td>
+                            <td>${device.ipAddress || 'N/A'}</td>
+                            <td>
+                                <button class="btn-secondary" onclick="app.viewDeviceDetails('${device.id}')" style="padding: 5px 10px; font-size: 12px;">View</button>
+                                <button class="btn-secondary" onclick="app.openEditDeviceModal('${device.id}')" style="padding: 5px 10px; font-size: 12px; margin: 0 3px;">Edit</button>
+                                <button class="btn-danger" onclick="app.deleteDevice('${device.id}')" style="padding: 5px 10px; font-size: 12px;">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            }
+
+            renderCardView(container) {
+                let html = '<div class="card-view">';
+
+                this.filteredDevices.forEach(device => {
+                    const healthScore = device.getHealthScore();
+                    const healthColor = healthScore > 70 ? '#4caf50' : healthScore > 40 ? '#ff9800' : '#f44336';
+
+                    html += `
+                        <div class="device-card">
+                            <div class="card-header">
+                                <div class="card-title">${device.name}</div>
+                                <div class="card-subtitle">${device.type.toUpperCase()}</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="device-info">
+                                    <div class="info-label">Location</div>
+                                    <div class="info-value">${device.location}</div>
+                                </div>
+
+                                <div style="display: flex; gap: 10px;">
+                                    <span class="status-chip status-${device.status}">${device.status}</span>
+                                </div>
+
+                                <div class="device-stats">
+                                    <div class="stat">
+                                        <div class="stat-value">${device.batteryLevel}%</div>
+                                        <div class="stat-label">Battery</div>
+                                    </div>
+                                    <div class="stat">
+                                        <div class="stat-value">${device.signalStrength}%</div>
+                                        <div class="stat-label">Signal</div>
+                                    </div>
+                                </div>
+
+                                <div class="device-info">
+                                    <div class="info-label">Health Score</div>
+                                    <div class="info-value" style="color: ${healthColor};">${healthScore}%</div>
+                                </div>
+
+                                ${device.sensors.length > 0 ? `
+                                    <div class="sensor-list">
+                                        <div class="info-label">Sensors</div>
+                                        ${device.sensors.map(sensor => `
+                                            <div class="sensor-item">
+                                                <div class="sensor-name">${sensor.name}:</div>
+                                                <div class="sensor-value">${sensor.value}${sensor.unit}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+
+                                <div class="card-actions">
+                                    <button class="btn-secondary" onclick="app.viewDeviceDetails('${device.id}')">View</button>
+                                    <button class="btn-secondary" onclick="app.openEditDeviceModal('${device.id}')">Edit</button>
+                                    <button class="btn-danger" onclick="app.deleteDevice('${device.id}')">Delete</button>
+                                    <button class="btn-success" onclick="app.restartDevice('${device.id}')">Restart</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            viewDeviceDetails(deviceId) {
+                const device = this.devices.find(d => d.id === deviceId);
+                if (!device) return;
+
+                const lastSeenDate = new Date(device.lastSeen).toLocaleString();
+                const createdDate = new Date(device.createdAt).toLocaleString();
+                const healthScore = device.getHealthScore();
+                const healthColor = healthScore > 70 ? '#4caf50' : healthScore > 40 ? '#ff9800' : '#f44336';
+
+                let sensorsHtml = '';
+                if (device.sensors.length > 0) {
+                    sensorsHtml = `
+                        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                            <h3 style="margin-bottom: 15px;">Associated Sensors</h3>
+                            <div class="sensor-list">
+                                ${device.sensors.map(sensor => `
+                                    <div class="sensor-item">
+                                        <div class="sensor-name">${sensor.name} (${sensor.type})</div>
+                                        <div class="sensor-value" style="margin-top: 5px;">
+                                            Value: ${sensor.value}${sensor.unit}
+                                        </div>
+                                        <div style="font-size: 11px; color: #999; margin-top: 5px;">
+                                            Last Updated: ${new Date(sensor.lastUpdated).toLocaleString()}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const detailsHtml = `
+                    <div style="line-height: 1.8;">
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 10px;">Basic Information</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Device Name</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500;">${device.name}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Device Type</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500;">${device.type.toUpperCase()}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Location</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500;">${device.location}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Status</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500;">
+                                        <span class="status-chip status-${device.status}">${device.status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 10px;">Network Information</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">IP Address</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500; font-family: monospace;">${device.ipAddress || 'N/A'}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">MAC Address</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500; font-family: monospace;">${device.macAddress || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 10px;">Device Health</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Battery Level</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500;">${device.batteryLevel}%</div>
+                                    <div style="width: 100%; height: 4px; background: #eee; border-radius: 2px; margin-top: 5px; overflow: hidden;">
+                                        <div style="width: ${device.batteryLevel}%; height: 100%; background: ${device.batteryLevel > 50 ? '#4caf50' : device.batteryLevel > 20 ? '#ff9800' : '#f44336'};"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Signal Strength</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500;">${device.signalStrength}%</div>
+                                    <div style="width: 100%; height: 4px; background: #eee; border-radius: 2px; margin-top: 5px; overflow: hidden;">
+                                        <div style="width: ${device.signalStrength}%; height: 100%; background: ${device.signalStrength > 70 ? '#4caf50' : device.signalStrength > 40 ? '#ff9800' : '#f44336'};"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Health Score</div>
+                                    <div style="font-size: 14px; color: ${healthColor}; font-weight: 600;">${healthScore}%</div>
+                                    <div style="width: 100%; height: 4px; background: #eee; border-radius: 2px; margin-top: 5px; overflow: hidden;">
+                                        <div style="width: ${healthScore}%; height: 100%; background: ${healthColor};"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 10px;">System Information</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Firmware Version</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500; font-family: monospace;">${device.firmwareVersion}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Last Seen</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500;">${lastSeenDate}</div>
+                                </div>
+                                <div style="grid-column: 1 / -1;">
+                                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Created Date</div>
+                                    <div style="font-size: 14px; color: #333; font-weight: 500;">${createdDate}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${device.description ? `
+                            <div style="margin-bottom: 20px;">
+                                <h3 style="margin-bottom: 10px;">Description</h3>
+                                <div style="font-size: 14px; color: #555; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                                    ${device.description}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${sensorsHtml}
+                    </div>
+                `;
+
+                document.getElementById('detailsTitle').textContent = `${device.name} Details`;
+                document.getElementById('detailsBody').innerHTML = detailsHtml;
+                this.openModal('detailsModal');
+            }
+
+            openAddDeviceModal() {
+                this.editingDevice = null;
+                document.getElementById('deviceModalTitle').textContent = 'Add Device';
+                document.getElementById('deviceForm').reset();
+                this.openModal('deviceModal');
+            }
+
+            openEditDeviceModal(deviceId) {
+                const device = this.devices.find(d => d.id === deviceId);
+                if (!device) return;
+
+                this.editingDevice = device;
+                document.getElementById('deviceModalTitle').textContent = 'Edit Device';
+
+                document.getElementById('deviceName').value = device.name;
+                document.getElementById('deviceType').value = device.type;
+                document.getElementById('deviceLocation').value = device.location;
+                document.getElementById('deviceMac').value = device.macAddress;
+                document.getElementById('deviceIp').value = device.ipAddress;
+                document.getElementById('deviceFirmware').value = device.firmwareVersion;
+                document.getElementById('deviceDescription').value = device.description;
+
+                this.openModal('deviceModal');
+            }
+
+            saveDevice(event) {
+                event.preventDefault();
+
+                const name = document.getElementById('deviceName').value;
+                const type = document.getElementById('deviceType').value;
+                const location = document.getElementById('deviceLocation').value;
+                const macAddress = document.getElementById('deviceMac').value;
+                const ipAddress = document.getElementById('deviceIp').value;
+                const firmwareVersion = document.getElementById('deviceFirmware').value;
+                const description = document.getElementById('deviceDescription').value;
+
+                if (this.editingDevice) {
+                    // Update existing device
+                    this.editingDevice.name = name;
+                    this.editingDevice.type = type;
+                    this.editingDevice.location = location;
+                    this.editingDevice.macAddress = macAddress;
+                    this.editingDevice.ipAddress = ipAddress;
+                    this.editingDevice.firmwareVersion = firmwareVersion;
+                    this.editingDevice.description = description;
+
+                    this.showToast(`Device "${name}" updated successfully`, 'success');
+                } else {
+                    // Create new device
+                    const newDevice = new Device({
+                        name,
+                        type,
+                        location,
+                        macAddress,
+                        ipAddress,
+                        firmwareVersion,
+                        description
+                    });
+
+                    this.devices.push(newDevice);
+                    this.showToast(`Device "${name}" created successfully`, 'success');
+                }
+
+                this.closeModal('deviceModal');
+                this.filterDevices();
+            }
+
+            deleteDevice(deviceId) {
+                const device = this.devices.find(d => d.id === deviceId);
+                if (!device) return;
+
+                if (confirm(`Are you sure you want to delete "${device.name}"? This action cannot be undone.`)) {
+                    this.devices = this.devices.filter(d => d.id !== deviceId);
+                    this.filterDevices();
+                    this.showToast(`Device "${device.name}" deleted successfully`, 'success');
+                }
+            }
+
+            restartDevice(deviceId) {
+                const device = this.devices.find(d => d.id === deviceId);
+                if (!device) return;
+
+                device.status = 'offline';
+                this.render();
+                this.showToast(`Restarting device "${device.name}"...`, 'warning');
+
+                setTimeout(() => {
+                    device.status = 'active';
+                    device.lastSeen = new Date();
+                    this.render();
+                    this.showToast(`Device "${device.name}" restarted successfully`, 'success');
+                }, 2000);
+            }
+
+            refreshDevices() {
+                this.showToast('Refreshing devices...', 'warning');
+                this.simulateDeviceUpdates();
+                setTimeout(() => {
+                    this.showToast('Devices refreshed successfully', 'success');
+                }, 1000);
+            }
+
+            exportDevices() {
+                const dataStr = JSON.stringify(
+                    this.filteredDevices.map(d => d.toJSON()),
+                    null,
+                    2
+                );
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `devices-export-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                this.showToast('Devices exported successfully', 'success');
+            }
+
+            openModal(modalId) {
+                document.getElementById(modalId).classList.add('active');
+            }
+
+            closeModal(modalId) {
+                document.getElementById(modalId).classList.remove('active');
+                if (modalId === 'deviceModal') {
+                    document.getElementById('deviceForm').reset();
+                    this.editingDevice = null;
+                }
+            }
+
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        // ============================================
+        // Initialize Application
+        // ============================================
+
+        const app = new DeviceManager();
+    </script>
+</body>
+</html>

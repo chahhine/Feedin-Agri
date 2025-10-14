@@ -1,0 +1,2211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraFlow - Smart Farming Dashboard | IoT Farm Management</title>
+    <meta name="description" content="Production-ready smart farming dashboard with real-time monitoring, AI insights, and seamless farm management">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-green: #10b981;
+            --secondary-green: #34d399;
+            --dark-green: #047857;
+            --primary-blue: #3b82f6;
+            --secondary-blue: #60a5fa;
+            --light-bg: #f8fafb;
+            --card-bg: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.12);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body.dark-mode {
+            --light-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(100, 116, 139, 0.3);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--light-bg) 0%, #f0fdf4 100%);
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--light-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* Navigation */
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            position: relative;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 0.5rem 0;
+            transition: color 0.3s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-blue));
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: var(--primary-green);
+        }
+
+        .farm-selector {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .farm-selector:hover {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+            transform: translateY(-1px);
+        }
+
+        /* Farm Selector Modal */
+        .farm-selector-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .farm-selector-modal.active {
+            display: flex;
+        }
+
+        .farm-selector-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .farm-selector-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .farm-selector-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .farm-search {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .farm-search input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            background: var(--light-bg);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .farm-search input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .farm-search-icon {
+            position: absolute;
+            left: 2.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .farm-list {
+            padding: 1rem;
+            overflow-y: auto;
+            max-height: 50vh;
+        }
+
+        .farm-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .farm-card:hover {
+            transform: translateX(4px);
+            border-color: var(--primary-green);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+        }
+
+        .farm-card.selected {
+            border-color: var(--primary-green);
+            border-width: 2px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15));
+        }
+
+        .farm-map-preview {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        .farm-card-info {
+            flex: 1;
+        }
+
+        .farm-card-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .farm-card-location {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        .farm-card-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .farm-card-weather {
+            text-align: right;
+        }
+
+        .farm-card-temp {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .farm-card-condition {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .weather-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 1rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .weather-icon {
+            font-size: 1.2rem;
+            animation: weatherPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes weatherPulse {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.05); }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .theme-toggle, .language-toggle {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            color: var(--text-primary);
+        }
+
+        .theme-toggle:hover, .language-toggle:hover {
+            transform: scale(1.1) rotate(20deg);
+            filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.3));
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background 0.3s ease;
+        }
+
+        .user-profile:hover {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* ===== KPI CARDS ===== */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-green), var(--secondary-blue));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .kpi-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 16px 40px rgba(16, 185, 129, 0.2);
+            border-color: var(--primary-green);
+        }
+
+        .kpi-card:hover::before {
+            opacity: 1;
+        }
+
+        .kpi-card:hover::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        body.dark-mode .kpi-card:hover {
+            box-shadow: 0 16px 40px rgba(16, 185, 129, 0.3);
+        }
+
+        .kpi-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-subtext {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .kpi-icon {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .status-badge.danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        /* ===== MAIN GRID ===== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .nav-links {
+                gap: 1rem;
+            }
+            .nav-link {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .kpi-row {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            .header {
+                padding: 1rem;
+            }
+            .header-content {
+                gap: 1rem;
+            }
+            .nav-links {
+                display: none;
+            }
+            .logo {
+                font-size: 1.2rem;
+            }
+            .weather-info {
+                display: none;
+            }
+            .container {
+                padding: 1rem;
+            }
+            .farm-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .farm-map-preview {
+                margin: 0 auto;
+            }
+            .farm-card-weather {
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .header-left {
+                gap: 0.5rem;
+            }
+            .farm-selector {
+                font-size: 0.85rem;
+                padding: 0.5rem 0.8rem;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            animation: fadeInPanel 0.6s ease forwards;
+        }
+
+        .panel:nth-child(1) { animation-delay: 0.1s; }
+        .panel:nth-child(2) { animation-delay: 0.2s; }
+        .panel:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes fadeInPanel {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .panel:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-green);
+            transform: translateY(-4px);
+        }
+
+        body.dark-mode .panel:hover {
+            box-shadow: 0 12px 32px rgba(16, 185, 129, 0.25);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Page Transition */
+        .page-transition {
+            opacity: 1;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .page-transition.fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        /* ===== FARM MAP ===== */
+        .farm-map {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+            border-radius: 0.75rem;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .farm-map:hover {
+            border-color: var(--primary-green);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.1);
+        }
+
+        body.dark-mode .farm-map {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+        }
+
+        body.dark-mode .farm-map:hover {
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+        }
+
+        .map-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        body.dark-mode .map-svg {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .farm-boundary {
+            fill: none;
+            stroke: #10b981;
+            stroke-width: 2;
+            opacity: 0.6;
+        }
+
+        body.dark-mode .farm-boundary {
+            stroke: #34d399;
+        }
+
+        .sensor-marker {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sensor-marker:hover circle {
+            r: 8;
+            filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.6));
+        }
+
+        .sensor-marker circle {
+            fill: #10b981;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .sensor-marker circle {
+            fill: #34d399;
+        }
+
+        .sensor-marker.active circle {
+            fill: #3b82f6;
+            r: 8;
+            animation: markerPulse 1.5s ease-in-out infinite;
+        }
+
+        body.dark-mode .sensor-marker.active circle {
+            fill: #60a5fa;
+        }
+
+        @keyframes markerPulse {
+            0%, 100% {
+                r: 8;
+                filter: drop-shadow(0 0 0 rgba(59, 130, 246, 0.4));
+            }
+            50% {
+                r: 10;
+                filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8));
+            }
+        }
+
+        .map-legend {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* ===== WEATHER WIDGET ===== */
+        .weather-forecast {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .weather-forecast {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .weather-forecast {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .forecast-item {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .forecast-item:hover {
+            transform: translateY(-6px) scale(1.05);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2));
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
+            border-color: var(--primary-green);
+        }
+
+        body.dark-mode .forecast-item {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15));
+        }
+
+        body.dark-mode .forecast-item:hover {
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+        }
+
+        .forecast-day {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .forecast-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .forecast-temp {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .ai-suggestion {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15));
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border-left: 3px solid var(--primary-green);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+        }
+
+        .ai-suggestion:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        }
+
+        body.dark-mode .ai-suggestion {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2));
+        }
+
+        body.dark-mode .ai-suggestion:hover {
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .ai-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            animation: aiPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes aiPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .ai-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        .ai-text strong {
+            color: var(--primary-green);
+        }
+
+        /* ===== FARM DETAILS ===== */
+        .crop-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
+        }
+
+        .crop-item:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+            transform: translateX(4px);
+            padding-left: 1.25rem;
+        }
+
+        body.dark-mode .crop-item:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+        }
+
+        .crop-item:last-child {
+            border-bottom: none;
+        }
+
+        .crop-info {
+            flex: 1;
+        }
+
+        .crop-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+
+        .crop-stage {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .crop-progress {
+            width: 120px;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .crop-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-green), var(--secondary-green));
+            transition: width 0.5s ease;
+        }
+
+        .sensor-reading {
+            padding: 0.8rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+            border-radius: 0.5rem;
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .sensor-reading:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            border-color: var(--border-color);
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+        }
+
+        body.dark-mode .sensor-reading {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+        }
+
+        body.dark-mode .sensor-reading:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15));
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+
+        .reading-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .reading-value {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: transform 0.3s ease;
+        }
+
+        .sensor-reading:hover .reading-value {
+            transform: scale(1.1);
+        }
+
+        /* ===== FAB ===== */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            z-index: 200;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            color: white;
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% {
+                box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                box-shadow: 0 8px 32px rgba(16, 185, 129, 0.6);
+                transform: scale(1.05) rotate(90deg);
+            }
+        }
+
+        .fab:hover {
+            transform: scale(1.15) rotate(180deg);
+            box-shadow: 0 12px 40px rgba(16, 185, 129, 0.6);
+            animation: none;
+        }
+
+        body.dark-mode .fab {
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+        }
+
+        body.dark-mode .fab:hover {
+            box-shadow: 0 12px 40px rgba(16, 185, 129, 0.7);
+        }
+
+        .fab.active {
+            width: 200px;
+            height: 240px;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-blue));
+            box-shadow: 0 20px 60px rgba(16, 185, 129, 0.4);
+            transform: scale(1) rotate(0deg);
+            animation: none;
+        }
+
+        body.dark-mode .fab.active {
+            box-shadow: 0 20px 60px rgba(16, 185, 129, 0.5);
+        }
+
+        .fab-menu {
+            display: none;
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        .fab.active .fab-menu {
+            display: flex;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .fab-item {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+
+        .fab.active .fab-item {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .fab.active .fab-item:nth-child(1) { transition-delay: 0.1s; }
+        .fab.active .fab-item:nth-child(2) { transition-delay: 0.15s; }
+        .fab.active .fab-item:nth-child(3) { transition-delay: 0.2s; }
+        .fab.active .fab-item:nth-child(4) { transition-delay: 0.25s; }
+
+        .fab-item:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateX(6px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ===== ANIMATIONS ===== */
+        .count-up {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary-green);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        body.dark-mode .modal {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1.25rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            animation: slideUp 0.3s ease;
+        }
+
+        body.dark-mode .modal-content {
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        body.dark-mode .btn:hover {
+            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.45);
+        }
+
+        .btn-secondary {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--text-secondary);
+            color: white;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        body.dark-mode .btn-secondary {
+            background: var(--text-secondary);
+            color: var(--light-bg);
+        }
+
+        body.dark-mode .btn-secondary:hover {
+            background: var(--text-primary);
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            padding: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        /* Toast Notifications (for future use) */
+        .toast-container {
+            position: fixed;
+            top: 5rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .toast {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1rem 1.5rem;
+            min-width: 300px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideInRight 0.3s ease;
+            transition: all 0.3s ease;
+        }
+
+        .toast:hover {
+            transform: translateX(-4px);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .toast-container {
+                right: 1rem;
+                left: 1rem;
+            }
+            .toast {
+                min-width: auto;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+
+        body.dark-mode ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+        }
+
+        body.dark-mode ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Focus Visible for Accessibility */
+        *:focus-visible {
+            outline: 2px solid var(--primary-green);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="logo">
+                    🌱 TerraFlow
+                </div>
+                <nav class="nav-links">
+                    <a class="nav-link active" data-page="dashboard">Dashboard</a>
+                    <a class="nav-link" data-page="farms">Farms</a>
+                    <a class="nav-link" data-page="sensors">Sensors</a>
+                    <a class="nav-link" data-page="reports">Reports</a>
+                </nav>
+                <button class="farm-selector" id="farmSelectorBtn">
+                    <span>🗺️</span>
+                    <span id="currentFarmName">North Farm (Alpha)</span>
+                    <span style="font-size: 0.8rem;">▼</span>
+                </button>
+                <div class="weather-info">
+                    <span class="weather-icon">☀️</span>
+                    <span id="weatherDisplay">28°C • Clear Skies</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" title="Menu">☰</button>
+                <button class="language-toggle" title="Language">🌐</button>
+                <button class="theme-toggle" id="themeToggle" title="Dark Mode">🌙</button>
+                <div class="user-profile">
+                    <div class="avatar">JD</div>
+                    <div>John Doe</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- FARM SELECTOR MODAL -->
+    <div class="farm-selector-modal" id="farmSelectorModal">
+        <div class="farm-selector-content">
+            <div class="farm-selector-header">
+                <div class="farm-selector-title">🗺️ Select Farm</div>
+                <button class="modal-close" onclick="closeFarmSelector()">&times;</button>
+            </div>
+            <div class="farm-search" style="position: relative;">
+                <span class="farm-search-icon">🔍</span>
+                <input type="text" id="farmSearchInput" placeholder="Search farms..." onkeyup="filterFarms()">
+            </div>
+            <div class="farm-list" id="farmList">
+                <!-- Farm cards will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        <!-- KPI ROW -->
+        <div class="kpi-row" id="kpiRow">
+            <!-- KPI Cards will be populated by JavaScript -->
+        </div>
+
+        <!-- MAIN GRID -->
+        <div class="main-grid">
+            <!-- LEFT: FARM MAP -->
+            <div class="panel">
+                <div class="panel-title">🗺️ Farm Map</div>
+                <div class="farm-map">
+                    <svg class="map-svg" viewBox="0 0 400 300">
+                        <!-- Farm Boundary -->
+                        <path class="farm-boundary" d="M 20 50 Q 200 20 380 50 L 380 280 Q 200 300 20 280 Z"></path>
+                        
+                        <!-- Sensor Markers -->
+                        <g class="sensor-marker" data-sensor="1">
+                            <circle cx="100" cy="80" r="6"></circle>
+                            <text x="100" y="100" text-anchor="middle" font-size="12" fill="#6b7280">Sensor 1</text>
+                        </g>
+                        <g class="sensor-marker active" data-sensor="2">
+                            <circle cx="200" cy="120" r="6"></circle>
+                            <text x="200" y="140" text-anchor="middle" font-size="12" fill="#6b7280">Sensor 2</text>
+                        </g>
+                        <g class="sensor-marker" data-sensor="3">
+                            <circle cx="300" cy="100" r="6"></circle>
+                            <text x="300" y="120" text-anchor="middle" font-size="12" fill="#6b7280">Sensor 3</text>
+                        </g>
+                        <g class="sensor-marker" data-sensor="4">
+                            <circle cx="150" cy="200" r="6"></circle>
+                            <text x="150" y="220" text-anchor="middle" font-size="12" fill="#6b7280">Sensor 4</text>
+                        </g>
+                        <g class="sensor-marker" data-sensor="5">
+                            <circle cx="280" cy="220" r="6"></circle>
+                            <text x="280" y="240" text-anchor="middle" font-size="12" fill="#6b7280">Sensor 5</text>
+                        </g>
+                    </svg>
+                    <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #10b981;"></div>
+                        <span>Active Sensor</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #3b82f6;"></div>
+                        <span>Selected</span>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER: WEATHER WIDGET -->
+            <div class="panel">
+                <div class="panel-title">🌤️ Weather & AI Insights</div>
+                <div class="weather-forecast" id="weatherForecast">
+                    <!-- Forecast items populated by JavaScript -->
+                </div>
+                <div class="ai-suggestion">
+                    <div class="ai-icon">🤖</div>
+                    <div class="ai-text">
+                        <strong>AI Suggestion:</strong> Irrigation system recommends watering tomorrow morning (5:00-7:00 AM) for optimal crop hydration and minimal water loss.
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: FARM DETAILS -->
+            <div class="panel">
+                <div class="panel-title">🌾 Farm Details</div>
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Crop Progress</h4>
+                    <div id="cropList">
+                        <!-- Crop items populated by JavaScript -->
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Sensor Readings</h4>
+                    <div id="sensorReadings">
+                        <!-- Sensor readings populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAB -->
+    <button class="fab" id="fab">➕</button>
+
+    <!-- MODALS -->
+    <div class="modal" id="sensorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Add Sensor</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Sensor Name</label>
+                    <input type="text" placeholder="e.g., North Field Soil">
+                </div>
+                <div class="form-group">
+                    <label>Sensor Type</label>
+                    <select>
+                        <option>Soil Moisture</option>
+                        <option>Temperature</option>
+                        <option>Humidity</option>
+                        <option>pH Level</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Location (X, Y)</label>
+                    <input type="text" placeholder="100, 150">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" type="submit">Add Sensor</button>
+                    <button class="btn btn-secondary" type="button" onclick="closeAllModals()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="farmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Add Farm</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Farm Name</label>
+                    <input type="text" placeholder="e.g., Green Valley Farm">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" placeholder="City, Region">
+                </div>
+                <div class="form-group">
+                    <label>Area (hectares)</label>
+                    <input type="number" placeholder="50">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" type="submit">Add Farm</button>
+                    <button class="btn btn-secondary" type="button" onclick="closeAllModals()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Generate Report</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Report Type</label>
+                    <select>
+                        <option>Monthly Summary</option>
+                        <option>Weekly Report</option>
+                        <option>Daily Log</option>
+                        <option>Yield Analysis</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date Range</label>
+                    <input type="text" placeholder="Last 30 days">
+                </div>
+                <div class="form-group">
+                    <label>Include</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; margin-bottom: 0;">
+                            <input type="checkbox" checked> Sensor Data
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; margin-bottom: 0;">
+                            <input type="checkbox" checked> Crop Status
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal;">
+                            <input type="checkbox"> AI Insights
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" type="submit">Generate</button>
+                    <button class="btn btn-secondary" type="button" onclick="closeAllModals()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="alertModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Alerts & Notifications</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 1rem; align-items: flex-start;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.3rem;">High Soil Moisture</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Sensor 2 detected moisture above 85%. Consider irrigation delay.</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">5 minutes ago</div>
+                    </div>
+                </div>
+                <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 1rem; align-items: flex-start;">
+                    <span style="font-size: 1.5rem;">🔔</span>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.3rem;">Device Offline</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Raspberry Pi #3 has been offline for 2 hours.</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">1 hour ago</div>
+                    </div>
+                </div>
+                <div style="padding: 1rem; display: flex; gap: 1rem; align-items: flex-start;">
+                    <span style="font-size: 1.5rem;">✅</span>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.3rem;">System Healthy</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">All systems operating normally. Crop growth on schedule.</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">30 minutes ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        /*
+         * ═══════════════════════════════════════════════════════════════
+         * TerraFlow Dashboard - JavaScript
+         * Production-ready with smooth animations and transitions
+         * ═══════════════════════════════════════════════════════════════
+         */
+
+        // ===== THEME TOGGLE =====
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlElement = document.documentElement;
+
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        // ===== NAVIGATION =====
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                // Remove active from all
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                // Add active to clicked
+                this.classList.add('active');
+                
+                // Add page transition effect
+                const container = document.querySelector('.container');
+                container.classList.add('fade-out');
+                setTimeout(() => {
+                    container.classList.remove('fade-out');
+                    // Here you would load different content based on data-page attribute
+                    const page = this.dataset.page;
+                    console.log('Navigating to:', page);
+                }, 300);
+            });
+        });
+
+        // ===== FARM DATA =====
+        const farmsData = [
+            {
+                id: 1,
+                name: 'North Farm (Alpha)',
+                location: 'Northern Valley, CA',
+                area: '125 hectares',
+                sensors: 12,
+                devices: 5,
+                weather: { temp: '28°C', icon: '☀️', condition: 'Clear' }
+            },
+            {
+                id: 2,
+                name: 'South Farm (Beta)',
+                location: 'Southern Hills, CA',
+                area: '85 hectares',
+                sensors: 8,
+                devices: 3,
+                weather: { temp: '26°C', icon: '🌤️', condition: 'Partly Cloudy' }
+            },
+            {
+                id: 3,
+                name: 'East Orchard',
+                location: 'Eastern Plains, CA',
+                area: '200 hectares',
+                sensors: 18,
+                devices: 7,
+                weather: { temp: '24°C', icon: '⛅', condition: 'Overcast' }
+            },
+            {
+                id: 4,
+                name: 'West Vineyard',
+                location: 'Western Coast, CA',
+                area: '95 hectares',
+                sensors: 10,
+                devices: 4,
+                weather: { temp: '22°C', icon: '🌦️', condition: 'Rainy' }
+            },
+            {
+                id: 5,
+                name: 'Central Gardens',
+                location: 'Central Valley, CA',
+                area: '150 hectares',
+                sensors: 15,
+                devices: 6,
+                weather: { temp: '27°C', icon: '☀️', condition: 'Sunny' }
+            }
+        ];
+
+        let selectedFarmId = 1;
+
+        // ===== FARM SELECTOR MODAL =====
+        function openFarmSelector() {
+            document.getElementById('farmSelectorModal').classList.add('active');
+            renderFarmList();
+        }
+
+        function closeFarmSelector() {
+            document.getElementById('farmSelectorModal').classList.remove('active');
+        }
+
+        function renderFarmList() {
+            const farmList = document.getElementById('farmList');
+            farmList.innerHTML = farmsData.map(farm => `
+                <div class="farm-card ${farm.id === selectedFarmId ? 'selected' : ''}" onclick="selectFarm(${farm.id})">
+                    <div class="farm-map-preview">${farm.weather.icon}</div>
+                    <div class="farm-card-info">
+                        <div class="farm-card-name">${farm.name}</div>
+                        <div class="farm-card-location">📍 ${farm.location}</div>
+                        <div class="farm-card-stats">
+                            <span>🌾 ${farm.area}</span>
+                            <span>📡 ${farm.sensors} sensors</span>
+                            <span>📱 ${farm.devices} devices</span>
+                        </div>
+                    </div>
+                    <div class="farm-card-weather">
+                        <div class="farm-card-temp">${farm.weather.temp}</div>
+                        <div class="farm-card-condition">${farm.weather.condition}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectFarm(farmId) {
+            const container = document.querySelector('.container');
+            container.classList.add('fade-out');
+            
+            setTimeout(() => {
+                selectedFarmId = farmId;
+                const farm = farmsData.find(f => f.id === farmId);
+                document.getElementById('currentFarmName').textContent = farm.name;
+                
+                // Update weather
+                const weatherIcon = document.querySelector('.weather-info .weather-icon');
+                weatherIcon.textContent = farm.weather.icon;
+                document.getElementById('weatherDisplay').textContent = `${farm.weather.temp} • ${farm.weather.condition}`;
+                
+                // Re-render farm list to update selected state
+                renderFarmList();
+                
+                // Close modal
+                closeFarmSelector();
+                
+                container.classList.remove('fade-out');
+                
+                // You could also update KPI data, sensor readings, etc. here
+            }, 300);
+        }
+
+        function filterFarms() {
+            const searchValue = document.getElementById('farmSearchInput').value.toLowerCase();
+            const farmCards = document.querySelectorAll('.farm-card');
+            
+            farmCards.forEach(card => {
+                const farmName = card.querySelector('.farm-card-name').textContent.toLowerCase();
+                const farmLocation = card.querySelector('.farm-card-location').textContent.toLowerCase();
+                
+                if (farmName.includes(searchValue) || farmLocation.includes(searchValue)) {
+                    card.style.display = 'grid';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Add event listener to farm selector button
+        document.getElementById('farmSelectorBtn').addEventListener('click', openFarmSelector);
+
+        // Close modal when clicking outside
+        document.getElementById('farmSelectorModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeFarmSelector();
+            }
+        });
+
+        // ===== KPI DATA =====
+        const kpiData = [
+            {
+                icon: '📱',
+                label: 'Raspberry Pi Devices',
+                value: 5,
+                subtext: '5 connected • 1 offline',
+                status: 'warning'
+            },
+            {
+                icon: '📡',
+                label: 'Total Sensors',
+                value: 12,
+                subtext: '11 active • 1 updating',
+                status: 'success'
+            },
+            {
+                icon: '🟢',
+                label: 'System Health',
+                value: '98%',
+                subtext: 'All systems optimal',
+                status: 'success'
+            },
+            {
+                icon: '🌱',
+                label: 'Crop Growth',
+                value: '72%',
+                subtext: 'On track for harvest',
+                status: 'success'
+            }
+        ];
+
+        // ===== RENDER KPI CARDS =====
+        function renderKPICards() {
+            const kpiRow = document.getElementById('kpiRow');
+            kpiRow.innerHTML = kpiData.map((kpi, index) => `
+                <div class="kpi-card" style="animation-delay: ${index * 0.1}s;">
+                    <div class="kpi-icon">${kpi.icon}</div>
+                    <div class="kpi-label">${kpi.label}</div>
+                    <div class="kpi-value count-up" data-target="${typeof kpi.value === 'number' ? kpi.value : kpi.value.replace('%', '')}">${kpi.value}</div>
+                    <div class="kpi-subtext">${kpi.subtext}</div>
+                    <span class="status-badge ${kpi.status}">${kpi.status.toUpperCase()}</span>
+                </div>
+            `).join('');
+
+            // Animate count-up
+            animateCountUp();
+        }
+
+        // ===== COUNT-UP ANIMATION =====
+        function animateCountUp() {
+            const countElements = document.querySelectorAll('.count-up');
+            countElements.forEach(element => {
+                const originalText = element.textContent;
+                const target = parseInt(element.dataset.target);
+                if (isNaN(target)) return;
+
+                const hasPercent = originalText.includes('%');
+                let current = 0;
+                const increment = Math.ceil(target / 30);
+                const interval = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(interval);
+                    }
+                    element.textContent = hasPercent ? current + '%' : current;
+                }, 30);
+            });
+        }
+
+        // ===== WEATHER FORECAST =====
+        const weatherData = [
+            { day: 'Mon', icon: '☀️', temp: '28°C' },
+            { day: 'Tue', icon: '🌤️', temp: '26°C' },
+            { day: 'Wed', icon: '⛅', temp: '24°C' },
+            { day: 'Thu', icon: '🌦️', temp: '22°C' },
+            { day: 'Fri', icon: '☀️', temp: '27°C' }
+        ];
+
+        function renderWeatherForecast() {
+            const forecast = document.getElementById('weatherForecast');
+            forecast.innerHTML = weatherData.map(item => `
+                <div class="forecast-item">
+                    <div class="forecast-day">${item.day}</div>
+                    <div class="forecast-icon">${item.icon}</div>
+                    <div class="forecast-temp">${item.temp}</div>
+                </div>
+            `).join('');
+        }
+
+        // ===== CROP DATA =====
+        const cropData = [
+            { name: 'Wheat', stage: 'Flowering (72%)', progress: 72 },
+            { name: 'Corn', stage: 'Vegetative (45%)', progress: 45 },
+            { name: 'Soybean', stage: 'Early Growth (28%)', progress: 28 }
+        ];
+
+        function renderCropList() {
+            const cropList = document.getElementById('cropList');
+            cropList.innerHTML = cropData.map(crop => `
+                <div class="crop-item">
+                    <div class="crop-info">
+                        <div class="crop-name">${crop.name}</div>
+                        <div class="crop-stage">${crop.stage}</div>
+                    </div>
+                    <div class="crop-progress">
+                        <div class="crop-progress-bar" style="width: ${crop.progress}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== SENSOR READINGS =====
+        const sensorReadings = [
+            { label: '💧 Soil Moisture', value: '62%', color: '#10b981' },
+            { label: '🌡️ Temperature', value: '24.5°C', color: '#f59e0b' },
+            { label: '💨 Humidity', value: '78%', color: '#3b82f6' },
+            { label: '⚖️ pH Level', value: '6.8', color: '#8b5cf6' }
+        ];
+
+        function renderSensorReadings() {
+            const readingsContainer = document.getElementById('sensorReadings');
+            readingsContainer.innerHTML = sensorReadings.map(reading => `
+                <div class="sensor-reading">
+                    <div class="reading-label">${reading.label}</div>
+                    <div class="reading-value" style="color: ${reading.color};">${reading.value}</div>
+                </div>
+            `).join('');
+        }
+
+        // ===== FAB FUNCTIONALITY =====
+        const fab = document.getElementById('fab');
+        const fabItems = {
+            'sensorModal': '➕ Add Sensor',
+            'farmModal': '🗺️ Add Farm',
+            'reportModal': '📄 Reports',
+            'alertModal': '🔔 Alerts'
+        };
+
+        fab.addEventListener('click', (e) => {
+            if (e.target === fab) {
+                fab.classList.toggle('active');
+            }
+        });
+
+        // Create FAB menu items
+        const fabMenu = document.createElement('div');
+        fabMenu.className = 'fab-menu';
+        Object.entries(fabItems).forEach(([modalId, label]) => {
+            const item = document.createElement('button');
+            item.className = 'fab-item';
+            item.textContent = label;
+            item.type = 'button';
+            item.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fab.classList.remove('active');
+                openModal(modalId);
+            };
+            fabMenu.appendChild(item);
+        });
+        fab.appendChild(fabMenu);
+
+        // ===== MODAL FUNCTIONS =====
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+
+        // Close modal when clicking close button or outside
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', closeAllModals);
+        });
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeAllModals();
+            });
+        });
+
+        // ===== SENSOR MARKER INTERACTIONS =====
+        document.querySelectorAll('.sensor-marker').forEach(marker => {
+            marker.addEventListener('click', function() {
+                // Remove active class from all markers
+                document.querySelectorAll('.sensor-marker').forEach(m => {
+                    m.classList.remove('active');
+                });
+                // Add active class to clicked marker
+                this.classList.add('active');
+
+                // Update sensor readings based on marker
+                const sensorId = this.dataset.sensor;
+                updateSensorReadings(sensorId);
+            });
+        });
+
+        function updateSensorReadings(sensorId) {
+            const colorMap = {
+                '💧 Soil Moisture': '#10b981',
+                '🌡️ Temperature': '#f59e0b',
+                '💨 Humidity': '#3b82f6',
+                '⚖️ pH Level': '#8b5cf6'
+            };
+
+            const readings = [
+                { label: '💧 Soil Moisture', value: (55 + parseInt(sensorId) * 5) + '%', color: colorMap['💧 Soil Moisture'] },
+                { label: '🌡️ Temperature', value: (22 + parseInt(sensorId) * 0.5).toFixed(1) + '°C', color: colorMap['🌡️ Temperature'] },
+                { label: '💨 Humidity', value: (70 + parseInt(sensorId) * 2) + '%', color: colorMap['💨 Humidity'] },
+                { label: '⚖️ pH Level', value: (6.5 + parseInt(sensorId) * 0.1).toFixed(1), color: colorMap['⚖️ pH Level'] }
+            ];
+
+            const readingsContainer = document.getElementById('sensorReadings');
+            readingsContainer.innerHTML = readings.map(reading => `
+                <div class="sensor-reading">
+                    <div class="reading-label">${reading.label}</div>
+                    <div class="reading-value" style="color: ${reading.color};">${reading.value}</div>
+                </div>
+            `).join('');
+
+            // Smooth animation
+            readingsContainer.style.opacity = '0.5';
+            setTimeout(() => {
+                readingsContainer.style.opacity = '1';
+                readingsContainer.style.transition = 'opacity 0.3s ease';
+            }, 10);
+        }
+
+        // ===== INITIALIZE =====
+        function init() {
+            // Add page transition class to container
+            document.querySelector('.container').classList.add('page-transition');
+            
+            renderKPICards();
+            renderWeatherForecast();
+            renderCropList();
+            renderSensorReadings();
+
+            // Update weather display
+            const now = new Date();
+            const temps = ['28°C', '26°C', '24°C', '22°C', '27°C'];
+            const icons = ['☀️', '🌤️', '⛅', '🌦️', '☀️'];
+            const currentIndex = now.getDate() % 5;
+            document.getElementById('weatherDisplay').textContent = `${temps[currentIndex]} • ${['Clear Skies', 'Partly Cloudy', 'Overcast', 'Rainy', 'Sunny'][currentIndex]}`;
+            
+            // Initialize farm selector with first farm
+            renderFarmList();
+        }
+
+        // Call init on page load
+        init();
+
+        // ===== RESPONSIVE ADJUSTMENTS =====
+        window.addEventListener('resize', () => {
+            // Re-render on significant resize
+            if (window.innerWidth < 1200) {
+                document.body.style.fontSize = '14px';
+            } else {
+                document.body.style.fontSize = '16px';
+            }
+        });
+
+        // ===== ACCESSIBILITY =====
+        // Add keyboard navigation for modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAllModals();
+                closeFarmSelector();
+                fab.classList.remove('active');
+            }
+        });
+
+        // Hide loading overlay when page is ready
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, 500);
+        });
+
+        // ===== MOBILE MENU =====
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                // Simple implementation: show farm selector on mobile
+                // In a full app, you'd show a mobile navigation menu
+                openFarmSelector();
+            });
+        }
+
+        // ===== LIVE UPDATES SIMULATION =====
+        setInterval(() => {
+            // Simulate sensor data updates
+            const randomSensor = Math.floor(Math.random() * 5) + 1;
+            const markers = document.querySelectorAll('.sensor-marker');
+            if (Math.random() > 0.7) {
+                // Randomly animate a marker
+                const randomMarker = markers[randomSensor - 1];
+                if (randomMarker && !randomMarker.classList.contains('active')) {
+                    randomMarker.style.animation = 'markerPulse 0.5s ease';
+                    setTimeout(() => {
+                        randomMarker.style.animation = '';
+                    }, 500);
+                }
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<div class="crops-container">
+  <div class="crops-header">
+    <h1>Crop Management</h1>
+    <p>Track and manage your crop cultivation</p>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="addCrop()">
+        <mat-icon>add</mat-icon>
+        Add Crop
+      </button>
+      <button mat-icon-button (click)="refreshCrops()" [disabled]="isLoading">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="crops-content" *ngIf="!isLoading; else loadingTemplate">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Crop Overview</mat-card-title>
+        <mat-card-subtitle>{{ crops.length }} crops found</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-container" *ngIf="crops.length > 0; else noCrops">
+          <table mat-table [dataSource]="crops" class="crops-table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Crop Name</th>
+              <td mat-cell *matCellDef="let crop">
+                <div class="crop-name">
+                  <mat-icon>eco</mat-icon>
+                  <span>{{ crop.name }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="variety">
+              <th mat-header-cell *matHeaderCellDef>Variety</th>
+              <td mat-cell *matCellDef="let crop">
+                <span class="crop-variety">{{ crop.variety || 'Not specified' }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let crop">
+                <mat-chip [color]="getStatusColor(crop.status)" selected>
+                  <mat-icon class="status-icon">{{ getStatusIcon(crop.status) }}</mat-icon>
+                  {{ crop.status | titlecase }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="planting_date">
+              <th mat-header-cell *matHeaderCellDef>Planting Date</th>
+              <td mat-cell *matCellDef="let crop">
+                <div class="date-info">
+                  <mat-icon>event</mat-icon>
+                  <span>{{ crop.planting_date ? (crop.planting_date | date:'short') : 'Not set' }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="expected_harvest_date">
+              <th mat-header-cell *matHeaderCellDef>Expected Harvest</th>
+              <td mat-cell *matCellDef="let crop">
+                <div class="date-info">
+                  <mat-icon>schedule</mat-icon>
+                  <span>{{ crop.expected_harvest_date ? (crop.expected_harvest_date | date:'short') : 'Not set' }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let crop">
+                <button mat-icon-button [matMenuTriggerFor]="cropMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #cropMenu="matMenu">
+                  <button mat-menu-item (click)="editCrop(crop)">
+                    <mat-icon>edit</mat-icon>
+                    Edit
+                  </button>
+                  <button mat-menu-item (click)="deleteCrop(crop)" class="delete-action">
+                    <mat-icon>delete</mat-icon>
+                    Delete
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+        <ng-template #noCrops>
+          <div class="no-data">
+            <mat-icon>eco</mat-icon>
+            <h3>No Crops Found</h3>
+            <p>Get started by adding your first crop to track your agricultural production.</p>
+            <button mat-raised-button color="primary" (click)="addCrop()">
+              <mat-icon>add</mat-icon>
+              Add Your First Crop
+            </button>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading crops...</p>
+    </div>
+  </ng-template>
+</div>
