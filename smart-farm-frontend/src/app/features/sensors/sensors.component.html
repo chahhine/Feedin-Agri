@@ -1,0 +1,169 @@
+<div class="sensors-container">
+  <!-- Epic Header Section -->
+  <div class="sensors-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1>{{ languageService.t()('sensors.title') }}</h1>
+        <p>{{ languageService.t()('sensors.subtitle') }}</p>
+      </div>
+      <div class="header-actions">
+        <button mat-icon-button (click)="refreshData()" [disabled]="isLoading" [matTooltip]="languageService.t()('common.refresh')" class="action-btn">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="sensors-content" *ngIf="!isLoading; else loadingTemplate">
+    <mat-tab-group class="sensors-tabs">
+      <!-- Sensors Tab -->
+      <mat-tab [label]="languageService.t()('sensors.title')">
+        <div class="tab-content">
+          <div class="content-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <mat-icon>sensors</mat-icon>
+                <span>{{ languageService.t()('sensors.title') }}</span>
+              </div>
+              <div class="panel-subtitle">{{ sensors.length }} {{ languageService.t()('sensors.title') }}</div>
+            </div>
+            
+            <div class="panel-content">
+              <div class="table-container" *ngIf="sensors.length > 0; else noSensors">
+                <table mat-table [dataSource]="sensors" class="sensors-table">
+                  <ng-container matColumnDef="sensor_id">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('sensors.sensorId') }}</th>
+                    <td mat-cell *matCellDef="let sensor">
+                      <div class="sensor-id">
+                        <mat-icon>sensors</mat-icon>
+                        <span>{{ sensor.sensor_id }}</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('sensors.sensorType') }}</th>
+                    <td mat-cell *matCellDef="let sensor">
+                      <mat-chip [color]="getSensorTypeColor(sensor.type)" selected>
+                        <mat-icon class="sensor-type-icon">{{ getSensorTypeIcon(sensor.type) }}</mat-icon>
+                        {{ getSensorTypeTranslation(sensor.type) }}
+                      </mat-chip>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="unit">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('sensors.unit') }}</th>
+                    <td mat-cell *matCellDef="let sensor">
+                      <span class="sensor-unit">{{ getUnitTranslation(sensor.unit) }}</span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="location">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('sensors.location') }}</th>
+                    <td mat-cell *matCellDef="let sensor">
+                      <div class="location-info">
+                        <mat-icon>location_on</mat-icon>
+                        <span>{{ sensor.location || languageService.t()('common.none') }}</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="device_id">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('devices.title') }}</th>
+                    <td mat-cell *matCellDef="let sensor">
+                      <span class="device-id">{{ sensor.device_id }}</span>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="sensor-row"></tr>
+                </table>
+              </div>
+              <ng-template #noSensors>
+                <div class="no-data">
+                  <mat-icon>sensors_off</mat-icon>
+                  <h3>{{ languageService.t()('sensors.noSensors') }}</h3>
+                  <p>{{ languageService.t()('sensors.noSensors') }}</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Recent Readings Tab -->
+      <mat-tab [label]="languageService.t()('sensorReadings.title')">
+        <div class="tab-content">
+          <div class="content-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <mat-icon>timeline</mat-icon>
+                <span>{{ languageService.t()('sensorReadings.title') }}</span>
+              </div>
+              <div class="panel-subtitle">{{ languageService.t()('sensorReadings.liveData') }}</div>
+            </div>
+            
+            <div class="panel-content">
+              <div class="table-container" *ngIf="recentReadings.length > 0; else noReadings">
+                <table mat-table [dataSource]="recentReadings" class="readings-table">
+                  <ng-container matColumnDef="sensor_id">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('sensors.sensorId') }}</th>
+                    <td mat-cell *matCellDef="let reading">
+                      <div class="sensor-id">
+                        <mat-icon>sensors</mat-icon>
+                        <span>{{ reading.sensor_id }}</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="value1">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('sensors.value') }} 1</th>
+                    <td mat-cell *matCellDef="let reading">
+                      <span class="sensor-value">{{ reading.value1 | number:'1.2-2' }}</span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="value2">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('sensors.value') }} 2</th>
+                    <td mat-cell *matCellDef="let reading">
+                      <span class="sensor-value">{{ reading.value2 | number:'1.2-2' }}</span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="createdAt">
+                    <th mat-header-cell *matHeaderCellDef>{{ languageService.t()('sensors.timestamp') }}</th>
+                    <td mat-cell *matCellDef="let reading">
+                      <div class="timestamp">
+                        <mat-icon>schedule</mat-icon>
+                        <span>{{ reading.createdAt | date:'short' }}</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="readingColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: readingColumns;" class="reading-row"></tr>
+                </table>
+              </div>
+              <ng-template #noReadings>
+                <div class="no-data">
+                  <mat-icon>sensors_off</mat-icon>
+                  <h3>{{ languageService.t()('sensorReadings.noReadings') }}</h3>
+                  <p>{{ languageService.t()('sensorReadings.noReadings') }}</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+  <!-- Loading Template -->
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>{{ languageService.t()('common.loading') }}</p>
+    </div>
+  </ng-template>
+</div>

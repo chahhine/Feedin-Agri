@@ -1,0 +1,130 @@
+<div class="dashboard-container">
+  <!-- Epic KPI Cards -->
+  <div class="kpi-row" *ngIf="!isLoading">
+    <div class="kpi-card">
+      <div class="kpi-icon">📱</div>
+      <div class="kpi-label">{{ languageService.t()('dashboard.statistics.totalDevices') || 'Total Devices' }}</div>
+      <div class="kpi-value">{{ devices.length }}</div>
+      <div class="kpi-subtext">{{ getDeviceStatusCount('online') }} online • {{ getDeviceStatusCount('offline') }} offline</div>
+      <span class="status-badge success" *ngIf="getOnlinePercentage() >= 90">EXCELLENT</span>
+      <span class="status-badge warning" *ngIf="getOnlinePercentage() >= 70 && getOnlinePercentage() < 90">GOOD</span>
+      <span class="status-badge danger" *ngIf="getOnlinePercentage() < 70">NEEDS ATTENTION</span>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon">📡</div>
+      <div class="kpi-label">{{ languageService.t()('dashboard.statistics.onlineDevices') || 'Online Devices' }}</div>
+      <div class="kpi-value">{{ getDeviceStatusCount('online') }}</div>
+      <div class="kpi-subtext">{{ getOnlinePercentage() }}% online rate</div>
+      <span class="status-badge success">CONNECTED</span>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon">🟢</div>
+      <div class="kpi-label">{{ languageService.t()('dashboard.statistics.systemHealth') || 'System Health' }}</div>
+      <div class="kpi-value">{{ getOnlinePercentage() }}%</div>
+      <div class="kpi-subtext">All systems operational</div>
+      <span class="status-badge success" *ngIf="getOnlinePercentage() >= 90">OPTIMAL</span>
+      <span class="status-badge warning" *ngIf="getOnlinePercentage() < 90">CHECK REQUIRED</span>
+    </div>
+
+
+  </div>
+
+  <!-- Main Grid with Placeholder Components -->
+  <div class="main-grid" *ngIf="!isLoading">
+    <!-- Farm Map Placeholder -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>🗺️</span>
+        <span>Farm Map</span>
+      </div>
+      <div class="coming-soon-panel">
+        <mat-icon class="coming-soon-icon">map</mat-icon>
+        <h3>Interactive Farm Map</h3>
+        <p>Real-time sensor locations and field monitoring coming soon!</p>
+        <div class="feature-list">
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> Sensor Markers</div>
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> Field Boundaries</div>
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> Real-time Updates</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weather & AI Insights Placeholder -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>🌤️</span>
+        <span>Weather & AI Insights</span>
+      </div>
+      <div class="coming-soon-panel">
+        <mat-icon class="coming-soon-icon">cloud</mat-icon>
+        <h3>Weather Forecast & AI</h3>
+        <p>Smart predictions and weather-based recommendations coming soon!</p>
+        <div class="feature-list">
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> 7-Day Forecast</div>
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> AI Suggestions</div>
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> Irrigation Alerts</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Farm Details Placeholder -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>🌾</span>
+        <span>Farm Details</span>
+      </div>
+      <div class="coming-soon-panel">
+        <mat-icon class="coming-soon-icon">agriculture</mat-icon>
+        <h3>Crop & Sensor Data</h3>
+        <p>Detailed crop progress and sensor readings coming soon!</p>
+        <div class="feature-list">
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> Crop Progress</div>
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> Sensor Readings</div>
+          <div class="feature-item"><mat-icon>check_circle</mat-icon> Growth Analytics</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button (FAB) with Perfect Circular Burst -->
+  <div class="fab-container" [class.elevated]="showFab">
+    <!-- Main FAB Button -->
+    <button class="fab-main"
+            [class.active]="showFab"
+            (click)="toggleFab()"
+            [attr.aria-label]="'Quick Actions'"
+            matTooltip="Quick Actions"
+            matTooltipPosition="left">
+      <mat-icon class="fab-icon">agriculture</mat-icon>
+    </button>
+
+    <!-- Circular Burst Sub-buttons (Dynamically positioned) -->
+    <div class="fab-radial-menu" [class.active]="showFab">
+      <button *ngFor="let action of fabActions; let i = index"
+              class="fab-sub-button"
+              [style.--angle]="getAngle(i) + 'deg'"
+              [style.--distance]="circularDistance + 'px'"
+              [style.transition-delay]="(i * 50) + 'ms'"
+              [style.background]="action.gradient"
+              (click)="navigateAndCloseFab(action.route)"
+              [matTooltip]="action.label"
+              matTooltipPosition="left"
+              [attr.aria-label]="action.label">
+        <mat-icon [style.color]="action.iconColor">{{ action.icon }}</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- FAB Backdrop -->
+  <div class="fab-backdrop"
+       [class.active]="showFab"
+       (click)="closeFab()"></div>
+
+  <!-- Loading Template -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>{{ languageService.t()('dashboard.loadingData') || 'Loading your farm data...' }}</p>
+  </div>
+</div>

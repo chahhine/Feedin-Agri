@@ -1,0 +1,333 @@
+.device-details-dialog {
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: #f5f5f5;
+
+  .device-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .device-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #1976d2;
+    }
+
+    .device-title {
+      h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .device-subtitle {
+        margin: 0.25rem 0 0 0;
+        color: #666;
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  .device-status {
+    .status-icon {
+      font-size: 16px !important;
+      width: 16px !important;
+      height: 16px !important;
+      margin-right: 4px;
+    }
+  }
+}
+
+.device-tabs {
+  flex: 1;
+  overflow: hidden;
+
+  .mat-mdc-tab-group {
+    height: 100%;
+  }
+
+  .mat-mdc-tab-body-wrapper {
+    height: calc(100% - 48px);
+  }
+
+  .mat-mdc-tab-body-content {
+    height: 100%;
+    overflow-y: auto;
+  }
+}
+
+.tab-content {
+  padding: 1.5rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.info-card {
+  .mat-mdc-list {
+    padding: 0;
+  }
+
+  .mat-mdc-list-item {
+    padding: 0.75rem 0;
+
+    .mat-icon {
+      color: #666;
+    }
+  }
+}
+
+.sensors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+
+  .sensor-card {
+    .mat-mdc-card-header {
+      padding-bottom: 0.5rem;
+    }
+
+    .mat-mdc-card-content {
+      padding-top: 0;
+    }
+
+    .sensor-info {
+      .sensor-detail {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+
+        .label {
+          font-weight: 500;
+          color: #666;
+        }
+
+        .value {
+          color: #333;
+        }
+      }
+    }
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+
+  .stat-card {
+    text-align: center;
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: #1976d2;
+      margin-top: 0.5rem;
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+
+  p {
+    margin-top: 1rem;
+    color: #666;
+  }
+}
+
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    color: #ccc;
+  }
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+  }
+
+  p {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: #f5f5f5;
+
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  .dialog-buttons {
+    display: flex;
+    gap: 0.5rem;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+}
+
+// Mobile responsive
+@media (max-width: 768px) {
+  .device-details-dialog {
+    max-width: 100%;
+    max-height: 100vh;
+  }
+
+  .dialog-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+
+    .device-info {
+      .device-icon {
+        font-size: 36px;
+        width: 36px;
+        height: 36px;
+      }
+
+      .device-title h2 {
+        font-size: 1.25rem;
+      }
+    }
+  }
+
+  .tab-content {
+    padding: 1rem;
+  }
+
+  .sensors-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+    gap: 1rem;
+
+    .action-buttons,
+    .dialog-buttons {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+// Dark theme support
+body.dark-theme .device-details-dialog {
+  .dialog-header {
+    background-color: var(--card-bg, #1e293b);
+    border-bottom: 1px solid var(--border-color, #334155);
+
+    .device-info {
+      .device-title {
+        h2 {
+          color: var(--text-primary, #f1f5f9);
+        }
+
+        .device-subtitle {
+          color: var(--text-secondary, #cbd5e1);
+        }
+      }
+    }
+  }
+
+  .info-card {
+    .mat-mdc-list-item {
+      .mat-icon {
+        color: var(--text-secondary, #cbd5e1);
+      }
+    }
+  }
+
+  .sensors-grid {
+    .sensor-card {
+      .sensor-info {
+        .sensor-detail {
+          .label {
+            color: var(--text-secondary, #cbd5e1);
+          }
+
+          .value {
+            color: var(--text-primary, #f1f5f9);
+          }
+        }
+      }
+    }
+  }
+
+  .stats-grid {
+    .stat-card {
+      .stat-value {
+        color: #10b981;
+      }
+    }
+  }
+
+  .loading-container {
+    p {
+      color: var(--text-secondary, #cbd5e1);
+    }
+  }
+
+  .no-data {
+    color: var(--text-secondary, #cbd5e1);
+
+    mat-icon {
+      color: var(--text-secondary, #cbd5e1);
+    }
+
+    h3 {
+      color: var(--text-primary, #f1f5f9);
+    }
+  }
+
+  .dialog-actions {
+    background-color: var(--card-bg, #1e293b);
+    border-top: 1px solid var(--border-color, #334155);
+  }
+}
+

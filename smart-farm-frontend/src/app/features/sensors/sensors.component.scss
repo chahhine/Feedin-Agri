@@ -1,0 +1,549 @@
+// Epic Sensors Styles - TerraFlow Inspired
+.sensors-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  padding-top: 40px; // Reduced from 100px
+  padding-bottom: 120px; // Account for footer spacing
+}
+
+// ===== HEADER SECTION ===== (TerraFlow Style)
+.sensors-header {
+  margin-bottom: 2rem;
+  animation: fadeIn 0.6s ease;
+
+  .header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+    background: var(--card-bg, #ffffff);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+      border-color: #10b981;
+      transform: translateY(-2px);
+    }
+  }
+
+  .header-info {
+  h1 {
+    margin: 0;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-primary, #1f2937);
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+  }
+  
+  p {
+    margin: 0.5rem 0 0 0;
+      font-size: 1.1rem;
+      color: var(--text-secondary, #6b7280);
+      font-weight: 400;
+    }
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    .action-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--light-bg, #f9fafb);
+      border: 1px solid var(--border-color, #e5e7eb);
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+        transform: scale(1.05);
+      }
+    }
+  }
+}
+
+body.dark-theme .sensors-header {
+  .header-content {
+    background: var(--card-bg, #1e293b);
+    border-color: var(--border-color, #334155);
+
+    &:hover {
+      box-shadow: 0 12px 32px rgba(16, 185, 129, 0.25);
+    }
+  }
+
+  .header-info {
+    h1 {
+      color: var(--text-primary, #f1f5f9);
+    }
+
+    p {
+      color: var(--text-secondary, #cbd5e1);
+    }
+  }
+
+  .header-actions {
+    .action-btn {
+      background: var(--light-bg, #0f172a);
+      border-color: var(--border-color, #334155);
+    }
+  }
+}
+
+// ===== TABS STYLING ===== (TerraFlow Style)
+.sensors-tabs {
+  background: var(--card-bg, #ffffff);
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: fadeIn 0.8s ease;
+
+  .mat-mdc-tab-group {
+    .mat-mdc-tab-header {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(59, 130, 246, 0.02));
+      border-bottom: 1px solid var(--border-color, #e5e7eb);
+
+      .mat-mdc-tab {
+        font-weight: 600;
+        color: var(--text-secondary, #6b7280);
+        transition: all 0.3s ease;
+
+        &.mdc-tab--active {
+          color: #10b981;
+        }
+
+        &:hover {
+          color: #10b981;
+        }
+      }
+    }
+
+    .mat-mdc-tab-body-wrapper {
+      .mat-mdc-tab-body-content {
+        padding: 0;
+      }
+    }
+  }
+}
+
+body.dark-theme .sensors-tabs {
+  background: var(--card-bg, #1e293b);
+  border-color: var(--border-color, #334155);
+
+  .mat-mdc-tab-group {
+    .mat-mdc-tab-header {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+      border-bottom-color: var(--border-color, #334155);
+
+      .mat-mdc-tab {
+        color: var(--text-secondary, #cbd5e1);
+
+        &.mdc-tab--active {
+          color: #10b981;
+        }
+      }
+    }
+  }
+}
+
+// ===== TAB CONTENT ===== (TerraFlow Style)
+.tab-content {
+  padding: 0;
+}
+
+// ===== CONTENT PANELS ===== (TerraFlow Style)
+.content-panel {
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(59, 130, 246, 0.02));
+
+  .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+
+    mat-icon {
+      font-size: 1.5rem;
+      color: #10b981;
+    }
+
+    span {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-primary, #1f2937);
+    }
+  }
+
+  .panel-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #6b7280);
+    margin-left: 2.25rem;
+  }
+}
+
+.panel-content {
+  padding: 1.5rem;
+}
+
+body.dark-theme .content-panel {
+  .panel-header {
+    border-bottom-color: var(--border-color, #334155);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+
+    .panel-title {
+      span {
+        color: var(--text-primary, #f1f5f9);
+      }
+    }
+
+    .panel-subtitle {
+      color: var(--text-secondary, #cbd5e1);
+    }
+  }
+}
+
+// ===== TABLE STYLES ===== (TerraFlow Style)
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  
+  .sensors-table,
+  .readings-table {
+    width: 100%;
+    background: var(--card-bg, #ffffff);
+
+    th {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      font-weight: 600;
+      color: var(--text-primary, #1f2937);
+      padding: 1rem;
+      border-bottom: 2px solid var(--border-color, #e5e7eb);
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color, #e5e7eb);
+    }
+
+    .sensor-row,
+    .reading-row {
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+        transform: scale(1.01);
+      }
+
+      &:last-child td {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+.sensor-id {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  
+  mat-icon {
+    color: #10b981;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  span {
+    font-weight: 500;
+    color: var(--text-primary, #1f2937);
+  }
+}
+
+.sensor-type-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin-right: 4px;
+}
+
+.sensor-unit {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+  color: #10b981;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.sensor-value {
+  font-weight: 600;
+  color: #10b981;
+  font-size: 1.1rem;
+}
+
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  mat-icon {
+    color: #10b981;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.device-id {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(160, 82, 45, 0.1));
+  color: #8b4513;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(139, 69, 19, 0.2);
+}
+
+.timestamp {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary, #6b7280);
+  
+  mat-icon {
+    color: var(--text-secondary, #6b7280);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+body.dark-theme .table-container {
+  border-color: var(--border-color, #334155);
+
+  .sensors-table,
+  .readings-table {
+    background: var(--card-bg, #1e293b);
+
+    th {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: var(--text-primary, #f1f5f9);
+      border-bottom-color: var(--border-color, #334155);
+    }
+
+    td {
+      border-bottom-color: var(--border-color, #334155);
+    }
+
+    .sensor-row,
+    .reading-row {
+      &:hover {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+      }
+    }
+  }
+}
+
+// ===== NO DATA STATE ===== (TerraFlow Style)
+.no-data {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+  border-radius: 16px;
+  border: 2px dashed var(--border-color, #e5e7eb);
+  
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1.5rem;
+    color: #10b981;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #1f2937);
+  }
+  
+  p {
+    margin: 0 0 2rem 0;
+    font-size: 1.1rem;
+    color: var(--text-secondary, #6b7280);
+    line-height: 1.6;
+  }
+}
+
+body.dark-theme .no-data {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+  border-color: var(--border-color, #334155);
+
+  h3 {
+    color: var(--text-primary, #f1f5f9);
+  }
+
+  p {
+    color: var(--text-secondary, #cbd5e1);
+  }
+}
+
+// ===== LOADING CONTAINER ===== (TerraFlow Style)
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 1rem;
+  min-height: 400px;
+
+  p {
+    margin-top: 1.5rem;
+    color: var(--text-secondary, #6b7280);
+    font-size: 1.1rem;
+  }
+}
+
+body.dark-theme .loading-container p {
+  color: var(--text-secondary, #cbd5e1);
+}
+
+// ===== ANIMATIONS =====
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+// ===== RESPONSIVE DESIGN =====
+@media (max-width: 1200px) {
+  .sensors-container {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sensors-container {
+    padding: 1rem;
+    padding-top: 90px;
+  }
+  
+  .sensors-header {
+    .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+      gap: 1.5rem;
+      padding: 1.5rem;
+    }
+
+    .header-info h1 {
+      font-size: 2rem;
+    }
+    
+    .header-actions {
+      align-self: stretch;
+      justify-content: space-between;
+    }
+  }
+  
+  .table-container {
+    font-size: 0.9rem;
+    
+    th, td {
+      padding: 8px 12px;
+    }
+  }
+  
+  .sensor-id,
+  .location-info,
+  .timestamp {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .sensors-container {
+    padding: 0.75rem;
+    padding-top: 80px;
+  }
+
+  .sensors-header {
+    .header-content {
+      padding: 1rem;
+    }
+
+    .header-info h1 {
+      font-size: 1.75rem;
+    }
+  }
+
+  .panel-header {
+    padding: 1rem;
+
+    .panel-title {
+      span {
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  .panel-content {
+    padding: 1rem;
+  }
+}
+
+// ===== ACCESSIBILITY =====
+*:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+// Smooth scroll behavior
+html {
+  scroll-behavior: smooth;
+}

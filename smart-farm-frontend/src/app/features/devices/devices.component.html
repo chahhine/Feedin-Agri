@@ -1,0 +1,355 @@
+<div class="devices-container" role="main" aria-label="{{ languageService.t()('devices.title') }}">
+  <!-- Epic Header Section -->
+  <div class="devices-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1 id="page-title">{{ languageService.t()('devices.title') }}</h1>
+        <p>{{ languageService.t()('devices.subtitle') }}</p>
+      </div>
+      <div class="header-actions" role="toolbar" aria-label="Device actions">
+        <button
+          mat-icon-button
+          (click)="toggleViewMode()"
+          [matTooltip]="languageService.t()('devices.toggleView')"
+          class="action-btn"
+          [attr.aria-label]="'Toggle to ' + (viewMode === 'table' ? 'card' : 'table') + ' view'"
+          aria-live="polite"
+          type="button">
+          <mat-icon aria-hidden="true">{{ viewMode === 'table' ? 'view_module' : 'table_view' }}</mat-icon>
+          <span class="sr-only">{{ languageService.t()('devices.toggleView') }}</span>
+        </button>
+        <button
+          mat-icon-button
+          (click)="refreshDevices()"
+          [disabled]="isLoading"
+          [matTooltip]="languageService.t()('common.refresh')"
+          class="action-btn"
+          [class.refreshing]="isLoading"
+          [attr.aria-label]="languageService.t()('common.refresh')"
+          [attr.aria-busy]="isLoading"
+          type="button">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          <span class="sr-only">{{ languageService.t()('common.refresh') }}</span>
+        </button>
+        <!-- Removed Add Device button for read-only mode -->
+</div>
+    </div>
+  </div>
+
+  <!-- Epic Filters Panel -->
+  <div class="filters-panel" role="search" aria-label="Device filters">
+    <div class="filters-content">
+      <div class="filters-header">
+        <h3><mat-icon aria-hidden="true">filter_list</mat-icon> Search & Filter</h3>
+        <button
+          mat-button
+          (click)="clearFilters()"
+          [disabled]="!hasActiveFilters"
+          class="clear-btn"
+          [attr.aria-label]="'Clear ' + activeFilterCount + ' active filters'"
+          aria-live="polite">
+          <mat-icon aria-hidden="true">clear</mat-icon>
+          Clear Filters
+          <span class="filter-badge" *ngIf="hasActiveFilters" aria-label="{{ activeFilterCount }} filters active">{{ activeFilterCount }}</span>
+        </button>
+      </div>
+
+      <div class="filters-grid" role="group" aria-label="Filter controls">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>{{ languageService.t()('devices.search') }}</mat-label>
+          <input
+            matInput
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            [placeholder]="languageService.t()('devices.searchPlaceholder')"
+            [attr.aria-label]="languageService.t()('devices.search')"
+            [attr.title]="languageService.t()('devices.search')"
+            role="searchbox"
+            aria-describedby="search-help"
+            id="device-search-input"
+            name="device-search"
+            type="search">
+          <mat-icon matSuffix aria-hidden="true">search</mat-icon>
+          <span id="search-help" class="sr-only">Search by device name, location, or description</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>{{ languageService.t()('devices.filterByStatus') }}</mat-label>
+          <mat-select
+            [(ngModel)]="statusFilter"
+            (selectionChange)="onStatusFilterChange()"
+            [attr.aria-label]="languageService.t()('devices.filterByStatus')">
+            <mat-option value="">{{ languageService.t()('devices.allStatuses') }}</mat-option>
+      <mat-option *ngFor="let status of availableStatuses" [value]="status">
+              {{ getStatusTranslation(status) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>{{ languageService.t()('devices.filterByType') }}</mat-label>
+          <mat-select
+            [(ngModel)]="deviceTypeFilter"
+            (selectionChange)="onDeviceTypeFilterChange()"
+            [attr.aria-label]="languageService.t()('devices.filterByType')">
+            <mat-option value="">{{ languageService.t()('devices.allTypes') }}</mat-option>
+            <mat-option *ngFor="let type of availableDeviceTypes" [value]="type">
+              {{ getDeviceTypeTranslation(type) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Removed bulk actions for read-only mode -->
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="devices-content" *ngIf="!isLoading; else loadingTemplate" role="region" aria-live="polite" [attr.aria-busy]="isLoading">
+    <!-- Table View -->
+    <div class="content-panel" *ngIf="viewMode === 'table'">
+      <div class="panel-header">
+        <div class="panel-title">
+          <mat-icon aria-hidden="true">table_view</mat-icon>
+          <span>{{ languageService.t()('devices.title') }}</span>
+        </div>
+        <div class="panel-subtitle" role="status" aria-live="polite">
+          {{ totalDevices }} {{ languageService.t()('devices.title') }}
+          <span class="sr-only">devices found</span>
+        </div>
+      </div>
+
+      <div class="panel-content">
+        <div class="table-container" *ngIf="filteredDevices.length > 0; else noDevices">
+          <table
+            mat-table
+            [dataSource]="dataSource"
+            matSort
+            (matSortChange)="onSortChange($event)"
+            class="devices-table"
+            role="table"
+            aria-label="Devices table"
+            [attr.aria-rowcount]="totalDevices">
+            <!-- Removed selection column for read-only mode -->
+
+            <!-- Name Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header role="columnheader">
+                {{ languageService.t()('devices.deviceName') }}
+              </th>
+              <td mat-cell *matCellDef="let device" role="cell">
+                <div class="device-name">
+                  <mat-icon aria-hidden="true">{{ getDeviceTypeIcon(device.device_type || '') }}</mat-icon>
+                  <span>{{ device.name }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header role="columnheader">
+                {{ languageService.t()('devices.status') }}
+              </th>
+              <td mat-cell *matCellDef="let device" role="cell">
+                <mat-chip
+                  [color]="getStatusColor(device.status)"
+                  selected
+                  [class.pulse-online]="device.status === 'online'"
+                  [attr.aria-label]="'Status: ' + getStatusTranslation(device.status)">
+                  <mat-icon class="status-icon" aria-hidden="true">{{ getStatusIcon(device.status) }}</mat-icon>
+                  {{ getStatusTranslation(device.status) }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Location Column -->
+            <ng-container matColumnDef="location">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header role="columnheader">
+                {{ languageService.t()('devices.location') }}
+              </th>
+              <td mat-cell *matCellDef="let device" role="cell">
+                <div class="location-info">
+                  <mat-icon aria-hidden="true">location_on</mat-icon>
+                  <span>{{ device.location }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+      <!-- Device Type Column -->
+            <ng-container matColumnDef="device_type">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header role="columnheader">
+                {{ languageService.t()('devices.deviceType') }}
+              </th>
+              <td mat-cell *matCellDef="let device" role="cell">
+                <span class="device-type">{{ getDeviceTypeTranslation(device.device_type) }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Last Seen Column -->
+            <ng-container matColumnDef="last_seen">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header role="columnheader">
+                {{ languageService.t()('devices.lastSeen') }}
+              </th>
+              <td mat-cell *matCellDef="let device" role="cell">
+                <div class="last-seen">
+                  <mat-icon aria-hidden="true">schedule</mat-icon>
+                  <span>{{ device.last_seen ? (device.last_seen | date:'short') : languageService.t()('common.none') }}</span>
+                </div>
+              </td>
+</ng-container>
+
+            <!-- Removed actions column/menu for read-only mode -->
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns; let i = index"
+              class="device-row"
+              [style.animation-delay.ms]="i * 30"
+              tabindex="0"
+              [attr.aria-label]="'Device: ' + row.name + ', Status: ' + getStatusTranslation(row.status)"></tr>
+          </table>
+
+          <!-- Pagination -->
+          <mat-paginator
+            [length]="totalDevices"
+            [pageSize]="pageSize"
+            [pageIndex]="pageIndex"
+            [pageSizeOptions]="[5, 10, 25, 50]"
+            (page)="onPageChange($event)"
+            showFirstLastButtons
+            role="navigation"
+            aria-label="Device list pagination">
+          </mat-paginator>
+        </div>
+        <ng-template #noDevices>
+          <div class="no-data" [class.no-results]="hasActiveFilters">
+            <mat-icon>{{ hasActiveFilters ? 'search_off' : 'devices_other' }}</mat-icon>
+            <h3>{{ hasActiveFilters ? languageService.t()('devices.noResults') : languageService.t()('devices.noDevices') }}</h3>
+            <p>{{ hasActiveFilters ? languageService.t()('devices.noResultsDescription') : languageService.t()('devices.noDevicesDescription') }}</p>
+            <button *ngIf="hasActiveFilters" mat-raised-button color="primary" (click)="clearFilters()">
+              <mat-icon>clear</mat-icon>
+              {{ languageService.t()('devices.clearFilters') }}
+            </button>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Card View -->
+    <div class="content-panel" *ngIf="viewMode === 'cards'">
+      <div class="panel-header">
+        <div class="panel-title">
+          <mat-icon aria-hidden="true">view_module</mat-icon>
+          <span>{{ languageService.t()('devices.title') }}</span>
+        </div>
+        <div class="panel-subtitle" role="status" aria-live="polite">
+          {{ totalDevices }} {{ languageService.t()('devices.title') }}
+          <span class="sr-only">devices found</span>
+        </div>
+      </div>
+
+      <div class="panel-content">
+        <div class="devices-grid" *ngIf="filteredDevices.length > 0; else noDevicesCards" role="list" aria-label="Device cards">
+          <div
+            *ngFor="let device of filteredDevices.slice(startIndex, endIndex); let i = index"
+            class="device-card card-enter"
+            [style.animation-delay.ms]="i * 50"
+            role="listitem"
+            tabindex="0"
+            [attr.aria-label]="'Device card: ' + device.name + ', Type: ' + getDeviceTypeTranslation(device.device_type || '') + ', Status: ' + getStatusTranslation(device.status)">
+            <div class="card-header">
+              <div
+                class="device-icon"
+                [style.background]="getDeviceTypeGradient(device.device_type || '')"
+                [attr.aria-label]="getDeviceTypeTranslation(device.device_type || '') + ' device icon'">
+                <mat-icon aria-hidden="true">{{ getDeviceTypeIcon(device.device_type || '') }}</mat-icon>
+              </div>
+              <div class="device-info">
+                <h3>{{ device.name }}</h3>
+                <p><mat-icon aria-hidden="true" class="inline-icon">location_on</mat-icon>{{ device.location }}</p>
+              </div>
+              <div class="device-status">
+                <mat-chip
+                  [color]="getStatusColor(device.status)"
+                  selected
+                  [class.pulse-online]="device.status === 'online'"
+                  [attr.aria-label]="'Status: ' + getStatusTranslation(device.status)">
+                  <mat-icon class="status-icon" aria-hidden="true">{{ getStatusIcon(device.status) }}</mat-icon>
+                  {{ getStatusTranslation(device.status) }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <div class="device-details">
+                <div class="detail-item">
+                  <mat-icon aria-hidden="true">category</mat-icon>
+                  <span>{{ getDeviceTypeTranslation(device.device_type || '') }}</span>
+                </div>
+                <div class="detail-item" *ngIf="device.last_seen">
+                  <mat-icon aria-hidden="true">schedule</mat-icon>
+                  <span>{{ device.last_seen | date:'short' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Removed edit/delete actions in card view for read-only mode -->
+          </div>
+        </div>
+
+        <!-- Pagination for Card View -->
+        <mat-paginator
+          *ngIf="filteredDevices.length > 0"
+          [length]="totalDevices"
+          [pageSize]="pageSize"
+          [pageIndex]="pageIndex"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+          role="navigation"
+          aria-label="Device cards pagination">
+        </mat-paginator>
+
+        <ng-template #noDevicesCards>
+          <div class="no-data" [class.no-results]="hasActiveFilters">
+            <mat-icon>{{ hasActiveFilters ? 'search_off' : 'devices_other' }}</mat-icon>
+            <h3>{{ hasActiveFilters ? languageService.t()('devices.noResults') : languageService.t()('devices.noDevices') }}</h3>
+            <p>{{ hasActiveFilters ? languageService.t()('devices.noResultsDescription') : languageService.t()('devices.noDevicesDescription') }}</p>
+            <button *ngIf="hasActiveFilters" mat-raised-button color="primary" (click)="clearFilters()">
+              <mat-icon>clear</mat-icon>
+              {{ languageService.t()('devices.clearFilters') }}
+            </button>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Template with Skeleton Loaders -->
+  <ng-template #loadingTemplate>
+    <div class="content-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <mat-icon>{{ viewMode === 'table' ? 'table_view' : 'view_module' }}</mat-icon>
+          <span>{{ languageService.t()('devices.title') }}</span>
+        </div>
+        <div class="panel-subtitle">{{ languageService.t()('common.loading') }}...</div>
+      </div>
+
+      <div class="panel-content">
+        <!-- Skeleton for Table View -->
+        <div *ngIf="viewMode === 'table'" class="skeleton-table">
+          <div *ngFor="let i of [1,2,3,4,5,6]" class="skeleton-loader skeleton-row"></div>
+        </div>
+
+        <!-- Skeleton for Card View -->
+        <div *ngIf="viewMode === 'cards'" class="devices-grid">
+          <div *ngFor="let i of [1,2,3,4,5,6]" class="skeleton-loader skeleton-card"></div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Removed Floating Action Button for read-only mode -->
+</div>

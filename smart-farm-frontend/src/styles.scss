@@ -1,0 +1,350 @@
+/* You can add global styles to this file, and also import other style files */
+
+// @import '@angular/material/theming';
+// @include mat-core();
+
+// Custom theme
+// $primary: mat-palette($mat-indigo);
+// $accent: mat-palette($mat-pink, A200, A100, A400);
+// $warn: mat-palette($mat-red);
+
+// $theme: mat-light-theme((
+//   color: (
+//     primary: $primary,
+//     accent: $accent,
+//     warn: $warn,
+//   )
+// ));
+
+// @include angular-material-theme($theme);
+
+// Global styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+// Language transition animations
+body {
+  transition: opacity 0.3s ease-in-out;
+}
+
+body.language-transitioning {
+  opacity: 0.7;
+}
+
+// RTL/LTR specific styles
+body.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+body.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+// Smooth transitions for text direction changes
+body.rtl *,
+body.ltr * {
+  transition: text-align 0.3s ease-in-out, direction 0.3s ease-in-out;
+}
+
+// Enhanced RTL support
+body.rtl {
+  .flex-row {
+    flex-direction: row-reverse;
+  }
+
+  .text-left {
+    text-align: right;
+  }
+
+  .text-right {
+    text-align: left;
+  }
+
+  .ml-auto {
+    margin-left: unset;
+    margin-right: auto;
+  }
+
+  .mr-auto {
+    margin-right: unset;
+    margin-left: auto;
+  }
+
+  .pl-4 {
+    padding-left: unset;
+    padding-right: 1rem;
+  }
+
+  .pr-4 {
+    padding-right: unset;
+    padding-left: 1rem;
+  }
+}
+
+// CSS Variables for TerraFlow Theme
+:root {
+  --primary-green: #10b981;
+  --secondary-green: #34d399;
+  --dark-green: #047857;
+  --primary-blue: #3b82f6;
+  --secondary-blue: #60a5fa;
+  --light-bg: #f8fafb;
+  --card-bg: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --header-bg-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(240, 253, 244, 0.7));
+  --header-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --header-border: rgba(255, 255, 255, 0.4);
+  --header-text: #1f2937;
+  --header-text-secondary: #6b7280;
+  --nav-item-hover: rgba(16, 185, 129, 0.1);
+  --nav-item-active: rgba(16, 185, 129, 0.15);
+  --user-menu-bg: #ffffff;
+  --user-menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-theme {
+  --light-bg: #0f172a;
+  --card-bg: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --border-color: #334155;
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(100, 116, 139, 0.3);
+  --header-bg-gradient: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(30, 41, 59, 0.7));
+  --header-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --header-border: rgba(100, 116, 139, 0.3);
+  --header-text: #f1f5f9;
+  --header-text-secondary: #cbd5e1;
+  --nav-item-hover: rgba(16, 185, 129, 0.15);
+  --nav-item-active: rgba(16, 185, 129, 0.2);
+  --user-menu-bg: #1e293b;
+  --user-menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(135deg, var(--light-bg) 0%, #f0fdf4 100%);
+  transition: background 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+body.dark-theme {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+// Snackbar styles
+.success-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.error-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+// Utility classes
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.mb-1 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-2 {
+  margin-bottom: 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 1.5rem;
+}
+
+.mt-1 {
+  margin-top: 0.5rem;
+}
+
+.mt-2 {
+  margin-top: 1rem;
+}
+
+.mt-3 {
+  margin-top: 1.5rem;
+}
+
+.p-1 {
+  padding: 0.5rem;
+}
+
+.p-2 {
+  padding: 1rem;
+}
+
+.p-3 {
+  padding: 1.5rem;
+}
+
+// Loading spinner
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+// Card hover effects
+.mat-card {
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// Button styles
+.mat-raised-button {
+  border-radius: 8px;
+}
+
+.mat-flat-button {
+  border-radius: 8px;
+}
+
+// Form field styles
+.mat-form-field {
+  width: 100%;
+}
+
+// Table styles
+.mat-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// Chip styles
+.mat-chip {
+  border-radius: 16px;
+}
+
+// Responsive utilities
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile {
+    display: none !important;
+  }
+}
+// Custom Material Theme for Glassmorphism
+
+// Snackbar customization
+.success-snackbar {
+  .mdc-snackbar__surface {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    color: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(17, 153, 142, 0.4) !important;
+  }
+}
+
+.new-notification-snackbar {
+  .mdc-snackbar__surface {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4) !important;
+  }
+}
+
+// Dialog overlay
+.cdk-overlay-dark-backdrop {
+  background: rgba(15, 23, 42, 0.7) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+// Material form field glass style
+.mat-mdc-form-field.glass-select,
+.mat-mdc-form-field.glass-search {
+  .mat-mdc-text-field-wrapper {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-radius: 12px !important;
+
+    .mat-mdc-form-field-focus-overlay {
+      background-color: transparent !important;
+    }
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+// Chip list customization
+mat-chip-listbox.glass-chips {
+  .mat-mdc-chip {
+    --mdc-chip-elevated-container-color: rgba(255, 255, 255, 0.6);
+    --mdc-chip-label-text-color: #334155;
+  }
+}
+
+// Spinner gradient (SVG definition)
+.loading-spinner {
+  svg {
+    defs {
+      linearGradient#gradient {
+        stop:first-child {
+          stop-color: #667eea;
+        }
+        stop:last-child {
+          stop-color: #764ba2;
+        }
+      }
+    }
+  }
+}
