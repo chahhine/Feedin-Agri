@@ -33,6 +33,7 @@ import {
   SensorStatusResult,
 } from './utils/sensor-status.util';
 import { normalizeThresholds } from './utils/sensor-thresholds.util';
+import { generateUniqueSensorId, parseUniqueSensorId } from './utils/sensor-display.util';
 
 // Child Components
 import { GlobalFilterHeaderComponent, FilterState } from './components/global-filter-header/global-filter-header.component';
@@ -176,8 +177,8 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
       .kpi-dashboard {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 1rem;
-        padding: 1.5rem 2rem;
+        gap: 16px;
+        padding: 24px 32px;
         max-width: 1600px;
         width: 100%;
         margin: 0 auto;
@@ -196,8 +197,8 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
       }
 
       .kpi-dashboard.compact {
-        gap: 0.75rem;
-        padding: 1rem 1.5rem;
+        gap: 12px;
+        padding: 16px 24px;
       }
 
       .kpi-card-mini {
@@ -205,15 +206,15 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 1rem 1.25rem;
-        background: var(--glass-bg, rgba(255, 255, 255, 0.7));
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        padding: 16px 20px;
+        background: var(--glass-bg, rgba(255, 255, 255, 0.75));
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border-radius: 16px;
-        border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.4));
+        border: 1px solid var(--glass-border, rgba(16, 185, 129, 0.2));
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06),
                     inset 0 1px 1px rgba(255, 255, 255, 0.6);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
       }
 
@@ -231,9 +232,10 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
 
       .kpi-card-mini:hover {
         transform: translateY(-4px) scale(1.02);
-        box-shadow: 0 12px 32px rgba(16, 185, 129, 0.15),
+        box-shadow: 0 12px 32px rgba(16, 185, 129, 0.2),
+                    0 0 20px rgba(16, 185, 129, 0.1),
                     inset 0 1px 1px rgba(255, 255, 255, 0.7);
-        border-color: rgba(16, 185, 129, 0.3);
+        border-color: rgba(16, 185, 129, 0.4);
       }
 
       .kpi-card-mini:hover::before {
@@ -341,8 +343,8 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
         flex: 1;
         display: grid;
         grid-template-columns: minmax(460px, 520px) minmax(0, 1fr);
-        gap: 1.5rem;
-        padding: 0 2rem 2rem 2rem;
+        gap: 24px;
+        padding: 0 32px 32px 32px;
         max-width: 1600px;
         width: 100%;
         margin: 0 auto;
@@ -350,7 +352,7 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
 
       .main-content.compact {
         grid-template-columns: minmax(420px, 480px) minmax(0, 1fr);
-        gap: 1.25rem;
+        gap: 16px;
       }
 
       /* Responsive Breakpoints */
@@ -372,11 +374,11 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
       @media (max-width: 1023px) {
         .main-content {
           grid-template-columns: 300px minmax(0, 1fr);
-          gap: 1rem;
-          padding: 0 1.5rem 1.5rem 1.5rem;
+          gap: 16px;
+          padding: 0 24px 24px 24px;
         }
         .kpi-dashboard {
-          padding: 1rem 1.5rem;
+          padding: 16px 24px;
           grid-template-columns: repeat(3, 1fr);
         }
       }
@@ -384,15 +386,15 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
       @media (max-width: 768px) {
         .main-content {
           grid-template-columns: 1fr;
-          padding: 0 1rem 1rem 1rem;
+          padding: 0 16px 16px 16px;
         }
         .kpi-dashboard {
-          padding: 1rem;
+          padding: 16px;
           grid-template-columns: repeat(2, 1fr);
-          gap: 0.75rem;
+          gap: 12px;
         }
         .kpi-card-mini {
-          padding: 0.875rem 1rem;
+          padding: 14px 16px;
           gap: 10px;
         }
         .kpi-icon-mini {
@@ -424,14 +426,15 @@ import { FooterSummaryComponent, SummaryCounts } from './components/footer-summa
       }
 
       :host-context(body.dark-theme) .kpi-card-mini {
-        background: var(--glass-bg, rgba(30, 41, 59, 0.7));
+        background: var(--glass-bg, rgba(30, 41, 59, 0.75));
         border-color: var(--glass-border, rgba(100, 116, 139, 0.3));
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-                    inset 0 1px 1px rgba(100, 116, 139, 0.1);
+                    inset 0 1px 1px rgba(100, 116, 139, 0.15);
       }
 
       :host-context(body.dark-theme) .kpi-card-mini:hover {
-        box-shadow: 0 12px 32px rgba(16, 185, 129, 0.2),
+        box-shadow: 0 12px 32px rgba(16, 185, 129, 0.25),
+                    0 0 20px rgba(16, 185, 129, 0.15),
                     inset 0 1px 1px rgba(100, 116, 139, 0.2);
       }
 
@@ -567,19 +570,28 @@ export class SensorReadingsComponent implements OnInit {
       );
     }
 
-    // Map to DeviceListItem
-    const items: DeviceListItem[] = filtered.map((item) => ({
-      id: item.sensor.sensor_id,
-      name: item.sensor.sensor_id || 'Unknown',
-      type: item.sensor.type || 'Unknown',
-      status: item.statusResult.status,
-      value: item.statusResult.value,
-      unit: item.sensor.unit || '',
-      lastUpdate: item.statusResult.lastReading?.createdAt
-        ? new Date(item.statusResult.lastReading.createdAt)
-        : null,
-      isPinned: pinned.has(item.sensor.sensor_id),
-    }));
+    // Map to DeviceListItem with unique IDs
+    const items: DeviceListItem[] = filtered.map((item) => {
+      // Generate unique ID that includes sensor type (for composite sensors like DHT11)
+      const uniqueId = generateUniqueSensorId(
+        item.sensor.sensor_id,
+        item.sensor.type || 'unknown',
+        item.sensor.unit
+      );
+      
+      return {
+        id: uniqueId,
+        name: item.sensor.sensor_id || 'Unknown',
+        type: item.sensor.type || 'Unknown',
+        status: item.statusResult.status,
+        value: item.statusResult.value,
+        unit: item.sensor.unit || '',
+        lastUpdate: item.statusResult.lastReading?.createdAt
+          ? new Date(item.statusResult.lastReading.createdAt)
+          : null,
+        isPinned: pinned.has(uniqueId),
+      };
+    });
 
     // Sort: pinned first, then by status priority (critical > warning > offline > normal)
     const statusPriority = { critical: 0, warning: 1, offline: 2, normal: 3 };
@@ -591,20 +603,30 @@ export class SensorReadingsComponent implements OnInit {
 
   // Computed: Selected device detail
   selectedDeviceDetail = computed(() => {
-    const sensorId = this.selectedSensorId();
-    if (!sensorId) return null;
+    const uniqueSensorId = this.selectedSensorId();
+    if (!uniqueSensorId) return null;
 
-    const sensor = this.sensors().find((s) => s.sensor_id === sensorId);
+    // Parse the unique ID to get base sensor ID and type
+    const { baseSensorId, type } = parseUniqueSensorId(uniqueSensorId);
+
+    // Find the sensor that matches both the base ID and type
+    const sensors = this.sensors();
+    const sensor = sensors.find((s) => {
+      const matches = s.sensor_id === baseSensorId;
+      const typeMatches = s.type?.toLowerCase().replace(/\s+/g, '-') === type;
+      return matches && typeMatches;
+    });
+    
     if (!sensor) return null;
 
     const statuses = this.sensorStatuses();
-    const statusResult = statuses.find(
-      (s, idx) => this.sensors()[idx].sensor_id === sensorId
-    );
+    const statusIndex = sensors.findIndex((s) => s === sensor);
+    const statusResult = statusIndex >= 0 ? statuses[statusIndex] : null;
+    
     if (!statusResult) return null;
 
     const timeRangeMs = this.getTimeRangeMs(this.filterState().timeRange);
-    const chartData = this.readingsMap.getReadingsForSensor(sensorId, timeRangeMs);
+    const chartData = this.readingsMap.getReadingsForSensor(sensor.sensor_id, timeRangeMs);
 
     const thresholds = normalizeThresholds(sensor.type || '', {
       min: sensor.min_threshold ?? sensor.min_critical,
@@ -624,7 +646,7 @@ export class SensorReadingsComponent implements OnInit {
     }
 
     const detail: DeviceDetail = {
-      id: sensor.sensor_id,
+      id: uniqueSensorId,
       name: sensor.sensor_id || 'Unknown',
       type: sensor.type || 'Unknown',
       status: statusResult.status,
@@ -734,10 +756,27 @@ export class SensorReadingsComponent implements OnInit {
       )
       .subscribe();
 
-    // Restore selection from URL
+    // Restore selection from URL with backward compatibility
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       if (params['sensor']) {
-        this.selectedSensorId.set(params['sensor']);
+        const queryParam = params['sensor'];
+        const items = this.deviceListItems();
+        
+        // First, try to find exact match (new format: "dht11-temperature")
+        let matchingItem = items.find(item => item.id === queryParam);
+        
+        // If no exact match, try to find a sensor that starts with the query param
+        // This provides backward compatibility for URLs like "?sensor=dht11"
+        if (!matchingItem) {
+          matchingItem = items.find(item => item.id.startsWith(queryParam + '-'));
+        }
+        
+        // Set the selected sensor ID (will be the unique ID)
+        if (matchingItem) {
+          this.selectedSensorId.set(matchingItem.id);
+        } else {
+          this.selectedSensorId.set(queryParam); // Fallback to original param
+        }
       }
     });
   }
@@ -758,9 +797,10 @@ export class SensorReadingsComponent implements OnInit {
       this.sensorReadings.set(readings || []);
       this.readingsMap.setReadings(readings || []);
 
-      // Auto-select first item if none selected
+      // Auto-select first item if none selected (using unique ID)
       if (!this.selectedSensorId() && this.deviceListItems().length > 0) {
-        this.selectedSensorId.set(this.deviceListItems()[0].id);
+        const firstItem = this.deviceListItems()[0];
+        this.selectedSensorId.set(firstItem.id); // Already uses unique ID format
       }
     } catch (error) {
       console.error('Error loading data:', error);

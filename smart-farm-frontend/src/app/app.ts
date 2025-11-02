@@ -8,10 +8,12 @@ import { ThemeService } from './core/services/theme.service';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { FooterComponent } from './shared/components/footer/footer.component';
 import { SmartLoadingScreenSimpleComponent } from './shared/components/smart-loading-screen/smart-loading-screen-simple.component';
+import { AlertsComponent } from './shared/components/alerts/alerts.component';
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, HeaderComponent, FooterComponent, SmartLoadingScreenSimpleComponent],
+  imports: [RouterOutlet, CommonModule, HeaderComponent, FooterComponent, SmartLoadingScreenSimpleComponent, AlertsComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -35,9 +37,10 @@ export class AppComponent implements OnInit {
     // Initialize theme service (this will apply the saved theme)
     // The theme service constructor already handles initialization
 
-    // Show loading screen for at least 3 seconds to see the beautiful animation
+    // Show loading screen for at least 4.5 seconds to see the full animation cycle
+    // (1 full SVG drawing cycle = 3s, plus time for particles and effects)
     setTimeout(() => {
       this.isLoading = false;
-    }, 3000); // 3 seconds to see the full animation
+    }, 4500); // 4.5 seconds to see complete animation with all effects
   }
 }

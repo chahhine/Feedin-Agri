@@ -39,4 +39,13 @@ export class AuthService {
       return null;
     }
   }
+
+  async checkEmailExists(email: string): Promise<boolean> {
+    try {
+      const user = await this.usersService.findByEmail(email);
+      return !!user;
+    } catch (error) {
+      return false;
+    }
+  }
 }

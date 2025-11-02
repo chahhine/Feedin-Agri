@@ -1,10 +1,10 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { AppNotification, NotificationLevel } from '../models/notification.model';
 import { io, Socket } from 'socket.io-client';
 import { Subject } from 'rxjs';
 import { AuthService } from './auth.service';
 import { LanguageService } from './language.service';
+import { AlertService } from './alert.service';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -22,21 +22,21 @@ export class NotificationService {
   public newNotification$ = new Subject<AppNotification>();
   private unreadCounterSignal = signal<number>(0);
   public readonly unreadSignal = this.unreadCounterSignal;
-  
+
   // Action status events
   public actionAcknowledged$ = new Subject<any>();
   public actionFailed$ = new Subject<any>();
   public actionTimeout$ = new Subject<any>();
   public deviceStatus$ = new Subject<any>();
 
-  constructor(private snackBar: MatSnackBar, private auth: AuthService, private languageService: LanguageService) {}
+  constructor(private auth: AuthService, private languageService: LanguageService, private alertService: AlertService) {}
   initSocket() {
     if (this.socket) return;
     const wsUrl = environment.wsUrl;
     console.log('🔌 [WEBSOCKET] Initializing Socket.IO connection to', wsUrl);
-    
+
     // Add connection options for better reliability
-    this.socket = io(wsUrl, { 
+    this.socket = io(wsUrl, {
       transports: ['websocket', 'polling'], // Fallback to polling if websocket fails
       timeout: 10000, // 10 second timeout
       forceNew: true, // Force new connection
@@ -44,7 +44,7 @@ export class NotificationService {
       reconnectionAttempts: 5, // Try 5 times
       reconnectionDelay: 1000, // 1 second delay between attempts
     });
-    
+
     this.socket.on('connect', () => {
       console.log('✅ [WEBSOCKET] Connected to backend successfully');
       console.log('🔗 [WEBSOCKET] Socket ID:', this.socket?.id);
@@ -61,14 +61,14 @@ export class NotificationService {
     this.socket.onAny((eventName: string, ...args: any[]) => {
       console.log('🔍 [WEBSOCKET] Event received:', eventName, args);
     });
-    
+
     this.socket.on('disconnect', (reason) => {
       console.log('🔌 [WEBSOCKET] Disconnected from backend:', reason);
       this.isWebSocketConnected = false;
       // Start fallback polling if WebSocket disconnects
       this.startFallbackPolling();
     });
-    
+
     this.socket.on('connect_error', (error) => {
       console.error('❌ [WEBSOCKET] Connection error:', error);
       console.error('❌ [WEBSOCKET] Error details:', {
@@ -81,15 +81,15 @@ export class NotificationService {
       this.isWebSocketConnected = false;
       this.startFallbackPolling();
     });
-    
+
     this.socket.on('reconnect', (attemptNumber) => {
       console.log('🔄 [WEBSOCKET] Reconnected after', attemptNumber, 'attempts');
     });
-    
+
     this.socket.on('reconnect_error', (error) => {
       console.error('🔄❌ [WEBSOCKET] Reconnection error:', error);
     });
-    
+
     this.socket.on('reconnect_failed', () => {
       console.error('🔄❌ [WEBSOCKET] Reconnection failed after all attempts');
       this.isWebSocketConnected = false;
@@ -109,12 +109,12 @@ export class NotificationService {
       const currentUserId = this.auth.user()?.user_id;
       console.log('👤 [WEBSOCKET] Current user ID:', currentUserId);
       console.log('📧 [WEBSOCKET] Notification user ID:', n?.user_id);
-      
+
       if (n?.user_id && currentUserId && n.user_id !== currentUserId) {
         console.log('❌ [WEBSOCKET] Notification not for current user, ignoring');
         return; // not for this user
       }
-      
+
       console.log('✅ [WEBSOCKET] Processing notification for current user');
       // Only add if for current user; client may not have user here, but we can accept and filter by preferences
       const appN: AppNotification = {
@@ -191,10 +191,13 @@ export class NotificationService {
     this.notificationsSignal.update(list => [n, ...list].slice(0, 100));
 
     // Toast for immediate feedback
+    const alertMessage = message || '';
     if (level === 'critical') {
-      this.snackBar.open(`${title}${message ? ' - ' + message : ''}`, this.languageService.t()('notifications.dismiss'), { duration: 6000 });
+      this.alertService.error(title, alertMessage);
     } else if (level === 'info' || level === 'success') {
-      this.snackBar.open(`${title}${message ? ' - ' + message : ''}`, this.languageService.t()('notifications.dismiss'), { duration: 3000 });
+      this.alertService.success(title, alertMessage);
+    } else if (level === 'warning') {
+      this.alertService.warning(title, alertMessage);
     }
 
     return n.id;
@@ -262,7 +265,7 @@ export class NotificationService {
   // Fallback polling method when WebSocket is not available
   private startFallbackPolling() {
     if (this.fallbackPollingInterval) return; // Already polling
-    
+
     console.log('🔄 [FALLBACK] Starting fallback polling for notifications');
     this.fallbackPollingInterval = window.setInterval(() => {
       this.pollForNotifications();
@@ -272,9 +275,9 @@ export class NotificationService {
   private async pollForNotifications() {
     try {
       // This would need to be implemented with your API service
-      // For now, just log that we're polling
+// For now, just log that we're polling
       console.log('🔄 [FALLBACK] Polling for notifications...');
-      
+
       // TODO: Implement API call to get new notifications
       // const response = await this.api.get('/notifications/unread');
       // if (response.data && response.data.length > 0) {
@@ -290,9 +293,9 @@ export class NotificationService {
   private processNotification(n: any) {
     const currentUserId = this.auth.user()?.user_id;
     if (n?.user_id && currentUserId && n.user_id !== currentUserId) {
-      return; // not for this user
+  return; // not for this user
     }
-    
+
     const appN: AppNotification = {
       id: n.id,
       level: n.level,
@@ -301,9 +304,9 @@ export class NotificationService {
       createdAt: n.created_at || new Date().toISOString(),
       read: false,
       source: n.source,
-      context: n.context,
+  context: n.context,
     };
-    
+
     this.notificationsSignal.update(list => [appN, ...list]);
     this.newNotification$.next(appN);
     this.unreadCounterSignal.update(v => v + 1);
@@ -321,18 +324,18 @@ export class NotificationService {
       createdAt: new Date().toISOString(),
       read: false,
       source: 'system',
-      context: { test: true }
+  context: { test: true }
     };
-    
+
     this.notificationsSignal.update(list => [testNotification, ...list]);
     this.newNotification$.next(testNotification);
-    this.unreadCounterSignal.update(v => v + 1);
+this.unreadCounterSignal.update(v => v + 1);
     this.notify(testNotification.level, testNotification.title, testNotification.message);
-    
+
     // Make it accessible globally for debugging
-    (window as any).testNotification = () => this.testNotification();
+(window as any).testNotification = () => this.testNotification();
     (window as any).notificationService = this;
-    
+
     // Also test WebSocket emission to backend
     if (this.socket && this.socket.connected) {
       console.log('🧪 [TEST] Emitting test notification to backend via WebSocket');

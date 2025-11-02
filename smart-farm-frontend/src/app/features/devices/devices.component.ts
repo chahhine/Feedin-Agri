@@ -1,27 +1,33 @@
-import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, DestroyRef, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { debounceTime, Subject } from 'rxjs';
+import { debounceTime, Subject, catchError, of, retry, timeout, finalize } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatSortModule, Sort, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatDialog } from '@angular/material/dialog';
 
 import { ApiService } from '../../core/services/api.service';
 import { FarmManagementService } from '../../core/services/farm-management.service';
 import { Device, DeviceStatus } from '../../core/models/farm.model';
 import { LanguageService } from '../../core/services/language.service';
+import { AlertService } from '../../core/services/alert.service';
+import { FloatingUIService } from '../../core/services/floating-ui.service';
+import { TooltipDirective } from '../../shared/directives/tooltip.directive';
+import { DropdownDirective } from '../../shared/directives/dropdown.directive';
+import { DeviceDetailsDialogComponent, DeviceDetailsDialogData } from './components/device-details-dialog/device-details-dialog.component';
 import * as DeviceUtils from './device.utils';
+import { DEVICES_CONFIG, DEVICE_TABLE_COLUMNS } from './devices.constants';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-devices',
@@ -35,151 +41,221 @@ import * as DeviceUtils from './device.utils';
     MatTableModule,
     MatChipsModule,
     MatProgressSpinnerModule,
-    MatTooltipModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatSortModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    TooltipDirective,
+    DropdownDirective
   ],
   templateUrl: './devices.component.html',
-  styleUrl: './devices.component.scss'
+  styleUrls: [
+    './_devices-shared.scss',
+    './_devices-header.scss',
+    './_devices-filters.scss',
+    './_devices-cards.scss',
+    './_devices-table.scss'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DevicesComponent implements OnInit {
-  private apiService = inject(ApiService);
-  private farmManagement = inject(FarmManagementService);
-  private snackBar = inject(MatSnackBar);
-  public languageService = inject(LanguageService);
+export class DevicesComponent implements OnInit, OnDestroy {
+  // Services
+  private readonly apiService = inject(ApiService);
+  private readonly farmManagement = inject(FarmManagementService);
+  public readonly languageService = inject(LanguageService);
+  private readonly alertService = inject(AlertService);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroy$ = new Subject<void>();
 
+  // Component State
   devices: Device[] = [];
   filteredDevices: Device[] = [];
-  dataSource = new MatTableDataSource<Device>();
-  isLoading = true;
+  paginatedDevices: Device[] = [];
+  isLoading = false;
+  viewMode: 'cards' | 'table' = 'cards';
+  isTogglingStatus: Record<string, boolean> = {};
+  selectedDevices: Set<string> = new Set();
 
-  // Table configuration (read-only)
-  displayedColumns: string[] = ['name', 'status', 'location', 'device_type', 'last_seen'];
-
-  // Filtering and search
+  // Filtering and Search
   searchTerm = '';
   statusFilter = '';
   deviceTypeFilter = '';
-  availableStatuses = Object.values(DeviceStatus);
-  availableDeviceTypes = ['sensor', 'controller', 'gateway', 'camera', 'actuator', 'monitor'];
+  private readonly searchSubject = new Subject<string>();
 
   // Pagination
-  pageSize = 10;
-  pageIndex = 0;
+  pageSize: number = DEVICES_CONFIG.DEFAULT_PAGE_SIZE;
+  pageSizeOptions: readonly number[] = DEVICES_CONFIG.PAGE_SIZE_OPTIONS;
+  currentPage = 0;
   totalDevices = 0;
 
-  // Helper getters for pagination
-  get startIndex(): number {
-    return this.pageIndex * this.pageSize;
-  }
+  // Table
+  dataSource = new MatTableDataSource<Device>();
+  displayedColumns = [...DEVICE_TABLE_COLUMNS];
+  sort?: MatSort;
 
-  get endIndex(): number {
-    return this.startIndex + this.pageSize;
-  }
+  // Available Options
+  availableStatuses = [...DEVICES_CONFIG.DEVICE_STATUSES];
+  availableDeviceTypes = [...DEVICES_CONFIG.DEVICE_TYPES];
 
+  // Computed Properties
   get hasActiveFilters(): boolean {
     return !!(this.searchTerm || this.statusFilter || this.deviceTypeFilter);
   }
 
   get activeFilterCount(): number {
-    return (this.searchTerm ? 1 : 0) + (this.statusFilter ? 1 : 0) + (this.deviceTypeFilter ? 1 : 0);
-  }
-
-  // View mode
-  viewMode: 'table' | 'cards' = 'table';
-
-  // Search debounce
-  private searchSubject = new Subject<string>();
-  private destroyRef = inject(DestroyRef);
-
-  constructor() {
-    // Setup search debounce
-    this.searchSubject.pipe(
-      debounceTime(300),
-      takeUntilDestroyed()
-    ).subscribe(() => {
-      this.applyFilters();
-    });
+    let count = 0;
+    if (this.searchTerm) count++;
+    if (this.statusFilter) count++;
+    if (this.deviceTypeFilter) count++;
+    return count;
   }
 
   ngOnInit(): void {
+    this.setupSearchDebounce();
     this.loadDevices();
-
-    // Subscribe to farm selection changes with proper cleanup
-    this.farmManagement.selectedFarm$.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(selectedFarm => {
-      if (selectedFarm) {
-        this.loadDevices();
-      }
-    });
+    this.subscribeFarmChanges();
+    this.createDropdownMenu();
   }
 
-  private loadDevices(): void {
-    this.isLoading = true;
+  /**
+   * Create dropdown menu content programmatically
+   */
+  private createDropdownMenu(): void {
+    // The dropdown will be created when the button is clicked via the directive
+    // We don't need to create it here, but we ensure the element exists
+  }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Setup debounced search to prevent excessive filtering
+   */
+  private setupSearchDebounce(): void {
+    this.searchSubject
+      .pipe(
+        debounceTime(DEVICES_CONFIG.SEARCH_DEBOUNCE_MS),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.applyFilters();
+        this.cdr.markForCheck();
+      });
+  }
+
+  /**
+   * Subscribe to farm selection changes and reload devices
+   */
+  private subscribeFarmChanges(): void {
+    this.farmManagement.selectedFarm$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(selectedFarm => {
+        if (selectedFarm) {
+          this.loadDevices();
+        }
+      });
+  }
+
+  /**
+   * Load devices from API with proper error handling
+   */
+  async loadDevices(): Promise<void> {
     const selectedFarm = this.farmManagement.getSelectedFarm();
     if (!selectedFarm) {
-      this.isLoading = false;
+      this.devices = [];
+      this.applyFilters();
+      this.cdr.markForCheck();
       return;
     }
 
-    this.apiService.getDevicesByFarm(selectedFarm.farm_id).subscribe({
-      next: (devices) => {
-        this.devices = devices;
-        this.filteredDevices = [...devices];
-        this.dataSource.data = devices;
-        this.totalDevices = devices.length;
+    this.isLoading = true;
+    this.cdr.markForCheck();
+
+    this.apiService.getDevicesByFarm(selectedFarm.farm_id)
+      .pipe(
+        timeout(environment.apiTimeout),
+        retry({ count: DEVICES_CONFIG.MAX_RETRY_ATTEMPTS, delay: DEVICES_CONFIG.RETRY_DELAY_MS }),
+        catchError(error => {
+          console.error('Error loading devices:', error);
+
+          // Enhanced error handling
+          if (error.status === 404) {
+            this.alertService.error('devices.deviceNotFound', 'devices.loadErrorDescription');
+          } else if (error.status === 403) {
+            this.alertService.error('devices.noPermission', 'devices.loadErrorDescription');
+          } else if (error.status === 409) {
+            this.alertService.error('devices.deviceAlreadyExists', 'devices.loadErrorDescription');
+          } else {
+            this.alertService.error('devices.loadError', 'devices.loadErrorDescription');
+          }
+
+          return of([]);
+        }),
+        finalize(() => {
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(devices => {
+        this.devices = devices || [];
         this.applyFilters();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.snackBar.open(this.languageService.t()('errors.networkError'), this.languageService.t()('common.close'), {
-          duration: 3000, panelClass: ['error-snackbar']
-        });
-      }
-    });
+        this.cdr.markForCheck();
+      });
   }
 
-  getStatusColor(status: string): string {
-    return DeviceUtils.getStatusColor(status);
+  /**
+   * Refresh devices with user feedback
+   */
+  async refreshDevices(): Promise<void> {
+    await this.loadDevices();
+
+    if (!this.isLoading) {
+      this.alertService.success(
+        'devices.refreshed',
+        'devices.devicesRefreshedSuccessfully'
+      );
+    }
   }
 
-  getStatusIcon(status: string): string {
-    return DeviceUtils.getStatusIcon(status);
+  /**
+   * Toggle between card and table view modes
+   */
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'cards' ? 'table' : 'cards';
+    this.cdr.markForCheck();
   }
 
-  getDeviceTypeIcon(deviceType: string): string {
-    return DeviceUtils.getDeviceTypeIcon(deviceType);
+  /**
+   * Handle search input changes
+   */
+  onSearchChange(): void {
+    this.searchSubject.next(this.searchTerm);
   }
 
-  getDeviceTypeGradient(deviceType: string): string {
-    return DeviceUtils.getDeviceTypeGradient(deviceType);
+  /**
+   * Handle filter changes
+   */
+  onFilterChange(): void {
+    this.currentPage = 0;
+    this.applyFilters();
+    this.cdr.markForCheck();
   }
 
-  getStatusTranslation(status: string): string {
-    return DeviceUtils.getStatusTranslation(status, this.languageService.t());
-  }
-
-  getDeviceTypeTranslation(deviceType: string): string {
-    return DeviceUtils.getDeviceTypeTranslation(deviceType, this.languageService.t());
-  }
-
-  refreshDevices(): void {
-    this.loadDevices();
-  }
-
-  // Filtering and search
-  applyFilters(): void {
+  /**
+   * Apply all active filters to device list
+   */
+  private applyFilters(): void {
     let filtered = [...this.devices];
 
-    // Apply search filter
-    if (this.searchTerm.trim()) {
-      const searchLower = this.searchTerm.toLowerCase();
+    // Search filter
+    if (this.searchTerm) {
+      const searchLower = this.searchTerm.toLowerCase().trim();
       filtered = filtered.filter(device =>
         device.name.toLowerCase().includes(searchLower) ||
         device.location.toLowerCase().includes(searchLower) ||
@@ -188,83 +264,571 @@ export class DevicesComponent implements OnInit {
       );
     }
 
-    // Apply status filter
+    // Status filter
     if (this.statusFilter) {
       filtered = filtered.filter(device => device.status === this.statusFilter);
     }
 
-    // Apply device type filter
+    // Type filter
     if (this.deviceTypeFilter) {
       filtered = filtered.filter(device => device.device_type === this.deviceTypeFilter);
     }
 
     this.filteredDevices = filtered;
-    this.dataSource.data = filtered;
     this.totalDevices = filtered.length;
-    this.pageIndex = 0; // Reset to first page when filtering
+    this.updatePagination();
+    this.updateDataSource();
   }
 
-  onSearchChange(): void {
-    this.searchSubject.next(this.searchTerm);
+  /**
+   * Update paginated device list
+   */
+  private updatePagination(): void {
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedDevices = this.filteredDevices.slice(startIndex, endIndex);
   }
 
-  onStatusFilterChange(): void {
-    this.applyFilters();
+  /**
+   * Update Material table data source
+   */
+  private updateDataSource(): void {
+    // Let MatPaginator handle pagination automatically
+    this.dataSource.data = this.filteredDevices;
   }
 
-  onDeviceTypeFilterChange(): void {
-    this.applyFilters();
+  /**
+   * Handle pagination changes
+   */
+  onPageChange(event: PageEvent): void {
+    this.currentPage = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.updatePagination();
+    this.updateDataSource();
+    this.cdr.markForCheck();
   }
 
+  /**
+   * Handle table sorting changes
+   */
+  onSortChange(sort: Sort): void {
+    const data = [...this.filteredDevices];
+
+    if (!sort.active || sort.direction === '') {
+      this.filteredDevices = data;
+      this.updatePagination();
+      this.updateDataSource();
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.filteredDevices = data.sort((a, b) => {
+      const isAsc = sort.direction === 'asc';
+      switch (sort.active) {
+        case 'name': return this.compare(a.name, b.name, isAsc);
+        case 'type': return this.compare(a.device_type || '', b.device_type || '', isAsc);
+        case 'location': return this.compare(a.location, b.location, isAsc);
+        case 'status': return this.compare(a.status, b.status, isAsc);
+        case 'lastSeen': return this.compare(a.last_seen?.toString() || '', b.last_seen?.toString() || '', isAsc);
+        default: return 0;
+      }
+    });
+
+    this.updatePagination();
+    this.updateDataSource();
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Compare function for sorting
+   */
+  private compare(a: string | number, b: string | number, isAsc: boolean): number {
+    return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
+  }
+
+  /**
+   * Clear all filters and reset search
+   */
   clearFilters(): void {
     this.searchTerm = '';
     this.statusFilter = '';
     this.deviceTypeFilter = '';
+this.currentPage = 0;
     this.applyFilters();
+    this.cdr.markForCheck();
+
+    this.alertService.info(
+      'devices.filtersCleared',
+      'devices.allFiltersClearedSuccessfully'
+    );
   }
 
-  // Sorting
-  onSortChange(sort: Sort): void {
-    const data = this.filteredDevices.slice();
-    if (!sort.active || sort.direction === '') {
-      this.dataSource.data = data;
+  /**
+   * View device details (opens details dialog)
+   */
+  async viewDeviceDetails(device: Device): Promise<void> {
+    const dialogRef = this.dialog.open(DeviceDetailsDialogComponent, {
+      width: '90vw',
+      maxWidth: '1200px',
+      maxHeight: '90vh',
+      data: { device } as DeviceDetailsDialogData,
+      panelClass: 'device-details-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'edit') {
+        // Handle edit action if needed
+      } else if (result?.action === 'delete') {
+        // Handle delete action if needed
+        this.loadDevices();
+      }
+    });
+  }
+
+  /**
+   * Toggle device online/offline status
+   */
+  async toggleDeviceStatus(device: Device): Promise<void> {
+    if (device.status === 'maintenance') {
       return;
     }
 
-    data.sort((a, b) => {
-      const isAsc = sort.direction === 'asc';
-      switch (sort.active) {
-        case 'name':
-          return this.compare(a.name, b.name, isAsc);
-        case 'status':
-          return this.compare(a.status, b.status, isAsc);
-        case 'location':
-          return this.compare(a.location, b.location, isAsc);
-        case 'device_type':
-          return this.compare(a.device_type || '', b.device_type || '', isAsc);
-        case 'last_seen':
-          return this.compare(new Date(a.last_seen || 0), new Date(b.last_seen || 0), isAsc);
-        default:
-          return 0;
-      }
+    const newStatus = device.status === 'online' ? 'offline' : 'online';
+    const actionKey = newStatus === 'online' ? 'devices.activate' : 'devices.deactivate';
+
+    const result = await this.alertService.confirm(
+      'devices.changeStatus',
+      'devices.changeStatusConfirmation',
+      actionKey,
+      'common.cancel'
+    );
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    // Set loading state for this specific device
+    this.isTogglingStatus[device.device_id] = true;
+    this.cdr.markForCheck();
+
+    // Store previous status for rollback on error
+    const previousStatus = device.status;
+
+    // Optimistic update
+    device.status = newStatus as DeviceStatus;
+    this.cdr.markForCheck();
+
+    this.apiService.updateDeviceStatus(device.device_id, newStatus)
+      .pipe(
+        timeout(environment.apiTimeout),
+        retry({ count: 2, delay: 1000 }),
+        catchError(error => {
+          console.error('Error updating device status:', error);
+// Rollback on error
+          device.status = previousStatus;
+          this.cdr.markForCheck();
+
+          this.alertService.error(
+            'devices.updateError',
+            'devices.updateErrorDescription'
+          );
+          return of(null);
+        }),
+        finalize(() => {
+          this.isTogglingStatus[device.device_id] = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(updatedDevice => {
+        if (updatedDevice) {
+// Update with server response
+          Object.assign(device, updatedDevice);
+          this.cdr.markForCheck();
+
+          this.alertService.success(
+            'devices.statusUpdated',
+            `devices.deviceNow${newStatus === 'online' ? 'Online' : 'Offline'}`
+          );
+        }
+      });
+  }
+
+  /**
+   * Export device data to CSV
+   */
+  async exportDeviceData(): Promise<void> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const defaultFilename = `${DEVICES_CONFIG.EXPORT_FILENAME_PREFIX}${timestamp}.csv`;
+
+    const result = await this.alertService.prompt(
+      'devices.exportData',
+      'devices.exportDataDescription',
+      'text',
+      defaultFilename,
+      'devices.fileName'
+    );
+
+    if (!result.isConfirmed || !result.value) {
+      return;
+    }
+
+    try {
+      // Generate CSV content
+      const headers = ['Name', 'Type', 'Location', 'Status', 'Last Seen', 'Description'];
+      const csvRows = [headers.join(',')];
+
+      this.filteredDevices.forEach(device => {
+        const row = [
+          `"${device.name}"`,
+          `"${device.device_type || ''}"`,
+          `"${device.location}"`,
+          `"${device.status}"`,
+          `"${device.last_seen || ''}"`,
+          `"${device.description || ''}"`
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = csvRows.join('\n');
+const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute('href', url);
+      link.setAttribute('download', result.value);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      this.alertService.success(
+        'devices.exportComplete',
+        'devices.dataExportedSuccessfully'
+      );
+    } catch (error) {
+      console.error('Error exporting device data:', error);
+      this.alertService.error(
+        'devices.exportError',
+        'devices.exportErrorDescription'
+      );
+    }
+  }
+
+  /**
+   * Show device statistics
+   */
+  async showDeviceStatistics(): Promise<void> {
+    const stats = this.calculateDeviceStatistics();
+
+    this.alertService.custom({
+      title: 'devices.statistics',
+      html: `
+        <div style="text-align: left;">
+          <p><strong>${this.languageService.translate('devices.totalDevices')}:</strong> ${stats.total}</p>
+          <p><strong>${this.languageService.translate('dashboard.deviceStatus.online')}:</strong> ${stats.online} (${stats.onlinePercentage}%)</p>
+          <p><strong>${this.languageService.translate('dashboard.deviceStatus.offline')}:</strong> ${stats.offline} (${stats.offlinePercentage}%)</p>
+          <p><strong>${this.languageService.translate('dashboard.deviceStatus.maintenance')}:</strong> ${stats.maintenance} (${stats.maintenancePercentage}%)</p>
+        </div>
+      `,
+      showConfirmButton: true,
+      confirmButtonText: 'common.close',
+      showCancelButton: false
     });
-
-    this.dataSource.data = data;
   }
 
-  private compare(a: any, b: any, isAsc: boolean): number {
-    return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
+  // ===== Utility Methods =====
+
+  /**
+   * TrackBy function for ngFor optimization
+   */
+  trackByDeviceId(index: number, device: Device): string {
+    return device.device_id;
   }
 
-  // Pagination
-  onPageChange(event: PageEvent): void {
-    this.pageSize = event.pageSize;
-    this.pageIndex = event.pageIndex;
+  /**
+   * Get Material icon for device type
+   */
+  getDeviceIcon(type: string): string {
+    return DeviceUtils.getDeviceTypeIcon(type);
   }
 
-  // View mode
-  toggleViewMode(): void {
-    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+  /**
+   * Get icon color for device type
+   */
+  getDeviceIconColor(type: string | undefined): string {
+    if (!type) return '#6b7280';
+
+    const colors: Record<string, string> = {
+      sensor: '#10b981',
+      controller: '#3b82f6',
+      gateway: '#8b5cf6',
+      camera: '#f59e0b',
+      actuator: '#ef4444',
+      monitor: '#06b6d4'
+    };
+
+    return colors[type.toLowerCase()] || '#6b7280';
   }
 
+  /**
+   * Get status icon
+   */
+  getStatusIcon(status: string): string {
+    return DeviceUtils.getStatusIcon(status);
+  }
+
+  /**
+   * Get gradient background for device type
+   */
+  getDeviceTypeGradient(type: string): string {
+    return DeviceUtils.getDeviceTypeGradient(type);
+  }
+
+  /**
+   * Get translated status text
+   */
+  getStatusTranslation(status: string): string {
+    return DeviceUtils.getStatusTranslation(status, this.languageService.t());
+  }
+
+  /**
+   * Get translated status description
+   */
+  getStatusDescription(status: string): string {
+    return this.languageService.translate(`devices.statusDescription.${status}`);
+  }
+
+  /**
+   * Get translated device type
+   */
+  getDeviceTypeTranslation(type: string): string {
+    return DeviceUtils.getDeviceTypeTranslation(type, this.languageService.t());
+  }
+
+  /**
+   * Get toggle action text
+   */
+  getToggleActionText(device: Device): string {
+    return device.status === 'online'
+      ? this.languageService.translate('devices.deactivate')
+      : this.languageService.translate('devices.activate');
+  }
+
+  /**
+   * Get toggle action icon
+   */
+  getToggleActionIcon(device: Device): string {
+    return device.status === 'online' ? 'power_off' : 'power';
+  }
+
+  /**
+   * Get toggle action tooltip
+   */
+  getToggleActionTooltip(device: Device): string {
+    return device.status === 'online'
+      ? this.languageService.translate('devices.deactivateTooltip')
+      : this.languageService.translate('devices.activateTooltip');
+  }
+
+  /**
+   * Format last seen time (relative)
+   */
+  formatLastSeen(lastSeen: Date | string | undefined): string {
+    return DeviceUtils.formatTimeAgo(lastSeen as any, this.languageService.t());
+  }
+
+  /**
+   * Format last seen time (detailed)
+   */
+  formatLastSeenDetailed(lastSeen: Date | string | undefined): string {
+    if (!lastSeen) return this.languageService.translate('common.never');
+    const date = typeof lastSeen === 'string' ? new Date(lastSeen) : lastSeen;
+    return date.toLocaleString();
+  }
+
+  /**
+   * Calculate device statistics
+   */
+  private calculateDeviceStatistics(): {
+    total: number;
+    online: number;
+    offline: number;
+    maintenance: number;
+    onlinePercentage: number;
+    offlinePercentage: number;
+    maintenancePercentage: number;
+  } {
+    const total = this.devices.length;
+    const online = this.devices.filter(d => d.status === 'online').length;
+    const offline = this.devices.filter(d => d.status === 'offline').length;
+    const maintenance = this.devices.filter(d => d.status === 'maintenance').length;
+
+    return {
+      total,
+      online,
+      offline,
+      maintenance,
+      onlinePercentage: total > 0 ? Math.round((online / total) * 100) : 0,
+      offlinePercentage: total > 0 ? Math.round((offline / total) * 100) : 0,
+      maintenancePercentage: total > 0 ? Math.round((maintenance / total) * 100) : 0
+    };
+  }
+
+  // ===== Bulk Operations =====
+
+  /**
+   * Toggle device selection for bulk operations
+   */
+  toggleSelection(deviceId: string): void {
+    if (this.selectedDevices.has(deviceId)) {
+      this.selectedDevices.delete(deviceId);
+    } else {
+      this.selectedDevices.add(deviceId);
+    }
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Select all visible devices
+   */
+  selectAll(): void {
+    this.paginatedDevices.forEach(device => {
+      this.selectedDevices.add(device.device_id);
+    });
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Deselect all devices
+   */
+  deselectAll(): void {
+    this.selectedDevices.clear();
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Check if device is selected
+   */
+  isSelected(deviceId: string): boolean {
+    return this.selectedDevices.has(deviceId);
+  }
+
+  /**
+   * Get selected devices count
+   */
+  get selectedCount(): number {
+    return this.selectedDevices.size;
+  }
+
+  /**
+   * Delete multiple selected devices
+   */
+  async bulkDelete(): Promise<void> {
+    if (this.selectedDevices.size === 0) {
+      return;
+    }
+
+    const selectedDevicesList = this.devices.filter(d => this.selectedDevices.has(d.device_id));
+    const deviceNames = selectedDevicesList.map(d => d.name).join(', ');
+
+    const result = await this.alertService.confirm(
+      'devices.deleteDevice',
+      'devices.confirmBulkDelete',
+      'common.delete',
+      'common.cancel'
+    );
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    this.isLoading = true;
+    this.cdr.markForCheck();
+
+    // TODO: Implement bulk delete API endpoint
+    // For now, delete one by one
+    const deletePromises = Array.from(this.selectedDevices).map(deviceId =>
+      this.apiService.deleteDevice(deviceId).toPromise()
+    );
+
+    try {
+      await Promise.all(deletePromises);
+
+      // Remove deleted devices from local state
+this.devices = this.devices.filter(d => !this.selectedDevices.has(d.device_id));
+      this.selectedDevices.clear();
+      this.applyFilters();
+
+      this.alertService.success(
+        'devices.devicesDeleted',
+        `${selectedDevicesList.length} devices deleted successfully`
+      );
+    } catch (error) {
+      console.error('Error deleting devices:', error);
+      this.alertService.error(
+        'errors.bulkDeleteError',
+        'devices.updateErrorDescription'
+      );
+    } finally {
+      this.isLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  /**
+   * Change status of multiple selected devices
+   */
+  async bulkStatusChange(newStatus: DeviceStatus): Promise<void> {
+    if (this.selectedDevices.size === 0) {
+      return;
+    }
+
+    const result = await this.alertService.confirm(
+      'devices.changeStatus',
+      `Change status of ${this.selectedDevices.size} devices to ${newStatus}?`,
+      'common.confirm',
+      'common.cancel'
+    );
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    this.isLoading = true;
+    this.cdr.markForCheck();
+
+    const statusPromises = Array.from(this.selectedDevices).map(deviceId =>
+      this.apiService.updateDeviceStatus(deviceId, newStatus).toPromise()
+    );
+
+    try {
+      await Promise.all(statusPromises);
+
+      // Update local state
+      this.devices.forEach(device => {
+        if (this.selectedDevices.has(device.device_id)) {
+    device.status = newStatus;
+        }
+      });
+
+      this.selectedDevices.clear();
+      this.applyFilters();
+
+      this.alertService.success(
+        'devices.statusUpdated',
+        `Status updated for ${statusPromises.length} devices`
+      );
+    } catch (error) {
+      console.error('Error updating device status:', error);
+      this.alertService.error(
+        'devices.updateError',
+        'devices.updateErrorDescription'
+      );
+    } finally {
+      this.isLoading = false;
+
+     this.cdr.markForCheck();
+    }
+  }
 }

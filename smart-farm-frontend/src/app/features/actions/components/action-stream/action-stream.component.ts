@@ -142,7 +142,7 @@ interface ActionFilters {
               </h2>
               <p>{{ languageService.t()('actionStream.subtitle') }}</p>
             </div>
-            
+
             <!-- Live Status Indicator -->
             <div class="live-status" [@livePulse]="isLive() ? 'live' : 'offline'">
               <div class="status-indicator">
@@ -726,7 +726,7 @@ interface ActionFilters {
         .mat-mdc-tab {
           font-weight: 600;
           color: var(--text-secondary);
-          
+
           &.mdc-tab--active {
             color: var(--primary-green);
           }
@@ -1562,7 +1562,7 @@ export class ActionStreamComponent implements OnInit, OnDestroy {
     const filtered = this.getFilteredActions();
     const now = new Date();
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-    
+
     return filtered.filter(a => new Date(a.created_at) >= fiveMinutesAgo);
   }
 
@@ -1724,6 +1724,9 @@ export class ActionStreamComponent implements OnInit, OnDestroy {
   }
 
   getActionNameTranslation(actionName: string): string {
+    // Normalize the action name (handle spaces, underscores, case variations)
+    const normalized = actionName.toLowerCase().trim().replace(/\s+/g, ' ').replace(/_/g, ' ');
+
     const actionMap: { [key: string]: string } = {
       'irrigation': this.languageService.t()('actionStream.actionTypes.irrigation'),
       'ventilation': this.languageService.t()('actionStream.actionTypes.ventilation'),
@@ -1733,9 +1736,75 @@ export class ActionStreamComponent implements OnInit, OnDestroy {
       'fan': this.languageService.t()('actionStream.actionTypes.fan'),
       'pump': this.languageService.t()('actionStream.actionTypes.pump'),
       'light': this.languageService.t()('actionStream.actionTypes.light'),
+      'fertilization': this.languageService.t()('actionStream.actionTypes.fertilization'),
+      'pest control': this.languageService.t()('actionStream.actionTypes.pestControl'),
+      'harvesting': this.languageService.t()('actionStream.actionTypes.harvesting'),
+      'planting': this.languageService.t()('actionStream.actionTypes.planting'),
+      'pruning': this.languageService.t()('actionStream.actionTypes.pruning'),
+      'monitoring': this.languageService.t()('actionStream.actionTypes.monitoring'),
+      'alert': this.languageService.t()('actionStream.actionTypes.alert'),
+      'open roof': this.languageService.t()('actionStream.actionTypes.openRoof'),
+      'close roof': this.languageService.t()('actionStream.actionTypes.closeRoof'),
+      'open window': this.languageService.t()('actionStream.actionTypes.openWindow'),
+      'close window': this.languageService.t()('actionStream.actionTypes.closeWindow'),
+      'start pump': this.languageService.t()('actionStream.actionTypes.startPump'),
+      'stop pump': this.languageService.t()('actionStream.actionTypes.stopPump'),
+      'turn on fan': this.languageService.t()('actionStream.actionTypes.turnOnFan'),
+      'turn off fan': this.languageService.t()('actionStream.actionTypes.turnOffFan'),
+      'turn on heater': this.languageService.t()('actionStream.actionTypes.turnOnHeater'),
+      'turn off heater': this.languageService.t()('actionStream.actionTypes.turnOffHeater'),
+      'turn on light': this.languageService.t()('actionStream.actionTypes.turnOnLight'),
+      'turn off light': this.languageService.t()('actionStream.actionTypes.turnOffLight'),
+      'humidifier on': this.languageService.t()('actionStream.actionTypes.humidifierOn'),
+      'humidifier off': this.languageService.t()('actionStream.actionTypes.humidifierOff'),
+      'ventilator on': this.languageService.t()('actionStream.actionTypes.ventilatorOn'),
+      'ventilator off': this.languageService.t()('actionStream.actionTypes.ventilatorOff'),
+      'water pump on': this.languageService.t()('actionStream.actionTypes.waterPumpOn'),
+      'water pump off': this.languageService.t()('actionStream.actionTypes.waterPumpOff'),
+      'light on': this.languageService.t()('actionStream.actionTypes.lightOn'),
+      'light off': this.languageService.t()('actionStream.actionTypes.lightOff'),
     };
 
-    return actionMap[actionName.toLowerCase()] || actionName;
+    // Try exact match first
+    if (actionMap[normalized]) {
+      return actionMap[normalized];
+    }
+
+    // Try partial matches for compound actions
+    for (const [key, value] of Object.entries(actionMap)) {
+      if (normalized.includes(key) || key.includes(normalized)) {
+        return value;
+      }
+    }
+
+    // Fallback: try to translate common patterns
+    if (normalized.includes('humidifier') && normalized.includes('off')) {
+      return this.languageService.t()('actionStream.actionTypes.humidifierOff');
+    }
+    if (normalized.includes('humidifier') && normalized.includes('on')) {
+      return this.languageService.t()('actionStream.actionTypes.humidifierOn');
+    }
+    if (normalized.includes('pump') && normalized.includes('off')) {
+      return this.languageService.t()('actionStream.actionTypes.waterPumpOff');
+    }
+    if (normalized.includes('pump') && normalized.includes('on')) {
+      return this.languageService.t()('actionStream.actionTypes.waterPumpOn');
+    }
+    if (normalized.includes('fan') && normalized.includes('off')) {
+      return this.languageService.t()('actionStream.actionTypes.turnOffFan');
+    }
+    if (normalized.includes('fan') && normalized.includes('on')) {
+      return this.languageService.t()('actionStream.actionTypes.turnOnFan');
+    }
+    if (normalized.includes('light') && normalized.includes('off')) {
+      return this.languageService.t()('actionStream.actionTypes.lightOff');
+    }
+    if (normalized.includes('light') && normalized.includes('on')) {
+      return this.languageService.t()('actionStream.actionTypes.lightOn');
+    }
+
+    // Last resort: return original name if no match found
+    return actionName;
   }
 
   getSensorTypeTranslation(sensorType: string): string {
@@ -1801,4 +1870,5 @@ export class ActionStreamComponent implements OnInit, OnDestroy {
     return action.id || index.toString();
   }
 }
+
 

@@ -1,9 +1,11 @@
-import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatMenuModule } from '@angular/material/menu';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { SensorStatus } from '../../utils/sensor-status.util';
 
@@ -34,6 +36,8 @@ export interface DeviceDetail {
     MatButtonModule,
     MatTabsModule,
     MatTooltipModule,
+    MatButtonToggleModule,
+    MatMenuModule,
     NgxChartsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -143,27 +147,111 @@ export interface DeviceDetail {
         <!-- Chart -->
         <div class="chart-section">
           <div class="chart-header">
-            <mat-icon>show_chart</mat-icon>
-            <span>Historical Data</span>
+            <div class="chart-header-left">
+              <mat-icon>show_chart</mat-icon>
+              <span>Historical Data</span>
+            </div>
+            <div class="chart-controls">
+              <!-- View Toggle -->
+              <mat-button-toggle-group [(value)]="viewMode" class="view-toggle-group">
+                <mat-button-toggle value="chart" matTooltip="Chart View">
+                  <mat-icon>show_chart</mat-icon>
+                </mat-button-toggle>
+                <mat-button-toggle value="table" matTooltip="Table View">
+                  <mat-icon>table_rows</mat-icon>
+                </mat-button-toggle>
+                <mat-button-toggle value="timeline" matTooltip="Timeline View">
+                  <mat-icon>timeline</mat-icon>
+                </mat-button-toggle>
+              </mat-button-toggle-group>
+
+              <!-- Export Menu -->
+              <button mat-stroked-button [matMenuTriggerFor]="exportMenu" class="export-btn">
+                <mat-icon>download</mat-icon>
+                Export
+              </button>
+              <mat-menu #exportMenu="matMenu" class="export-menu">
+                <button mat-menu-item (click)="exportToCSV()">
+                  <mat-icon>description</mat-icon>
+                  <span>Export CSV</span>
+                </button>
+                <button mat-menu-item (click)="exportToPDF()">
+                  <mat-icon>picture_as_pdf</mat-icon>
+                  <span>Export PDF</span>
+                </button>
+              </mat-menu>
+            </div>
           </div>
           @if (chartSeriesData().length > 0) {
-            <div class="chart-container">
-              <ngx-charts-line-chart
-                [results]="chartSeriesData()"
-                [xAxis]="true"
-                [yAxis]="true"
-                [showXAxisLabel]="false"
-                [showYAxisLabel]="false"
-                [timeline]="true"
-                [autoScale]="true"
-                [curve]="curveFunction"
-                [animations]="true"
-                [scheme]="colorScheme"
-                [showGridLines]="true"
-                [gradient]="true"
-              >
-              </ngx-charts-line-chart>
-            </div>
+            <!-- Chart View -->
+            @if (viewMode() === 'chart') {
+              <div class="chart-container">
+                <ngx-charts-line-chart
+                  [results]="chartSeriesData()"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [showXAxisLabel]="false"
+                  [showYAxisLabel]="false"
+                  [timeline]="true"
+                  [autoScale]="true"
+                  [curve]="curveFunction"
+                  [animations]="true"
+                  [scheme]="colorScheme"
+                  [showGridLines]="true"
+                  [gradient]="true"
+                >
+                </ngx-charts-line-chart>
+              </div>
+            }
+
+            <!-- Table View -->
+            @if (viewMode() === 'table') {
+              <div class="data-table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Value</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (point of device()!.chartData; track point.name) {
+                      <tr>
+                        <td>{{ point.name | date:'short' }}</td>
+                        <td>{{ point.value | number: '1.0-2' }} {{ device()!.unit }}</td>
+                        <td>
+                          <span class="table-status-badge" [class]="getValueStatus(point.value)">
+                            {{ getValueStatus(point.value) | uppercase }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            <!-- Timeline View -->
+            @if (viewMode() === 'timeline') {
+              <div class="timeline-container">
+                <div class="timeline-track"></div>
+                @for (point of device()!.chartData; track point.name; let i = $index) {
+                  <div class="timeline-entry" [style.animation-delay]="i * 30 + 'ms'">
+                    <div class="timeline-marker" [class]="getValueStatus(point.value)">
+                      <div class="timeline-dot"></div>
+                    </div>
+                    <div class="timeline-content">
+                      <div class="timeline-time">{{ point.name | date:'short' }}</div>
+                      <div class="timeline-value">
+                        <span class="value-text">{{ point.value | number: '1.0-2' }}</span>
+                        <span class="value-unit">{{ device()!.unit }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           } @else {
             <div class="no-chart-data">
               <mat-icon>timeline</mat-icon>
@@ -420,9 +508,17 @@ export interface DeviceDetail {
       }
 
       .kpi-card.primary {
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #005f5b, #047857);
         color: white;
         grid-column: 1 / -1;
+        box-shadow: 0 8px 24px rgba(0, 95, 91, 0.25),
+                    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      }
+
+      .kpi-card.primary:hover {
+        box-shadow: 0 12px 32px rgba(0, 95, 91, 0.35),
+                    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+        transform: translateY(-4px) scale(1.01);
       }
 
       .kpi-icon {
@@ -486,6 +582,7 @@ export interface DeviceDetail {
         font-size: 2rem;
         font-weight: 700;
         line-height: 1;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
 
       .kpi-unit {
@@ -536,6 +633,7 @@ export interface DeviceDetail {
       .chart-header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 8px;
         font-weight: 700;
         font-size: 1rem;
@@ -543,9 +641,104 @@ export interface DeviceDetail {
         margin-bottom: 16px;
       }
 
-      .threshold-header mat-icon,
+      .chart-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
       .chart-header mat-icon {
         color: #667eea;
+      }
+
+      .chart-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      /* View Toggle Group */
+      .view-toggle-group {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(16, 185, 129, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .view-toggle-group ::ng-deep .mat-button-toggle {
+        border: none;
+        background: transparent;
+        color: #6b7280;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .view-toggle-group ::ng-deep .mat-button-toggle-button {
+        padding: 8px 16px;
+        height: 40px;
+      }
+
+      .view-toggle-group ::ng-deep .mat-button-toggle mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #6b7280;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .view-toggle-group ::ng-deep .mat-button-toggle:hover {
+        background: rgba(16, 185, 129, 0.1);
+      }
+
+      .view-toggle-group ::ng-deep .mat-button-toggle:hover mat-icon {
+        color: #10b981;
+        transform: scale(1.1);
+      }
+
+      .view-toggle-group ::ng-deep .mat-button-toggle-checked {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .view-toggle-group ::ng-deep .mat-button-toggle-checked mat-icon {
+        color: white;
+        transform: scale(1.1);
+      }
+
+      .view-toggle-group ::ng-deep .mat-button-toggle-checked:hover {
+        background: linear-gradient(135deg, #059669, #047857);
+      }
+
+      /* Export Button */
+      .export-btn {
+        border-radius: 12px;
+        border: 2px solid rgba(16, 185, 129, 0.3);
+        background: rgba(255, 255, 255, 0.9);
+        color: #10b981;
+        font-weight: 600;
+        padding: 0 16px;
+        height: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .export-btn mat-icon {
+        margin-right: 6px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .export-btn:hover {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+        border-color: #10b981;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+      }
+
+      .export-btn:active {
+        transform: translateY(0);
       }
 
       .threshold-bar {
@@ -622,6 +815,199 @@ export interface DeviceDetail {
 
       .chart-container {
         height: 300px;
+      }
+
+      /* Data Table View */
+      .data-table-container {
+        max-height: 300px;
+        overflow-y: auto;
+        border-radius: 12px;
+        border: 1px solid rgba(229, 231, 235, 0.8);
+      }
+
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+      }
+
+      .data-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: linear-gradient(135deg, #f8fafb, #f0fdf4);
+      }
+
+      .data-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: #1f2937;
+        border-bottom: 2px solid rgba(16, 185, 129, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .data-table tbody tr {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-bottom: 1px solid rgba(229, 231, 235, 0.6);
+      }
+
+      .data-table tbody tr:hover {
+        background: rgba(16, 185, 129, 0.05);
+        transform: scale(1.005);
+        box-shadow: inset 4px 0 0 #10b981;
+      }
+
+      .data-table td {
+        padding: 12px 16px;
+        font-size: 0.875rem;
+        color: #374151;
+      }
+
+      .table-status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      .table-status-badge.normal {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .table-status-badge.warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .table-status-badge.critical {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .table-status-badge.offline {
+        background: #f3f4f6;
+        color: #4b5563;
+      }
+
+      /* Timeline View */
+      .timeline-container {
+        max-height: 300px;
+        overflow-y: auto;
+        position: relative;
+        padding: 16px 0 16px 40px;
+      }
+
+      .timeline-track {
+        position: absolute;
+        left: 16px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, #10b981, #34d399, #10b981);
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+      }
+
+      .timeline-entry {
+        position: relative;
+        margin-bottom: 24px;
+        animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+      }
+
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .timeline-marker {
+        position: absolute;
+        left: -32px;
+        top: 4px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        z-index: 2;
+      }
+
+      .timeline-marker.normal {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+
+      .timeline-marker.warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
+
+      .timeline-marker.critical {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .timeline-marker.offline {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+      }
+
+      .timeline-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+      }
+
+      .timeline-content {
+        background: white;
+        border-radius: 12px;
+        padding: 12px 16px;
+        border: 1px solid rgba(229, 231, 235, 0.8);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .timeline-content:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        border-color: rgba(16, 185, 129, 0.4);
+      }
+
+      .timeline-time {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
+
+      .timeline-value {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
+
+      .value-text {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1f2937;
+      }
+
+      .value-unit {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
       }
 
       .no-chart-data {
@@ -837,21 +1223,23 @@ export interface DeviceDetail {
       :host-context(body.dark-theme) .kpi-card.primary {
         background: linear-gradient(
           135deg,
-          rgba(16, 185, 129, 0.2),
-          rgba(5, 150, 105, 0.15)
+          rgba(128, 203, 196, 0.25),
+          rgba(0, 95, 91, 0.2)
         );
-        border-color: rgba(16, 185, 129, 0.5);
+        border-color: rgba(128, 203, 196, 0.4);
+        box-shadow: 0 8px 24px rgba(128, 203, 196, 0.2),
+                    inset 0 1px 1px rgba(128, 203, 196, 0.15);
       }
 
       :host-context(body.dark-theme) .kpi-card.primary:hover {
         background: linear-gradient(
           135deg,
-          rgba(16, 185, 129, 0.3),
-          rgba(5, 150, 105, 0.25)
+          rgba(128, 203, 196, 0.35),
+          rgba(0, 95, 91, 0.3)
         );
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2),
-                    0 0 32px rgba(16, 185, 129, 0.15),
-                    inset 0 1px 1px rgba(52, 211, 153, 0.3);
+        box-shadow: 0 12px 32px rgba(128, 203, 196, 0.3),
+                    0 0 32px rgba(128, 203, 196, 0.15),
+                    inset 0 1px 1px rgba(128, 203, 196, 0.25);
       }
 
       :host-context(body.dark-theme) .kpi-label {
@@ -859,8 +1247,8 @@ export interface DeviceDetail {
       }
 
       :host-context(body.dark-theme) .kpi-value {
-        color: #ffffff;
-        text-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        color: #80cbc4;
+        text-shadow: 0 2px 8px rgba(128, 203, 196, 0.4), 0 0 16px rgba(128, 203, 196, 0.2);
       }
 
       :host-context(body.dark-theme) .kpi-unit {
@@ -886,12 +1274,146 @@ export interface DeviceDetail {
                     inset 0 1px 1px rgba(52, 211, 153, 0.2);
       }
 
-      :host-context(body.dark-theme) .threshold-header {
+      :host-context(body.dark-theme) .chart-header {
         color: #f1f5f9;
       }
 
       :host-context(body.dark-theme) .threshold-labels {
         color: #cbd5e1;
+      }
+
+      /* Dark Theme - View Toggle */
+      :host-context(body.dark-theme) .view-toggle-group {
+        border-color: rgba(16, 185, 129, 0.4);
+        background: rgba(30, 41, 59, 0.8);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      :host-context(body.dark-theme) .view-toggle-group ::ng-deep .mat-button-toggle {
+        background: transparent;
+        color: #94a3b8;
+      }
+
+      :host-context(body.dark-theme) .view-toggle-group ::ng-deep .mat-button-toggle mat-icon {
+        color: #94a3b8;
+      }
+
+      :host-context(body.dark-theme) .view-toggle-group ::ng-deep .mat-button-toggle:hover {
+        background: rgba(16, 185, 129, 0.15);
+      }
+
+      :host-context(body.dark-theme) .view-toggle-group ::ng-deep .mat-button-toggle:hover mat-icon {
+        color: #34d399;
+      }
+
+      :host-context(body.dark-theme) .view-toggle-group ::ng-deep .mat-button-toggle-checked {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(5, 150, 105, 0.35));
+        color: #6ee7b7;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                    0 0 12px rgba(16, 185, 129, 0.3);
+      }
+
+      :host-context(body.dark-theme) .view-toggle-group ::ng-deep .mat-button-toggle-checked mat-icon {
+        color: #6ee7b7;
+      }
+
+      /* Dark Theme - Export Button */
+      :host-context(body.dark-theme) .export-btn {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: rgba(16, 185, 129, 0.5);
+        color: #34d399;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      :host-context(body.dark-theme) .export-btn:hover {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.2));
+        border-color: #34d399;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+
+      /* Dark Theme - Data Table */
+      :host-context(body.dark-theme) .data-table-container {
+        border-color: rgba(100, 116, 139, 0.4);
+      }
+
+      :host-context(body.dark-theme) .data-table {
+        background: rgba(30, 41, 59, 0.7);
+      }
+
+      :host-context(body.dark-theme) .data-table thead {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+      }
+
+      :host-context(body.dark-theme) .data-table th {
+        color: #f1f5f9;
+        border-bottom-color: rgba(16, 185, 129, 0.4);
+      }
+
+      :host-context(body.dark-theme) .data-table tbody tr {
+        border-bottom-color: rgba(100, 116, 139, 0.3);
+      }
+
+      :host-context(body.dark-theme) .data-table tbody tr:hover {
+        background: rgba(16, 185, 129, 0.1);
+        box-shadow: inset 4px 0 0 #34d399;
+      }
+
+      :host-context(body.dark-theme) .data-table td {
+        color: #e2e8f0;
+      }
+
+      :host-context(body.dark-theme) .table-status-badge.normal {
+        background: rgba(16, 185, 129, 0.25);
+        color: #6ee7b7;
+      }
+
+      :host-context(body.dark-theme) .table-status-badge.warning {
+        background: rgba(245, 158, 11, 0.25);
+        color: #fcd34d;
+      }
+
+      :host-context(body.dark-theme) .table-status-badge.critical {
+        background: rgba(239, 68, 68, 0.25);
+        color: #fca5a5;
+      }
+
+      :host-context(body.dark-theme) .table-status-badge.offline {
+        background: rgba(107, 114, 128, 0.25);
+        color: #cbd5e1;
+      }
+
+      /* Dark Theme - Timeline */
+      :host-context(body.dark-theme) .timeline-track {
+        background: linear-gradient(180deg, rgba(16, 185, 129, 0.6), rgba(52, 211, 153, 0.5), rgba(16, 185, 129, 0.6));
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+      }
+
+      :host-context(body.dark-theme) .timeline-marker {
+        border-color: rgba(30, 41, 59, 0.9);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      :host-context(body.dark-theme) .timeline-content {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: rgba(100, 116, 139, 0.4);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      :host-context(body.dark-theme) .timeline-content:hover {
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        border-color: rgba(16, 185, 129, 0.5);
+      }
+
+      :host-context(body.dark-theme) .timeline-time {
+        color: #94a3b8;
+      }
+
+      :host-context(body.dark-theme) .value-text {
+        color: #f1f5f9;
+      }
+
+      :host-context(body.dark-theme) .value-unit {
+        color: #94a3b8;
       }
 
       :host-context(body.dark-theme) .chart-section {
@@ -931,6 +1453,9 @@ export class DeviceDetailPanelComponent {
   // Inputs
   device = input<DeviceDetail | null>(null);
   loading = input<boolean>(false);
+
+  // View mode state
+  viewMode = signal<'chart' | 'table' | 'timeline'>('chart');
 
   // Chart config
   colorScheme: any = {
@@ -979,6 +1504,127 @@ export class DeviceDetailPanelComponent {
     const { min, max } = dev.thresholds;
     if (max === min) return 0;
     return Math.max(0, Math.min(100, ((end - start) / (max - min)) * 100));
+  }
+
+  getValueStatus(value: number): SensorStatus {
+    const dev = this.device();
+    if (!dev) return 'offline';
+    
+    const { min, max, optimalMin, optimalMax } = dev.thresholds;
+    
+    if (value < min || value > max) return 'critical';
+    if (value < optimalMin || value > optimalMax) return 'warning';
+    return 'normal';
+  }
+
+  exportToCSV(): void {
+    const dev = this.device();
+    if (!dev || !dev.chartData || dev.chartData.length === 0) {
+      console.warn('No data available for export');
+      return;
+    }
+
+    // Generate CSV content
+    const headers = ['Timestamp', 'Value', 'Unit', 'Status'];
+    const rows = dev.chartData.map(point => {
+      const status = this.getValueStatus(point.value);
+      return [
+        new Date(point.name).toLocaleString(),
+        point.value.toFixed(2),
+        dev.unit,
+        status.toUpperCase()
+      ];
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${dev.name}_data_${new Date().toISOString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  exportToPDF(): void {
+    const dev = this.device();
+    if (!dev) {
+      console.warn('No device data available for export');
+      return;
+    }
+
+    // Simple PDF export using browser print
+    // For a production app, consider using libraries like jsPDF or pdfmake
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Sensor Data - ${dev.name}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #10b981; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+          th { background-color: #10b981; color: white; }
+          tr:nth-child(even) { background-color: #f9fafb; }
+          .header-info { margin-bottom: 20px; }
+          .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+          .normal { background: #d1fae5; color: #065f46; }
+          .warning { background: #fef3c7; color: #92400e; }
+          .critical { background: #fee2e2; color: #991b1b; }
+        </style>
+      </head>
+      <body>
+        <h1>Sensor Data Report</h1>
+        <div class="header-info">
+          <p><strong>Sensor:</strong> ${dev.name}</p>
+          <p><strong>Type:</strong> ${dev.type}</p>
+          <p><strong>Current Value:</strong> ${dev.currentValue.toFixed(2)} ${dev.unit}</p>
+          <p><strong>Status:</strong> ${dev.status.toUpperCase()}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Value</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dev.chartData.map(point => {
+              const status = this.getValueStatus(point.value);
+              return `
+                <tr>
+                  <td>${new Date(point.name).toLocaleString()}</td>
+                  <td>${point.value.toFixed(2)} ${dev.unit}</td>
+                  <td><span class="status-badge ${status}">${status.toUpperCase()}</span></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }
   }
 }
 

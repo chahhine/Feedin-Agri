@@ -1,5 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 
+// Modern Glassmorphic Toast Notifications - MUST be at top before any other rules
+@use './app/core/styles/toast-notifications.scss';
+
 // @import '@angular/material/theming';
 // @include mat-core();
 
@@ -83,6 +86,46 @@ body.rtl {
   .pr-4 {
     padding-right: unset;
     padding-left: 1rem;
+  }
+}
+
+// Date Range Picker Dialog Backdrop Blur
+.cdk-overlay-backdrop.date-range-picker-backdrop {
+  background: rgba(0, 0, 0, 0.5) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  animation: fadeInBackdrop 0.3s ease !important;
+}
+
+body.dark-theme .cdk-overlay-backdrop.date-range-picker-backdrop {
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+.date-range-picker-dialog {
+  animation: slideUpDialog 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@keyframes fadeInBackdrop {
+  from {
+    opacity: 0;
+    -webkit-backdrop-filter: blur(0px);
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
+@keyframes slideUpDialog {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -175,6 +218,173 @@ body.dark-theme {
 .error-snackbar {
   background-color: #f44336 !important;
   color: white !important;
+}
+
+// Glassmorphic Snackbar Styles
+.glass-snackbar {
+  .mdc-snackbar__surface,
+  .mat-mdc-snack-bar-container {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.85)) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.5)) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15),
+                inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+    padding: 16px 20px !important;
+    min-width: 320px !important;
+  }
+
+  .mat-mdc-snack-bar-label,
+  .mdc-snackbar__label {
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+    font-size: 0.95rem !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mat-mdc-button.mat-mdc-snack-bar-action,
+  .mdc-snackbar__actions button {
+    color: var(--primary-green) !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+    min-width: auto !important;
+    padding: 0 8px !important;
+
+    &:hover {
+      background: rgba(16, 185, 129, 0.1) !important;
+    }
+  }
+
+  &.success-snackbar {
+    .mdc-snackbar__surface,
+    .mat-mdc-snack-bar-container {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95)) !important;
+      border-color: rgba(110, 231, 183, 0.5) !important;
+    }
+
+    .mat-mdc-snack-bar-label,
+    .mdc-snackbar__label {
+      color: white !important;
+    }
+
+    .mat-mdc-button.mat-mdc-snack-bar-action,
+    .mdc-snackbar__actions button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+      }
+    }
+  }
+
+  &.error-snackbar {
+    .mdc-snackbar__surface,
+    .mat-mdc-snack-bar-container {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95)) !important;
+      border-color: rgba(254, 202, 202, 0.5) !important;
+    }
+
+    .mat-mdc-snack-bar-label,
+    .mdc-snackbar__label {
+      color: white !important;
+    }
+
+    .mat-mdc-button.mat-mdc-snack-bar-action,
+    .mdc-snackbar__actions button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+      }
+    }
+  }
+}
+
+// Dark theme snackbar adjustments
+body.dark-theme {
+  .glass-snackbar {
+    .mdc-snackbar__surface,
+    .mat-mdc-snack-bar-container {
+      background: var(--glass-bg, rgba(30, 41, 59, 0.85)) !important;
+      border-color: var(--glass-border, rgba(100, 116, 139, 0.4)) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                  inset 0 1px 1px rgba(100, 116, 139, 0.2) !important;
+    }
+
+    &.success-snackbar {
+      .mdc-snackbar__surface,
+      .mat-mdc-snack-bar-container {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9)) !important;
+      }
+    }
+
+    &.error-snackbar {
+      .mdc-snackbar__surface,
+      .mat-mdc-snack-bar-container {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)) !important;
+      }
+    }
+  }
+}
+
+// Glassmorphic Dialog Styles
+.glass-dialog {
+  .mat-mdc-dialog-container,
+  .mdc-dialog__container {
+    .mat-mdc-dialog-surface,
+    .mdc-dialog__surface {
+      background: var(--glass-bg, rgba(255, 255, 255, 0.9)) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      backdrop-filter: blur(16px) !important;
+      border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.5)) !important;
+      border-radius: 24px !important;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2),
+                  inset 0 1px 1px rgba(255, 255, 255, 0.7) !important;
+      overflow: hidden !important;
+    }
+  }
+}
+
+// Dark theme dialog adjustments
+body.dark-theme {
+  .glass-dialog {
+    .mat-mdc-dialog-container,
+    .mdc-dialog__container {
+      .mat-mdc-dialog-surface,
+      .mdc-dialog__surface {
+        background: var(--glass-bg, rgba(30, 41, 59, 0.9)) !important;
+        border-color: var(--glass-border, rgba(100, 116, 139, 0.4)) !important;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5),
+                    inset 0 1px 1px rgba(100, 116, 139, 0.2) !important;
+      }
+    }
+  }
+}
+
+// Dialog overlay fade animation
+.cdk-overlay-backdrop {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+// Dialog enter/exit animations
+.glass-dialog {
+  .mat-mdc-dialog-container {
+    animation: dialogSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@keyframes dialogSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 // Utility classes

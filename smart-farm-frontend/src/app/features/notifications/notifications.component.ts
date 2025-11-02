@@ -54,30 +54,39 @@ interface GroupedNotifications {
   template: `
     <div class="insight-stream-container" [attr.dir]="currentDirection()">
 
-      <!-- 1️⃣ KPI HEADER BAR -->
+      <!-- 1️⃣ KPI HEADER BAR - Enhanced with better empty states -->
       <div class="kpi-bar glass-panel">
         <div class="kpi-stats">
-          <div class="kpi-item" [matTooltip]="languageService.t()('notifications.totalNotifications')">
-            <mat-icon>notifications</mat-icon>
+          <div class="kpi-item" 
+               [class.zero-state]="kpiStats().total === 0"
+               [matTooltip]="kpiStats().total === 0 ? languageService.t()('notifications.noNotificationsYet') : languageService.t()('notifications.totalNotifications')">
+            <mat-icon>{{ kpiStats().total === 0 ? 'notifications_none' : 'notifications' }}</mat-icon>
             <div class="kpi-value">
               <span class="number">{{ kpiStats().total }}</span>
               <span class="label">{{ languageService.t()('notifications.total') }}</span>
+              <span class="status-text" *ngIf="kpiStats().total === 0">{{ languageService.t()('notifications.allClear') }}</span>
             </div>
           </div>
 
-          <div class="kpi-item unread" [matTooltip]="languageService.t()('notifications.unread')">
-            <mat-icon>mark_email_unread</mat-icon>
+          <div class="kpi-item unread" 
+               [class.zero-state]="kpiStats().unread === 0"
+               [matTooltip]="kpiStats().unread === 0 ? languageService.t()('notifications.allCaughtUp') : languageService.t()('notifications.unread')">
+            <mat-icon>{{ kpiStats().unread === 0 ? 'mark_email_read' : 'mark_email_unread' }}</mat-icon>
             <div class="kpi-value">
               <span class="number">{{ kpiStats().unread }}</span>
               <span class="label">{{ languageService.t()('notifications.unread') }}</span>
+              <span class="status-text" *ngIf="kpiStats().unread === 0">{{ languageService.t()('notifications.upToDate') }}</span>
             </div>
           </div>
 
-          <div class="kpi-item critical" [matTooltip]="languageService.t()('notifications.critical')">
-            <mat-icon>priority_high</mat-icon>
+          <div class="kpi-item critical" 
+               [class.zero-state]="kpiStats().critical === 0"
+               [matTooltip]="kpiStats().critical === 0 ? languageService.t()('notifications.noCriticalIssues') : languageService.t()('notifications.critical')">
+            <mat-icon>{{ kpiStats().critical === 0 ? 'check_circle' : 'priority_high' }}</mat-icon>
             <div class="kpi-value">
               <span class="number">{{ kpiStats().critical }}</span>
               <span class="label">{{ languageService.t()('notifications.critical') }}</span>
+              <span class="status-text" *ngIf="kpiStats().critical === 0">{{ languageService.t()('notifications.allGood') }}</span>
             </div>
           </div>
 
@@ -120,7 +129,7 @@ interface GroupedNotifications {
             </mat-chip-listbox>
           </div>
 
-          <!-- View Switcher -->
+          <!-- View Switcher (Map view removed) -->
           <div class="view-switcher">
             <button mat-icon-button
                     class="view-button"
@@ -136,22 +145,17 @@ interface GroupedNotifications {
                     [matTooltip]="languageService.t()('notifications.timelineView')">
               <mat-icon>timeline</mat-icon>
             </button>
-            <button mat-icon-button
-                    class="view-button"
-                    [class.active]="activeView() === 'map'"
-                    (click)="setView('map')"
-                    [matTooltip]="languageService.t()('notifications.mapView')">
-              <mat-icon>map</mat-icon>
-            </button>
           </div>
 
-          <!-- Combined Refresh Button with Status -->
-          <button mat-icon-button
-                  class="refresh-button"
+          <!-- Enhanced Refresh Button with Status Centered at Bottom -->
+          <button mat-button
+                  class="refresh-button enhanced"
                   (click)="refreshNotifications()"
                   [disabled]="loading"
                   [matTooltip]="languageService.t()('notifications.refresh')">
-            <mat-icon [class.spinning]="loading">refresh</mat-icon>
+            <div class="refresh-icon-wrapper">
+              <mat-icon [class.spinning]="loading">refresh</mat-icon>
+            </div>
             <span class="refresh-time" *ngIf="getLastRefreshTime() && !loading">{{ getLastRefreshTime() }}</span>
           </button>
 
@@ -164,50 +168,52 @@ interface GroupedNotifications {
           </button>
         </div>
 
-        <!-- Collapsible Advanced Filter Panel -->
+        <!-- Collapsible Advanced Filter Panel - Enhanced like Actions -->
         <div class="filter-panel" [class.expanded]="filterPanelExpanded()">
-          <div class="filter-controls">
-            <mat-form-field appearance="outline" class="glass-select" *ngIf="availableFarms().length > 0">
-              <mat-label>{{ languageService.t()('notifications.farm') }}</mat-label>
-              <mat-select [(ngModel)]="selectedFarm" (selectionChange)="onFarmChange()">
-                <mat-option [value]="null">{{ languageService.t()('notifications.allFarms') }}</mat-option>
-                <mat-option *ngFor="let farm of availableFarms()" [value]="farm">
-                  {{ farm }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+          <div class="filter-controls-wrapper">
+            <!-- Filter Inputs Row -->
+            <div class="filter-controls">
+              <mat-form-field appearance="outline" class="filter-field" *ngIf="availableFarms().length > 0">
+                <mat-label>{{ languageService.t()('notifications.farm') }}</mat-label>
+                <mat-select [(ngModel)]="selectedFarm" (selectionChange)="onFarmChange()">
+                  <mat-option [value]="null">{{ languageService.t()('notifications.allFarms') }}</mat-option>
+                  <mat-option *ngFor="let farm of availableFarms()" [value]="farm">
+                    {{ farm }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline" class="glass-select" *ngIf="availableDevices().length > 0">
-              <mat-label>{{ languageService.t()('notifications.device') }}</mat-label>
-              <mat-select [(ngModel)]="selectedDevice" (selectionChange)="onDeviceChange()">
-                <mat-option [value]="null">{{ languageService.t()('notifications.allDevices') }}</mat-option>
-                <mat-option *ngFor="let device of availableDevices()" [value]="device">
-                  {{ device }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+              <mat-form-field appearance="outline" class="filter-field" *ngIf="availableDevices().length > 0">
+                <mat-label>{{ languageService.t()('notifications.device') }}</mat-label>
+                <mat-select [(ngModel)]="selectedDevice" (selectionChange)="onDeviceChange()">
+                  <mat-option [value]="null">{{ languageService.t()('notifications.allDevices') }}</mat-option>
+                  <mat-option *ngFor="let device of availableDevices()" [value]="device">
+                    {{ device }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline" class="glass-search">
-              <mat-label>{{ languageService.t()('notifications.search') }}</mat-label>
-              <mat-icon matPrefix>search</mat-icon>
-              <input matInput
-                     [(ngModel)]="searchQuery"
-                     (ngModelChange)="onSearchChange()"
-                     [placeholder]="languageService.t()('notifications.searchPlaceholder')">
-              <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="clearSearch()">
-                <mat-icon>close</mat-icon>
+              <mat-form-field appearance="outline" class="filter-field search-field">
+                <mat-label>{{ languageService.t()('notifications.search') }}</mat-label>
+                <mat-icon matPrefix>search</mat-icon>
+                <input matInput
+                       [(ngModel)]="searchQuery"
+                       (ngModelChange)="onSearchChange()"
+                       [placeholder]="languageService.t()('notifications.searchPlaceholder')">
+                <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="clearSearch()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <!-- Clear All Filters Button - Same Level as Filter Inputs -->
+              <button mat-raised-button
+                      class="clear-filters-button"
+                      (click)="clearAllFilters()"
+                      [matTooltip]="languageService.t()('notifications.clearAllFilters')">
+                <mat-icon>clear_all</mat-icon>
+                <span>{{ languageService.t()('notifications.clearAllFilters') }}</span>
               </button>
-            </mat-form-field>
-          </div>
-
-          <!-- Clear All Filters Button -->
-          <div class="filter-actions">
-            <button class="clear-filters-button"
-                    (click)="clearAllFilters()"
-                    [matTooltip]="languageService.t()('notifications.clearAllFilters')">
-              <mat-icon>clear_all</mat-icon>
-              <span>{{ languageService.t()('notifications.clearAllFilters') }}</span>
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -371,22 +377,6 @@ interface GroupedNotifications {
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3️⃣ NOTIFICATION STREAM - MAP VIEW (PLACEHOLDER) -->
-      <div class="notification-map glass-panel" *ngIf="cacheReady && activeView() === 'map'">
-        <div class="map-placeholder">
-          <mat-icon>map</mat-icon>
-          <h3>{{ languageService.t()('notifications.mapViewComingSoon') }}</h3>
-          <p>{{ languageService.t()('notifications.mapViewDescription') }}</p>
-
-          <div class="map-preview">
-            <div *ngFor="let n of filteredNotifications().slice(0, 5)" class="map-pin" [attr.data-level]="n.level">
-              <mat-icon>place</mat-icon>
-              <span>{{ getLocation(n) }}</span>
             </div>
           </div>
         </div>

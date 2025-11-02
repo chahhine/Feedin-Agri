@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Res, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Res, Get, UseGuards, Req, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from '../users/dto/login-user.dto';
 import { Response } from 'express';
@@ -49,5 +49,15 @@ export class AuthController {
       path: '/',
     });
     return { csrfToken: token };
+  }
+
+  @Get('check-email')
+  @HttpCode(HttpStatus.OK)
+  async checkEmail(@Query('email') email: string) {
+    if (!email) {
+      return { exists: false };
+    }
+    const exists = await this.authService.checkEmailExists(email);
+    return { exists };
   }
 }

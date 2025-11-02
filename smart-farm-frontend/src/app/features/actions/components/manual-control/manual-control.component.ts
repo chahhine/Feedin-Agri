@@ -6,7 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { AlertService } from '../../../../core/services/alert.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -16,15 +17,18 @@ import { Subscription } from 'rxjs';
 import { trigger, state, style, transition, animate, query, stagger } from '@angular/animations';
 import { ApiService } from '../../../../core/services/api.service';
 import { FarmManagementService } from '../../../../core/services/farm-management.service';
-import { Device, Farm, DeviceStatus } from '../../../../core/models/farm.model';
+import { Device, Farm, DeviceStatus, Sensor, SensorReading } from '../../../../core/models/farm.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { ActionConfirmationDialogComponent, ActionConfirmationData } from './action-confirmation-dialog/action-confirmation-dialog.component';
 
 interface DeviceControl {
   device: Device;
   isOn: boolean;
   automationRules?: string[];
   thresholds?: { [key: string]: number };
+  sensor?: Sensor;
+  sensorReading?: SensorReading;
 }
 
 interface ControlKPIs {
@@ -202,7 +206,19 @@ interface ControlKPIs {
 
               <!-- Device Info -->
               <div class="action-info">
-                      <h3>{{ control.device.name }}</h3>
+                <!-- Device Name with Sensor Type/Value Title -->
+                <div class="device-title-row">
+                  <h3 class="device-name">{{ control.device.name }}</h3>
+                  <div class="sensor-value-title">
+                    <span class="sensor-type-label">{{ getConcernedValueType(control) }}</span>
+                    <span class="sensor-value" *ngIf="getConcernedValue(control) !== null">
+                      {{ getConcernedValue(control) }} {{ getConcernedValueUnit(control) }}
+                    </span>
+                    <span class="sensor-value no-data" *ngIf="getConcernedValue(control) === null">
+                      {{ languageService.t()('alerts.noRecentReading') || 'No reading' }}
+                    </span>
+                  </div>
+                </div>
                 <p class="device-location">{{ control.device.location || languageService.t()('manualControl.noLocation') }}</p>
                 <div class="device-details">
                   <div class="device-type">
@@ -584,11 +600,64 @@ interface ControlKPIs {
       }
 
       .action-info {
-        h3 {
-          margin: 0 0 0.5rem 0;
+        .device-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        h3.device-name {
+          margin: 0;
           font-size: 1.25rem;
           font-weight: 600;
           color: var(--text-primary);
+          flex: 1;
+          min-width: 0;
+        }
+
+        .sensor-value-title {
+          display: flex !important;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 0.25rem;
+          padding: 0.5rem 0.75rem;
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1)) !important;
+          border-radius: 12px;
+          border: 2px solid rgba(16, 185, 129, 0.3) !important;
+          min-width: fit-content;
+          flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+          visibility: visible !important;
+          opacity: 1 !important;
+
+          .sensor-type-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary-green);
+            opacity: 0.9;
+            white-space: nowrap;
+          }
+
+          .sensor-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            line-height: 1.2;
+            white-space: nowrap;
+
+            &.no-data {
+              font-size: 0.75rem;
+              font-weight: 500;
+              color: var(--text-secondary);
+              font-style: italic;
+              opacity: 0.7;
+            }
+          }
         }
 
         .device-location {
@@ -986,8 +1055,21 @@ interface ControlKPIs {
         }
       }
 
-      .action-info h3 {
-        font-size: 1.1rem;
+      .action-info {
+        .device-title-row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.75rem;
+        }
+
+        .sensor-value-title {
+          width: 100%;
+          align-items: flex-start;
+        }
+
+        h3.device-name {
+          font-size: 1.1rem;
+        }
       }
 
       .action-info .device-details {
@@ -1070,8 +1152,30 @@ interface ControlKPIs {
         }
       }
 
-      .action-info h3 {
-        font-size: 1rem;
+      .action-info {
+        .device-title-row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+
+        .sensor-value-title {
+          width: 100%;
+          align-items: flex-start;
+          padding: 0.4rem 0.6rem;
+        }
+
+        .sensor-value-title .sensor-type-label {
+          font-size: 0.65rem;
+        }
+
+        .sensor-value-title .sensor-value {
+          font-size: 1rem;
+        }
+
+        h3.device-name {
+          font-size: 1rem;
+        }
       }
 
       .action-info .device-details {
@@ -1098,7 +1202,7 @@ interface ControlKPIs {
 export class ManualControlComponent implements OnInit, OnDestroy {
   private apiService = inject(ApiService);
   private farmManagement = inject(FarmManagementService);
-  private snackBar = inject(MatSnackBar);
+  private alertService = inject(AlertService);
   private dialog = inject(MatDialog);
   public languageService = inject(LanguageService);
   public themeService = inject(ThemeService);
@@ -1161,23 +1265,48 @@ export class ManualControlComponent implements OnInit, OnDestroy {
       const devices = await this.apiService.getDevicesByFarm(selectedFarm.farm_id).toPromise();
       this.devices.set(devices || []);
 
-      // Create device controls
-      const controls: DeviceControl[] = (devices || []).map(device => ({
-        device,
-        isOn: false, // This would be determined by actual device state
-        automationRules: this.getAutomationRules(device),
-        thresholds: this.getDeviceThresholds(device)
-      }));
+      // Create device controls with sensor data
+      const controls: DeviceControl[] = await Promise.all(
+        (devices || []).map(async (device) => {
+          let sensor: Sensor | undefined;
+          let sensorReading: SensorReading | undefined;
+
+          try {
+            // Fetch device with sensors
+            const deviceWithSensors = await this.apiService.getDevice(device.device_id, true).toPromise();
+            if (deviceWithSensors?.sensors && deviceWithSensors.sensors.length > 0) {
+              sensor = deviceWithSensors.sensors[0];
+              // Fetch latest reading
+              try {
+                sensorReading = await this.apiService.getLatestReading(sensor.sensor_id).toPromise() || undefined;
+              } catch (err) {
+                console.warn(`Could not fetch reading for sensor ${sensor.sensor_id}:`, err);
+              }
+            }
+          } catch (error) {
+            console.warn(`Could not fetch sensor data for device ${device.device_id}:`, error);
+          }
+
+          return {
+            device,
+            isOn: false, // This would be determined by actual device state
+            automationRules: this.getAutomationRules(device),
+            thresholds: this.getDeviceThresholds(device),
+            sensor,
+            sensorReading
+          };
+        })
+      );
 
       this.deviceControls.set(controls);
 
       // Load recent actions - REMOVED since we deleted the mini log section
     } catch (error) {
       console.error('Error loading data:', error);
-      this.snackBar.open(
+      this.alertService.error(
+        this.languageService.t()('common.error'),
         this.languageService.t()('manualControl.loadDataError'),
-        this.languageService.t()('common.close'),
-        { duration: 3000 }
+        5000
       );
     } finally {
       this.isLoading.set(false);
@@ -1196,42 +1325,131 @@ export class ManualControlComponent implements OnInit, OnDestroy {
 
     this.automationEnabled.set(enabled);
     
-    // Show success message
-    this.snackBar.open(
-      this.languageService.t()('manualControl.automationToggled', {
-        state: enabled ? this.languageService.t()('manualControl.enabled') : this.languageService.t()('manualControl.disabled')
-      }),
-      this.languageService.t()('common.close'),
-      { duration: 3000 }
+    // Show success message with glassmorphic snackbar
+    const alertTexts = this.languageService.t()('alerts') as any;
+    this.showSuccessSnackbar(
+      alertTexts[enabled ? 'automationEnabled' : 'automationDisabled']
     );
   }
 
   async toggleSafeMode(enabled: boolean): Promise<void> {
+    // Show confirmation dialog
+    const confirmed = await this.showSafeModeConfirmation(enabled);
+    if (!confirmed) {
+      return;
+    }
+
     this.safeModeEnabled.set(enabled);
     
-    // Show success message
-    this.snackBar.open(
-      this.languageService.t()('manualControl.safeModeToggled', {
-        state: enabled ? this.languageService.t()('manualControl.enabled') : this.languageService.t()('manualControl.disabled')
-      }),
-      this.languageService.t()('common.close'),
-      { duration: 3000 }
+    // Show success message with glassmorphic snackbar
+    const alertTexts = this.languageService.t()('alerts') as any;
+    this.showSuccessSnackbar(
+      alertTexts[enabled ? 'safeModeEnabled' : 'safeModeDisabled']
+    );
+  }
+
+  private showSuccessSnackbar(message: string): void {
+    // Ensure message is never empty - provide fallback
+    const safeMessage = message && message.trim() 
+      ? message 
+      : this.languageService.t()('common.operationSuccess');
+    
+    // Use AlertService with title and message
+    this.alertService.success(
+      this.languageService.t()('common.success'),
+      safeMessage,
+      4000
+    );
+  }
+
+  private showErrorSnackbar(message: string): void {
+    // Ensure message is never empty - provide fallback
+    const safeMessage = message && message.trim() 
+      ? message 
+      : this.languageService.t()('common.operationError');
+    
+    // Use AlertService with title and message
+    this.alertService.error(
+      this.languageService.t()('common.error'),
+      safeMessage,
+      5000
     );
   }
 
   private async showAutomationConfirmation(): Promise<boolean> {
-    // For now, use a simple confirm dialog
-    // In a real app, you'd use MatDialog for a proper confirmation modal
-    return confirm(this.languageService.t()('manualControl.automationOffConfirmation'));
+    const dialogRef = this.dialog.open(ActionConfirmationDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      panelClass: 'glass-dialog',
+      data: {
+        actionType: 'disableAutomation',
+        context: 'warning'
+      } as ActionConfirmationData
+    });
+
+    return dialogRef.afterClosed().toPromise().then(result => result === true);
+  }
+
+  private async showSafeModeConfirmation(enabled: boolean): Promise<boolean> {
+    const dialogRef = this.dialog.open(ActionConfirmationDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      panelClass: 'glass-dialog',
+      data: {
+        actionType: 'safeMode',
+        context: enabled ? 'warning' : 'info'
+      } as ActionConfirmationData
+    });
+
+    return dialogRef.afterClosed().toPromise().then(result => result === true);
   }
 
   private async showActionConfirmation(device: Device, isOn: boolean): Promise<boolean> {
-    const action = isOn ? this.languageService.t()('manualControl.turnOn') : this.languageService.t()('manualControl.turnOff');
-    const message = this.languageService.t()('manualControl.actionConfirmation', {
-      action: action,
-      device: device.name
+    // Try to get sensor data from existing controls first
+    const controls = this.deviceControls();
+    const existingControl = controls.find(c => c.device.device_id === device.device_id);
+    
+    let sensor = existingControl?.sensor || null;
+    let sensorReading = existingControl?.sensorReading || null;
+    
+    // If not found in controls, fetch from API
+    if (!sensor) {
+      try {
+        const deviceWithSensors = await this.apiService.getDevice(device.device_id, true).toPromise();
+        if (deviceWithSensors?.sensors && deviceWithSensors.sensors.length > 0) {
+          sensor = deviceWithSensors.sensors[0];
+          // Get latest reading if not already available
+          if (!sensorReading && sensor) {
+            try {
+              sensorReading = await this.apiService.getLatestReading(sensor.sensor_id).toPromise() || null;
+            } catch (err) {
+              console.warn(`Could not fetch reading for sensor ${sensor.sensor_id}:`, err);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Could not fetch sensor data for device:', error);
+      }
+    }
+
+    const dialogRef = this.dialog.open(ActionConfirmationDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      panelClass: 'glass-dialog',
+      data: {
+        actionType: isOn ? 'turnOn' : 'turnOff',
+        device: device,
+        sensor: sensor,
+        sensorReading: sensorReading,
+        deviceZone: device.location,
+        thresholdMin: 20, // These would come from actual automation rules
+        thresholdMax: 80,
+        lastUpdateTime: sensorReading?.createdAt ? new Date(sensorReading.createdAt) : (device.last_seen ? new Date(device.last_seen) : undefined),
+        context: isOn ? 'success' : 'warning'
+      } as ActionConfirmationData
     });
-    return confirm(message);
+
+    return dialogRef.afterClosed().toPromise().then(result => result === true);
   }
 
   getStatusBadgeClass(control: DeviceControl): string {
@@ -1366,25 +1584,21 @@ export class ManualControlComponent implements OnInit, OnDestroy {
   async executeDeviceAction(device: Device, isOn: boolean): Promise<void> {
     // Check if manual control is allowed
     if (this.automationEnabled()) {
-      this.snackBar.open(
-        this.languageService.t()('manualControl.automationActiveError'),
-        this.languageService.t()('common.close'),
-        { duration: 3000 }
+      this.showErrorSnackbar(
+        this.languageService.t()('manualControl.automationActiveError')
       );
       return;
     }
 
     // Check safe mode
     if (this.safeModeEnabled()) {
-      this.snackBar.open(
-        this.languageService.t()('manualControl.safeModeActiveError'),
-        this.languageService.t()('common.close'),
-        { duration: 3000 }
+      this.showErrorSnackbar(
+        this.languageService.t()('manualControl.safeModeActiveError')
       );
       return;
     }
 
-    // Show confirmation dialog
+    // Show confirmation dialog with real sensor data
     const confirmed = await this.showActionConfirmation(device, isOn);
     if (!confirmed) {
       return; // User cancelled
@@ -1410,24 +1624,15 @@ export class ManualControlComponent implements OnInit, OnDestroy {
       );
       this.deviceControls.set(updatedControls);
 
-      // Show success message
-      this.snackBar.open(
-        this.languageService.t()('manualControl.deviceToggled', {
-          device: device.name,
-          state: isOn ? this.languageService.t()('manualControl.on') : this.languageService.t()('manualControl.off')
-        }),
-        this.languageService.t()('common.close'),
-        { duration: 3000 }
+      // Show success message with glassmorphic snackbar
+      const alertTexts = this.languageService.t()('alerts') as any;
+      this.showSuccessSnackbar(
+        alertTexts[isOn ? 'deviceTurnedOn' : 'deviceTurnedOff'].replace('{{device}}', device.name)
       );
-
-      // Refresh recent actions - REMOVED since we deleted the mini log section
     } catch (error) {
       console.error('Error executing device action:', error);
-      this.snackBar.open(
-        this.languageService.t()('manualControl.toggleError'),
-        this.languageService.t()('common.close'),
-        { duration: 3000 }
-      );
+      const alertTexts = this.languageService.t()('alerts') as any;
+      this.showErrorSnackbar(alertTexts.actionError);
     }
   }
 
@@ -1500,6 +1705,138 @@ export class ManualControlComponent implements OnInit, OnDestroy {
 
   trackByDeviceId(index: number, control: DeviceControl): string {
     return control.device.device_id;
+  }
+
+  getSensorTypeDisplayName(sensor: Sensor): string {
+    if (!sensor) return '';
+    
+    const type = sensor.type?.toLowerCase() || '';
+    
+    if (type.includes('temperature')) return this.languageService.t()('sensors.temperature') || 'Temperature';
+    if (type.includes('humidity')) return this.languageService.t()('sensors.humidity') || 'Humidity';
+    if (type.includes('soil') && type.includes('moisture')) return this.languageService.t()('sensors.soilMoisture') || 'Soil Moisture';
+    if (type.includes('light')) return this.languageService.t()('sensors.lightLevel') || 'Light';
+    if (type.includes('ph')) return this.languageService.t()('sensors.phLevel') || 'pH';
+    if (type.includes('pressure')) return this.languageService.t()('sensors.pressure') || 'Pressure';
+    
+    // Fallback to the sensor type itself
+    return sensor.type || '';
+  }
+
+  getSensorCurrentValue(reading: SensorReading, sensor: Sensor): string {
+    if (!reading || !sensor) return '—';
+    
+    const value1 = reading.value1;
+    const value2 = reading.value2;
+    
+    // Return the primary value, or value2 if value1 is not available
+    const value = value1 !== undefined ? value1 : value2;
+    
+    if (value === undefined || value === null) return '—';
+    
+    // Format based on sensor type
+    const type = sensor.type?.toLowerCase() || '';
+    if (type.includes('temperature')) {
+      return value.toFixed(1);
+    }
+    if (type.includes('humidity') || type.includes('moisture')) {
+      return value.toFixed(0);
+    }
+    if (type.includes('ph')) {
+      return value.toFixed(2);
+    }
+    if (type.includes('light')) {
+      return value.toFixed(0);
+    }
+    
+    // Default formatting
+    return value.toFixed(1);
+  }
+
+  getSensorUnit(sensor: Sensor): string {
+    if (!sensor) return '';
+    
+    const type = sensor.type?.toLowerCase() || '';
+    
+    if (type.includes('temperature')) return '°C';
+    if (type.includes('humidity') || type.includes('moisture')) return '%';
+    if (type.includes('light')) return 'lux';
+    if (type.includes('ph')) return 'pH';
+    if (type.includes('pressure')) return 'Pa';
+    
+    return sensor.unit || '';
+  }
+
+  getConcernedValueType(control: DeviceControl): string {
+    // If sensor exists, use sensor type
+    if (control.sensor) {
+      return this.getSensorTypeDisplayName(control.sensor);
+    }
+    
+    // Otherwise, infer from device type
+    const deviceType = control.device.device_type?.toLowerCase() || '';
+    const deviceName = control.device.name?.toLowerCase() || '';
+    
+    if (deviceType.includes('humidity') || deviceName.includes('humid') || deviceType.includes('humidifier')) {
+      return this.languageService.t()('sensors.humidity') || 'Humidity';
+    }
+    if (deviceType.includes('temperature') || deviceName.includes('temp') || deviceType.includes('heater') || deviceType.includes('thermostat')) {
+      return this.languageService.t()('sensors.temperature') || 'Temperature';
+    }
+    if (deviceType.includes('light') || deviceName.includes('light') || deviceType.includes('lamp')) {
+      return this.languageService.t()('sensors.lightLevel') || 'Light';
+    }
+    if (deviceType.includes('fan') || deviceName.includes('fan') || deviceType.includes('ventilation') || deviceName.includes('vent')) {
+      return this.languageService.t()('sensors.temperature') || 'Temperature'; // Fans control temperature
+    }
+    if (deviceType.includes('pump') || deviceName.includes('pump') || deviceType.includes('irrigation') || deviceName.includes('water')) {
+      return this.languageService.t()('sensors.soilMoisture') || 'Soil Moisture'; // Pumps control soil moisture
+    }
+    
+    // Fallback to device type name
+    return this.getDeviceTypeName(control.device);
+  }
+
+  getConcernedValue(control: DeviceControl): string | null {
+    // If sensor reading exists, use it
+    if (control.sensor && control.sensorReading) {
+      const value1 = control.sensorReading.value1;
+      const value2 = control.sensorReading.value2;
+      const value = value1 !== undefined ? value1 : value2;
+      
+      if (value !== undefined && value !== null) {
+        return this.getSensorCurrentValue(control.sensorReading, control.sensor);
+      }
+    }
+    
+    // No sensor reading available
+    return null;
+  }
+
+  getConcernedValueUnit(control: DeviceControl): string {
+    // If sensor exists, use sensor unit
+    if (control.sensor) {
+      return this.getSensorUnit(control.sensor);
+    }
+    
+    // Otherwise, infer from device type
+    const deviceType = control.device.device_type?.toLowerCase() || '';
+    const deviceName = control.device.name?.toLowerCase() || '';
+    
+    if (deviceType.includes('humidity') || deviceName.includes('humid') || deviceType.includes('humidifier')) {
+      return '%';
+    }
+    if (deviceType.includes('temperature') || deviceName.includes('temp') || deviceType.includes('heater') || deviceType.includes('thermostat') || deviceType.includes('fan') || deviceType.includes('ventilation')) {
+      return '°C';
+    }
+    if (deviceType.includes('light') || deviceName.includes('light') || deviceType.includes('lamp')) {
+      return 'lux';
+    }
+    if (deviceType.includes('pump') || deviceName.includes('pump') || deviceType.includes('irrigation') || deviceName.includes('water')) {
+      return '%';
+    }
+    
+    return '';
   }
 
 }

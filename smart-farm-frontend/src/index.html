@@ -48,60 +48,194 @@
 <body>
   <app-root></app-root>
 
-  <!-- Initial Loading Indicator -->
-  <!-- Note: This is replaced by the Angular Smart Loading Screen component -->
-  <!-- See: /shared/components/smart-loading-screen/ for the full animated version -->
-  <div id="loading" style="
+  <!-- Initial Loading Indicator - Agriculture Theme -->
+  <!-- This shows immediately while Angular bootstraps -->
+  <div id="initial-loading" style="
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #33691E 100%);
+    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 75%, #2E7D32 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 10000;
+    overflow: hidden;
   ">
-    <div style="text-align: center;">
+    <!-- Agriculture SVG Animation -->
+    <svg class="agriculture-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" style="
+      width: 280px;
+      height: 280px;
+      stroke: #A5D6A7;
+      stroke-width: 4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10;
+      filter: drop-shadow(0 0 20px rgba(165, 214, 167, 0.6));
+    ">
+      <g id="initial-circle">
+        <path d="M100 197.6c-53.9 0-97.6-43.7-97.6-97.6S46.1 2.4 100 2.4s97.6 43.7 97.6 97.6-43.7 97.6-97.6 97.6z"/>
+      </g>
+      <path id="initial-leafs1" d="M100 197.5v-32.8c-.1-5.1-1.1-12.4-5.8-17.1-7.3-7.3-23-5.4-23-5.4s-2.5 15 5.4 23c3.5 3.5 8.8 4.9 13.5 5.4m9.9 26.9v-32.8c.1-5.1 1.1-12.4 5.8-17.1 7.3-7.3 23-5.4 23-5.4s2.5 15-5.4 23c-3.5 3.5-8.8 4.9-13.5 5.4"/>
+      <path id="initial-leafs2" d="M100 162.5v-32.8c-.1-5.1-1.1-12.4-5.8-17.1-7.3-7.3-23-5.4-23-5.4s-2.5 15 5.4 23c3.5 3.5 8.8 4.9 13.5 5.4m9.9 26.9v-32.8c.1-5.1 1.1-12.4 5.8-17.1 7.3-7.3 23-5.4 23-5.4s2.5 15-5.4 23c-3.5 3.5-8.8 4.9-13.5 5.4"/>
+      <path id="initial-leafs3" d="M100 129.5V93.7c-.1-5.1-1.1-12.4-5.8-17.1-7.3-7.3-23-5.4-23-5.4s-2.5 15 5.4 23c3.5 3.5 8.8 4.9 13.5 5.4m9.9 29.9V93.7c.1-5.1 1.1-12.4 5.8-17.1 7.3-7.3 23-5.4 23-5.4s2.5 15-5.4 23c-3.5 3.5-8.8 4.9-13.5 5.4"/>
+      <path id="initial-leaf4" d="M112.4 51.4c0 10.5-12.4 20.1-12.4 20.1s-12.4-9-12.4-20.1C87.6 41 100 31.3 100 31.3s12.4 8.9 12.4 20.1z"/>
+    </svg>
+
+    <!-- Loading Message -->
+    <p style="
+      color: #E8F5E9;
+      font-family: 'Poppins', 'Roboto', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin: 2rem 0 0 0;
+      text-align: center;
+      letter-spacing: 1.5px;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(165, 214, 167, 0.4);
+      animation: textGlow 3s ease-in-out infinite;
+    ">Growing your smart network…</p>
+
+    <!-- Progress Dots -->
+    <div style="display: flex; gap: 12px; margin-top: 1.5rem;">
       <div style="
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        animation: bounce 2s ease-in-out infinite;
-      ">🌱</div>
-      <div style="
-        width: 40px;
-        height: 40px;
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-top: 4px solid #A5D6A7;
+        width: 12px;
+        height: 12px;
+        background: #A5D6A7;
         border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 1rem;
+        box-shadow: 0 0 15px rgba(165, 214, 167, 0.8);
+        animation: dotBounce 1.5s ease-in-out infinite;
       "></div>
-      <p style="color: #ffffff; font-family: 'Roboto', sans-serif; font-size: 1.2rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">Loading Smart Farm...</p>
+      <div style="
+        width: 12px;
+        height: 12px;
+        background: #A5D6A7;
+        border-radius: 50%;
+        box-shadow: 0 0 15px rgba(165, 214, 167, 0.8);
+        animation: dotBounce 1.5s ease-in-out 0.2s infinite;
+      "></div>
+      <div style="
+        width: 12px;
+        height: 12px;
+        background: #A5D6A7;
+        border-radius: 50%;
+        box-shadow: 0 0 15px rgba(165, 214, 167, 0.8);
+        animation: dotBounce 1.5s ease-in-out 0.4s infinite;
+      "></div>
     </div>
   </div>
 
   <style>
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    /* Gradient animation */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+
+    /* SVG line drawing animations */
+    #initial-circle path {
+      stroke-dasharray: 620;
+      stroke-dashoffset: 620;
+      animation: drawLine 3s ease-in-out infinite;
+      animation-delay: 0s;
+    }
+    #initial-leafs1 {
+      stroke-dasharray: 620;
+      stroke-dashoffset: 620;
+      animation: drawLine 3s ease-in-out infinite;
+      animation-delay: 0.3s;
+    }
+    #initial-leafs2 {
+      stroke-dasharray: 620;
+      stroke-dashoffset: 620;
+      animation: drawLine 3s ease-in-out infinite;
+      animation-delay: 0.6s;
+    }
+    #initial-leafs3 {
+      stroke-dasharray: 620;
+      stroke-dashoffset: 620;
+      animation: drawLine 3s ease-in-out infinite;
+      animation-delay: 0.9s;
+    }
+    #initial-leaf4 {
+      stroke-dasharray: 620;
+      stroke-dashoffset: 620;
+      animation: drawLine 3s ease-in-out infinite;
+      animation-delay: 1.2s;
+    }
+
+    @keyframes drawLine {
+      0% {
+        stroke-dashoffset: 620;
+        opacity: 0;
+      }
+      15% {
+        opacity: 1;
+      }
+      40% {
+        stroke-dashoffset: 0;
+      }
+      90% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+      100% {
+        stroke-dashoffset: 620;
+        opacity: 0;
+      }
+    }
+
+    /* Text glow animation */
+    @keyframes textGlow {
+      0%, 100% {
+        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(165, 214, 167, 0.4);
+      }
+      50% {
+        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6), 0 0 50px rgba(165, 214, 167, 0.6);
+      }
+    }
+
+    /* Dot bounce animation */
+    @keyframes dotBounce {
+      0%, 60%, 100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      30% {
+        transform: translateY(-15px) scale(1.2);
+        opacity: 0.7;
+      }
+    }
+
+    /* Responsive sizing */
+    @media (max-width: 768px) {
+      .agriculture-svg {
+        width: 220px !important;
+        height: 220px !important;
+      }
     }
   </style>
 
   <script>
-    // Hide loading indicator when Angular app is ready
-    window.addEventListener('load', function() {
+    // Hide initial loading when Angular is ready
+    window.addEventListener('DOMContentLoaded', function() {
+      // Wait a bit longer to ensure smooth transition to Angular loader
       setTimeout(function() {
-        const loading = document.getElementById('loading');
+        const loading = document.getElementById('initial-loading');
         if (loading) {
-          loading.style.display = 'none';
+          // Fade out smoothly
+          loading.style.transition = 'opacity 0.6s ease-in-out';
+          loading.style.opacity = '0';
+          setTimeout(function() {
+            loading.style.display = 'none';
+          }, 600);
         }
-      }, 200); // Hide quickly to show Angular component
+      }, 500); // Wait 500ms before starting fade out
     });
   </script>
 </body>

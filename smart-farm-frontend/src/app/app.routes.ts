@@ -50,7 +50,7 @@ export const routes: Routes = [
   },
   {
     path: 'crops',
-    loadComponent: () => import('./features/crops/crops.component').then(m => m.CropsComponent),
+    loadComponent: () => import('./features/crops/crops-with-fallback.component').then(m => m.CropsWithFallbackComponent),
     canActivate: [authGuard]
   },
   {

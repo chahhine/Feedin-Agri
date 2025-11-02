@@ -1,187 +1,206 @@
-// ===== TABLE STYLES ===== (TerraFlow Style)
+/**
+ * Devices Table View Styles
+ * Styles for the table layout
+ */
+
 .table-container {
-  overflow-x: auto;
-  border-radius: 12px;
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--user-menu-bg);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--user-menu-shadow);
+  border: 1px solid var(--header-border);
+  margin-bottom: 2rem;
 
   .devices-table {
     width: 100%;
-    background: var(--card-bg, #ffffff);
 
-    th {
-      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    ::ng-deep {
+      .mat-mdc-table {
+        background: transparent;
+      }
+
+      .mat-mdc-header-row {
+        background: rgba(46, 125, 50, 0.05);
+      }
+
+      .mat-mdc-header-cell {
+        color: var(--header-text);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+      }
+
+      .mat-mdc-cell {
+        color: var(--header-text);
+        padding: 1rem;
+        font-size: 0.9375rem;
+      }
+
+      .mat-mdc-row {
+        transition: background-color 0.2s ease;
+
+        &:hover {
+          background: rgba(46, 125, 50, 0.03);
+        }
+
+        &:focus-within {
+          background: rgba(46, 125, 50, 0.05);
+          outline: 2px solid #2e7d32;
+          outline-offset: -2px;
+        }
+      }
+
+      .mat-sort-header-arrow {
+        color: #2e7d32;
+      }
+    }
+
+    .device-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .device-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      span {
+        font-weight: 500;
+      }
+    }
+
+    .status-chip {
       font-weight: 600;
-      color: var(--text-primary, #1f2937);
-      padding: 1rem;
-      border-bottom: 2px solid var(--border-color, #e5e7eb);
-    }
+      border-radius: 20px;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      min-width: 90px;
+      justify-content: center;
 
-    td {
-      padding: 1rem;
-      border-bottom: 1px solid var(--border-color, #e5e7eb);
-    }
-
-    .device-row {
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      animation: slideUp 0.3s ease;
-
-      &:hover {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
-        transform: scale(1.01);
-        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+      .status-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
       }
 
-      &:last-child td {
-        border-bottom: none;
+      &.online {
+        background: #4caf50;
+        color: white;
+      }
+
+      &.offline {
+        background: #f44336;
+        color: white;
+      }
+
+      &.maintenance {
+        background: #ff9800;
+        color: white;
+      }
+    }
+
+    button {
+      margin: 0 0.25rem;
+
+      &:focus-visible {
+        outline: 2px solid #2e7d32;
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  ::ng-deep {
+    .mat-mdc-paginator {
+      background: transparent;
+      border-top: 1px solid var(--header-border);
+      color: var(--header-text);
+
+      .mat-mdc-paginator-container {
+        padding: 0.75rem 1rem;
+        min-height: 56px;
+      }
+
+      .mat-mdc-select-value,
+      .mat-mdc-paginator-range-label {
+        color: var(--header-text);
+      }
+
+      .mat-mdc-icon-button {
+        &:focus-visible {
+          outline: 2px solid #2e7d32;
+          outline-offset: 2px;
+        }
       }
     }
   }
 }
 
-.device-name {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  transition: all 0.3s ease;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .table-container {
+    border-radius: 8px;
 
-  mat-icon {
-    color: #10b981;
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-    transition: transform 0.3s ease;
-  }
+    .devices-table {
+      ::ng-deep {
+        .mat-mdc-header-cell,
+        .mat-mdc-cell {
+          padding: 0.75rem 0.5rem;
+          font-size: 0.8125rem;
+        }
 
-  span {
-    font-weight: 500;
-    color: var(--text-primary, #1f2937);
-  }
+        .mat-mdc-header-cell {
+          font-size: 0.75rem;
+        }
+      }
 
-  &:hover mat-icon {
-    transform: scale(1.2) rotate(5deg);
-  }
-}
+      .device-name-cell {
+        gap: 0.5rem;
 
-.status-icon {
-  font-size: 16px !important;
-  width: 16px !important;
-  height: 16px !important;
-  margin-right: 4px;
-}
+        .device-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
 
-// Pulse animation for online status
-.pulse-online {
-  position: relative;
-  overflow: visible;
+      .status-chip {
+        font-size: 0.6875rem;
+        padding: 0.2rem 0.5rem;
+        min-width: 80px;
+      }
+    }
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 12px;
-    width: 8px;
-    height: 8px;
-    background: #10b981;
-    border-radius: 50%;
-    transform: translateY(-50%);
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-}
+    ::ng-deep {
+      .mat-mdc-paginator {
+        .mat-mdc-paginator-container {
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          padding: 0.5rem;
+        }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: translateY(-50%) scale(1.5);
+        .mat-mdc-paginator-page-size {
+          margin: 0;
+        }
+      }
+    }
   }
 }
 
-.location-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  mat-icon {
-    color: #10b981;
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-    transition: transform 0.3s ease;
-  }
-
-  &:hover mat-icon {
-    transform: scale(1.2);
-  }
-}
-
-.device-type {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
-  color: #10b981;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  display: inline-block;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
-  }
-}
-
-.last-seen {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary, #6b7280);
-
-  mat-icon {
-    color: var(--text-secondary, #6b7280);
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-  }
-}
-
-.delete-action {
-  color: #ef4444;
-
-  mat-icon {
-    color: #ef4444;
-  }
-}
-
-body.dark-theme .table-container {
-  border-color: var(--border-color, #334155);
-
+/* Hide specific columns on mobile */
+@media (max-width: 480px) {
   .devices-table {
-    background: var(--card-bg, #1e293b);
-
-    th {
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: var(--text-primary, #f1f5f9);
-      border-bottom-color: var(--border-color, #334155);
-    }
-
-    td {
-      border-bottom-color: var(--border-color, #334155);
-    }
-
-    .device-row {
-      &:hover {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+    ::ng-deep {
+      .mat-column-type,
+      .mat-column-location {
+        display: none;
       }
     }
   }
-
-  .device-name span {
-    color: var(--text-primary, #f1f5f9);
-  }
 }
-

@@ -146,4 +146,16 @@ export class AuthService {
     const user = this.getCurrentUser();
     return user ? roles.includes(user.role) : false;
   }
+
+  /**
+   * Check if email exists in the system
+   * Used for async form validation
+   */
+  checkEmailExists(email: string): Observable<boolean> {
+    return this.http.get<{ exists: boolean }>(`${this.API_URL}/auth/check-email?email=${encodeURIComponent(email)}`, { withCredentials: true })
+      .pipe(
+        map(response => response.exists),
+        catchError(() => of(true)) // On error, assume email exists to allow form submission
+      );
+  }
 }

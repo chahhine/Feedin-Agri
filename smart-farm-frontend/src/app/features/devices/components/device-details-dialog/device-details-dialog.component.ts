@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, inject } from '@angular/core';
+import { Component, Inject, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,13 +8,16 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatBadgeModule } from '@angular/material/badge';
+import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 
 import { Device, Sensor, SensorReading } from '../../../../core/models/farm.model';
 import { ApiService } from '../../../../core/services/api.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ThemeService } from '../../../../core/services/theme.service';
+import { AlertService } from '../../../../core/services/alert.service';
+import * as DeviceUtils from '../../device.utils';
 
 export interface DeviceDetailsDialogData {
   device: Device;
@@ -33,22 +36,56 @@ export interface DeviceDetailsDialogData {
     MatDividerModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    MatListModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatBadgeModule
   ],
   templateUrl: './device-details-dialog.component.html',
-  styleUrl: './device-details-dialog.component.scss'
+  styleUrl: './device-details-dialog.component.scss',
+  animations: [
+    trigger('dialogAnimation', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'scale(0.9) translateY(20px)' }),
+        animate('400ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'scale(1) translateY(0)' }))
+      ]),
+      transition(':leave', [
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 0, transform: 'scale(0.95) translateY(-10px)' }))
+      ])
+    ]),
+    trigger('contentAnimation', [
+      transition(':enter', [
+        query('.detail-item, .metric-card', [
+          style({ opacity: 0, transform: 'translateY(10px)' }),
+          stagger(50, [
+            animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ], { optional: true })
+      ])
+    ])
+  ]
 })
 export class DeviceDetailsDialogComponent implements OnInit {
   private apiService = inject(ApiService);
-  private snackBar = inject(MatSnackBar);
+  private alertService = inject(AlertService);
   public languageService = inject(LanguageService);
+  public themeService = inject(ThemeService);
 
   device: Device;
-  sensors: Sensor[] = [];
-  isLoadingSensors = false;
+  sensors = signal<Sensor[]>([]);
+  recentReadings = signal<SensorReading[]>([]);
+  deviceActions = signal<any[]>([]);
+  
+  isLoadingSensors = signal(false);
+  isLoadingReadings = signal(false);
+  isLoadingActions = signal(false);
+  isLoadingStats = signal(false);
+  
   deviceStatistics: any = null;
-  isLoadingStats = false;
+
+  // Computed properties
+  readonly isDarkTheme = computed(() => this.themeService.currentTheme === 'dark');
+  readonly sensorCount = computed(() => this.sensors().length);
+  readonly hasReadings = computed(() => this.recentReadings().length > 0);
+  readonly recentActionsCount = computed(() => this.deviceActions().length);
 
   constructor(
     public dialogRef: MatDialogRef<DeviceDetailsDialogComponent>,
@@ -59,83 +96,175 @@ export class DeviceDetailsDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDeviceSensors();
+    this.loadRecentReadings();
+    this.loadDeviceActions();
     this.loadDeviceStatistics();
   }
 
   private loadDeviceSensors(): void {
-    this.isLoadingSensors = true;
+    this.isLoadingSensors.set(true);
     this.apiService.getSensorsByDevice(this.device.device_id).subscribe({
       next: (sensors) => {
-        this.sensors = sensors;
-        this.isLoadingSensors = false;
+        this.sensors.set(sensors || []);
+        this.isLoadingSensors.set(false);
       },
       error: (error) => {
         console.error('Error loading device sensors:', error);
-        this.isLoadingSensors = false;
-        this.snackBar.open(
-          this.languageService.t()('errors.networkError'),
-          this.languageService.t()('common.close'),
-          { duration: 3000, panelClass: ['error-snackbar'] }
-        );
+        this.isLoadingSensors.set(false);
+        this.alertService.error('errors.networkError', 'devices.errorLoadingSensors');
+      }
+    });
+  }
+
+  private loadRecentReadings(): void {
+    this.isLoadingReadings.set(true);
+    this.apiService.getReadingsByDevice(this.device.device_id, 10, 0).subscribe({
+      next: (readings) => {
+        this.recentReadings.set(readings || []);
+        this.isLoadingReadings.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading recent readings:', error);
+        this.isLoadingReadings.set(false);
+      }
+    });
+  }
+
+  private loadDeviceActions(): void {
+    this.isLoadingActions.set(true);
+    this.apiService.getDeviceActions(this.device.device_id).subscribe({
+      next: (actions) => {
+        this.deviceActions.set(actions || []);
+        this.isLoadingActions.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading device actions:', error);
+        this.isLoadingActions.set(false);
       }
     });
   }
 
   private loadDeviceStatistics(): void {
-    this.isLoadingStats = true;
+    this.isLoadingStats.set(true);
     this.apiService.getDeviceStatistics().subscribe({
       next: (stats) => {
-        this.deviceStatistics = stats;
-        this.isLoadingStats = false;
+        // Try to find device-specific stats
+        if (stats && Array.isArray(stats)) {
+          this.deviceStatistics = stats.find((s: any) => s.device_id === this.device.device_id) || null;
+        } else {
+          this.deviceStatistics = stats;
+        }
+        this.isLoadingStats.set(false);
       },
       error: (error) => {
         console.error('Error loading device statistics:', error);
-        this.isLoadingStats = false;
+        this.isLoadingStats.set(false);
       }
     });
   }
 
-  getStatusColor(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'online':
-        return 'primary';
-      case 'offline':
-        return 'warn';
-      case 'maintenance':
-        return 'accent';
-      default:
-        return 'basic';
-    }
+  // Utility methods
+  getDeviceIcon(type: string): string {
+    return DeviceUtils.getDeviceTypeIcon(type || 'unknown');
+  }
+
+  getDeviceTypeTranslation(type: string): string {
+    return DeviceUtils.getDeviceTypeTranslation(type || 'unknown', this.languageService.t());
+  }
+
+  getStatusTranslation(status: string): string {
+    return DeviceUtils.getStatusTranslation(status, this.languageService.t());
   }
 
   getStatusIcon(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'online':
-        return 'wifi';
-      case 'offline':
-        return 'wifi_off';
-      case 'maintenance':
-        return 'build';
+    return DeviceUtils.getStatusIcon(status);
+  }
+
+  getDeviceTypeGradient(type: string): string {
+    return DeviceUtils.getDeviceTypeGradient(type || 'unknown');
+  }
+
+  formatDate(date: Date | string | undefined): string {
+    if (!date) return this.languageService.t()('common.never');
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const lang = this.languageService.currentLanguage();
+    return d.toLocaleString(lang, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  formatRelativeTime(date: Date | string | undefined): string {
+    if (!date) return this.languageService.t()('common.never');
+    return DeviceUtils.formatTimeAgo(date as any, this.languageService.t());
+  }
+
+  getSensorTypeIcon(sensorType: string): string {
+    switch (sensorType?.toLowerCase()) {
+      case 'temperature':
+        return 'thermostat';
+      case 'humidity':
+        return 'water_drop';
+      case 'soil_moisture':
+      case 'soil':
+        return 'water';
+      case 'light':
+        return 'light_mode';
+      case 'ph':
+        return 'science';
       default:
-        return 'help';
+        return 'sensors';
     }
   }
 
-  getDeviceTypeIcon(deviceType: string): string {
-    if (!deviceType) return 'devices';
-
-    switch (deviceType.toLowerCase()) {
-      case 'sensor':
-        return 'sensors';
-      case 'controller':
-        return 'settings';
-      case 'gateway':
-        return 'router';
-      case 'camera':
-        return 'videocam';
+  getSensorTypeColor(sensorType: string): string {
+    switch (sensorType?.toLowerCase()) {
+      case 'temperature':
+        return '#ef4444';
+      case 'humidity':
+        return '#3b82f6';
+      case 'soil_moisture':
+      case 'soil':
+        return '#10b981';
+      case 'light':
+        return '#f59e0b';
+      case 'ph':
+        return '#8b5cf6';
       default:
-        return 'devices';
+        return '#6b7280';
     }
+  }
+
+  getStatusColor(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'online':
+        return '#10b981';
+      case 'offline':
+        return '#ef4444';
+      case 'maintenance':
+        return '#f59e0b';
+      default:
+        return '#6b7280';
+    }
+  }
+
+  calculateUptime(): string {
+    if (!this.device.last_seen || !this.device.created_at) return 'N/A';
+    
+    const created = new Date(this.device.created_at);
+    const now = new Date();
+    const diff = now.getTime() - created.getTime();
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
   }
 
   onClose(): void {
@@ -151,48 +280,10 @@ export class DeviceDetailsDialogComponent implements OnInit {
   }
 
   onRestart(): void {
-    // TODO: Implement device restart functionality
-    this.snackBar.open(
-      this.languageService.t()('devices.restartInitiated'),
-      this.languageService.t()('common.close'),
-      { duration: 3000 }
-    );
+    this.alertService.info('devices.restartInitiated', 'devices.restartDeviceMessage');
   }
 
   onUpdateFirmware(): void {
-    // TODO: Implement firmware update functionality
-    this.snackBar.open(
-      this.languageService.t()('devices.firmwareUpdateInitiated'),
-      this.languageService.t()('common.close'),
-      { duration: 3000 }
-    );
-  }
-
-  formatDate(date: Date | string | undefined): string {
-    if (!date) return this.languageService.t()('common.none');
-    return new Date(date).toLocaleString();
-  }
-
-  getSensorTypeIcon(sensorType: string): string {
-    switch (sensorType.toLowerCase()) {
-      case 'temperature':
-        return 'thermostat';
-      case 'humidity':
-        return 'water_drop';
-      case 'soil_moisture':
-        return 'water';
-      case 'light':
-        return 'light_mode';
-      case 'ph':
-        return 'science';
-      default:
-        return 'sensors';
-    }
-  }
-
-  getSensorStatusColor(sensor: Sensor): string {
-    // This would be based on sensor readings and thresholds
-    return 'primary';
+    this.alertService.info('devices.firmwareUpdateInitiated', 'devices.firmwareUpdateMessage');
   }
 }
-

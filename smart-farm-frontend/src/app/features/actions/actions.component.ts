@@ -32,8 +32,8 @@ import { ActionDetailsDialogComponent } from './components/action-details-dialog
 // import { ManualActionsV2Component } from '../dashboard/components/manual-actions-v2/manual-actions-v2.component';
 import { ManualControlComponent } from './components/manual-control/manual-control.component';
 import { ActionStreamComponent } from './components/action-stream/action-stream.component';
-import { SharedFabComponent } from '../../shared/components/shared-fab/shared-fab.component';
 import { LanguageService } from '../../core/services/language.service';
+import { DateRangePickerDialog } from './date-range-picker-dialog.component';
 
 interface ActionFilters {
   device_id?: string;
@@ -82,7 +82,6 @@ interface ActionStats {
     FormsModule,
     ManualControlComponent,
     ActionStreamComponent,
-    SharedFabComponent,
   ],
   animations: [
     // Tab switch animation
@@ -178,9 +177,15 @@ interface ActionStats {
       </div>
 
       <!-- Tabs: Trust → Awareness → Control -->
-      <mat-tab-group class="actions-tabs" animationDuration="300ms">
+      <mat-tab-group class="actions-tabs glass-card" animationDuration="300ms">
         <!-- 1️⃣ Action History Tab (TRUST - The Hero Page) -->
-        <mat-tab [label]="languageService.t()('actions.history')">
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <div class="custom-tab-label">
+              <mat-icon class="tab-icon">history</mat-icon>
+              <span>{{ languageService.t()('actions.history') }}</span>
+            </div>
+          </ng-template>
           <div class="tab-content" [@tabSwitch]>
             <ng-template #loadingState>
               <div style="display:flex;align-items:center;justify-content:center;padding:2rem;">
@@ -209,21 +214,27 @@ interface ActionStats {
 
                   <!-- Advanced Date Range Picker -->
                   <button mat-icon-button
-                          [matMenuTriggerFor]="dateRangeMenu"
+                          (click)="openDateRangePicker()"
                           matTooltip="{{ languageService.t()('actions.customRange') }}"
                           class="calendar-trigger">
                         <mat-icon>date_range</mat-icon>
                       </button>
+
+                  <!-- Selected Date Range Display -->
+                  <div class="selected-date-range" *ngIf="fromDateFilter.value && toDateFilter.value">
+                    <mat-icon>event</mat-icon>
+                    <span class="date-range-text">
+                      {{ fromDateFilter.value | date:'shortDate' }} - {{ toDateFilter.value | date:'shortDate' }}
+                    </span>
+                    <button mat-icon-button 
+                            class="clear-date-range"
+                            (click)="clearDateRange()"
+                            matTooltip="Clear date range">
+                      <mat-icon>close</mat-icon>
+                      </button>
+                  </div>
                     </div>
                   </div>
-
-              <!-- Date Range Menu (triggered by the calendar icon) -->
-              <mat-menu #dateRangeMenu="matMenu">
-                <button mat-menu-item (click)="showAdvancedFilters.set(true)">
-                  <mat-icon>tune</mat-icon>
-                  {{ languageService.t()('actions.moreFilters') }}
-                </button>
-              </mat-menu>
 
               <!-- Advanced Filters Grid -->
               <div class="filters-grid" [@slideIn] *ngIf="showAdvancedFilters()">
@@ -258,36 +269,74 @@ interface ActionStats {
                       </div>
 
               <!-- Toggle Advanced Filters -->
-              <button mat-button class="toggle-filters-btn" (click)="showAdvancedFilters.set(!showAdvancedFilters())">
-                <mat-icon>{{ showAdvancedFilters() ? 'expand_less' : 'expand_more' }}</mat-icon>
-                {{ showAdvancedFilters() ? languageService.t()('actions.lessFilters') : languageService.t()('actions.moreFilters') }}
+              <button mat-button class="toggle-filters-btn glass-btn" (click)="showAdvancedFilters.set(!showAdvancedFilters())">
+                <mat-icon class="toggle-icon" [class.rotated]="showAdvancedFilters()">{{ showAdvancedFilters() ? 'expand_less' : 'expand_more' }}</mat-icon>
+                <span class="toggle-text">{{ showAdvancedFilters() ? languageService.t()('actions.lessFilters') : languageService.t()('actions.moreFilters') }}</span>
               </button>
                       </div>
 
             <!-- View Toggle: Table vs Timeline -->
             <div class="view-toggle-section">
-              <mat-button-toggle-group [(value)]="selectedView" class="view-toggle-group">
-                <mat-button-toggle value="table">
-                  <mat-icon>table_rows</mat-icon>
-                  {{ languageService.t()('actions.tableView') }}
-                </mat-button-toggle>
-                <mat-button-toggle value="timeline">
-                  <mat-icon>timeline</mat-icon>
-                  {{ languageService.t()('actions.timelineView') }}
-                </mat-button-toggle>
-              </mat-button-toggle-group>
+              <div class="view-toggle-container glass-card">
+                <button
+                  class="view-toggle-btn"
+                  [class.active]="selectedView() === 'table'"
+                  [class.inactive]="selectedView() !== 'table'"
+                  (click)="selectedView.set('table')"
+                  [attr.aria-label]="languageService.t()('actions.tableView')">
+                  <div class="toggle-icon-wrapper">
+                    <mat-icon class="toggle-icon">grid_view</mat-icon>
+                    <mat-icon class="toggle-icon-active">table_chart</mat-icon>
+                  </div>
+                  <span class="toggle-label">{{ languageService.t()('actions.tableView') }}</span>
+                  <div class="toggle-indicator"></div>
+                </button>
+                <button
+                  class="view-toggle-btn"
+                  [class.active]="selectedView() === 'timeline'"
+                  [class.inactive]="selectedView() !== 'timeline'"
+                  (click)="selectedView.set('timeline')"
+                  [attr.aria-label]="languageService.t()('actions.timelineView')">
+                  <div class="toggle-icon-wrapper">
+                    <mat-icon class="toggle-icon">list</mat-icon>
+                    <mat-icon class="toggle-icon-active">timeline</mat-icon>
+                  </div>
+                  <span class="toggle-label">{{ languageService.t()('actions.timelineView') }}</span>
+                  <div class="toggle-indicator"></div>
+                </button>
+              </div>
 
               <!-- Export Actions -->
-              <div class="action-buttons">
-                <button mat-stroked-button (click)="exportToPDF()">
-                  <mat-icon>picture_as_pdf</mat-icon>
-                  {{ languageService.t()('actions.exportPDF') }}
+              <div class="export-buttons-container">
+                <button
+                  class="export-btn"
+                  [class.pdf]="true"
+                  (click)="exportToPDF()"
+                  [disabled]="isExportingPDF() || filteredActions().length === 0"
+                  [attr.aria-label]="languageService.t()('actions.exportPDF')">
+                  <div class="export-icon-wrapper">
+                    <mat-icon class="export-icon">picture_as_pdf</mat-icon>
+                  </div>
+                  <span class="export-label">{{ languageService.t()('actions.exportPDF') }}</span>
+                  @if (isExportingPDF()) {
+                    <mat-icon class="export-loading">hourglass_empty</mat-icon>
+                  }
                 </button>
-                <button mat-stroked-button (click)="exportToCSV()">
-                  <mat-icon>file_download</mat-icon>
-                  {{ languageService.t()('actions.exportCSV') }}
+                <button
+                  class="export-btn"
+                  [class.csv]="true"
+                  (click)="exportToCSV()"
+                  [disabled]="isExportingCSV() || filteredActions().length === 0"
+                  [attr.aria-label]="languageService.t()('actions.exportCSV')">
+                  <div class="export-icon-wrapper">
+                    <mat-icon class="export-icon">file_download</mat-icon>
+                  </div>
+                  <span class="export-label">{{ languageService.t()('actions.exportCSV') }}</span>
+                  @if (isExportingCSV()) {
+                    <mat-icon class="export-loading">hourglass_empty</mat-icon>
+                  }
                 </button>
-                    </div>
+              </div>
                       </div>
 
             <!-- TABLE VIEW -->
@@ -497,22 +546,31 @@ interface ActionStats {
         </mat-tab>
 
         <!-- 2️⃣ Manual Control Tab (CONTROL) -->
-        <mat-tab [label]="languageService.t()('actions.manualControl')">
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <div class="custom-tab-label">
+              <mat-icon class="tab-icon">touch_app</mat-icon>
+              <span>{{ languageService.t()('actions.manualControl') }}</span>
+            </div>
+          </ng-template>
           <div class="tab-content">
             <app-manual-control></app-manual-control>
           </div>
         </mat-tab>
 
         <!-- 3️⃣ Action Stream Tab (UNIFIED LIVE + HISTORICAL) -->
-        <mat-tab [label]="languageService.t()('actions.actionStream')">
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <div class="custom-tab-label">
+              <mat-icon class="tab-icon">stream</mat-icon>
+              <span>{{ languageService.t()('actions.actionStream') }}</span>
+            </div>
+          </ng-template>
           <div class="tab-content">
             <app-action-stream></app-action-stream>
           </div>
         </mat-tab>
       </mat-tab-group>
-
-      <!-- Shared FAB -->
-      <app-shared-fab></app-shared-fab>
     </div>
   `,
   styles: [`
@@ -735,43 +793,192 @@ interface ActionStats {
     }
 
     .time-chip {
-      border-radius: 24px;
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
       padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      background: rgba(0, 0, 0, 0.03);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: auto;
+      background: transparent;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 10px;
+      }
 
       mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-        margin-right: 0.25rem;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       &:hover {
-        background: rgba(16, 185, 129, 0.1);
-        border-color: var(--primary-green);
-        transform: translateY(-2px);
+        transform: translateY(-1px);
+        background: rgba(16, 185, 129, 0.05);
+        border-color: rgba(16, 185, 129, 0.2);
+
+        &::before {
+          opacity: 1;
+        }
+
+        mat-icon {
+          transform: scale(1.08);
+        }
+
+        color: var(--primary-green);
+      }
+
+      &:active {
+        transform: translateY(0) scale(0.97);
       }
 
       &.active {
-        background: var(--primary-green);
-        color: white;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08));
         border-color: var(--primary-green);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 2px 12px rgba(16, 185, 129, 0.25), inset 0 1px 1px rgba(16, 185, 129, 0.2);
+        color: var(--primary-green);
+        font-weight: 700;
+
+        &::before {
+          opacity: 1;
+        }
+
+        mat-icon {
+          transform: scale(1.1);
+          color: var(--primary-green);
+        }
+
+        &:hover {
+          box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3), inset 0 1px 1px rgba(16, 185, 129, 0.3);
+        }
       }
     }
 
     .calendar-trigger {
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 50%;
-      transition: all 0.2s ease;
+      position: relative;
+      border: 2px solid var(--glass-border, rgba(0, 0, 0, 0.1));
+      border-radius: 10px;
+      background: transparent;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 10px;
+      }
+
+      mat-icon {
+        color: var(--primary-green);
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
       &:hover {
-        background: rgba(16, 185, 129, 0.1);
+        background: rgba(16, 185, 129, 0.05);
         border-color: var(--primary-green);
+        transform: translateY(-1px);
+
+        &::before {
+          opacity: 1;
+        }
+
+        mat-icon {
+          transform: scale(1.1) rotate(5deg);
+        }
+      }
+
+      &:active {
+        transform: translateY(0) scale(0.97);
+      }
+
+      &:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      }
+    }
+
+    .selected-date-range {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+      border: 2px solid var(--primary-green);
+      border-radius: 10px;
+      margin-left: 0.5rem;
+      animation: slideIn 0.3s ease;
+
+      mat-icon {
+        color: var(--primary-green);
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      .date-range-text {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--primary-green);
+        white-space: nowrap;
+      }
+
+      .clear-date-range {
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        padding: 0;
+        margin-left: 0.25rem;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          color: var(--text-secondary);
+          transition: all 0.2s ease;
+        }
+
+        &:hover {
+          background: rgba(239, 68, 68, 0.1);
+
+          mat-icon {
+            color: #ef4444;
+            transform: scale(1.2);
+          }
+        }
       }
     }
 
@@ -780,19 +987,575 @@ interface ActionStats {
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem;
       margin-top: 1rem;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .filter-field {
       width: 100%;
+      margin-bottom: 0;
+
+      ::ng-deep {
+        // Form field wrapper - compact size with visible border
+        .mat-mdc-text-field-wrapper {
+          background: var(--glass-bg, #ffffff);
+          border-radius: 10px;
+          border: 2px solid var(--primary-green);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
+          padding: 0 !important;
+          height: 48px !important;
+        }
+
+        // Reduce form field height
+        .mat-mdc-form-field-flex {
+          height: 48px !important;
+          align-items: center;
+        }
+
+        // Infix padding reduction
+        .mat-mdc-form-field-infix {
+          padding-top: 10px !important;
+          padding-bottom: 10px !important;
+          min-height: 28px !important;
+        }
+
+        // Notched outline - make it visible (reduced border width)
+        .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: var(--primary-green) !important;
+            border-width: 2px !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          }
+
+          .mdc-notched-outline__leading {
+            border-top-left-radius: 10px !important;
+            border-bottom-left-radius: 10px !important;
+            border-right: none !important;
+          }
+
+          .mdc-notched-outline__notch {
+            border-left: none !important;
+            border-right: none !important;
+          }
+
+          .mdc-notched-outline__trailing {
+            border-top-right-radius: 10px !important;
+            border-bottom-right-radius: 10px !important;
+            border-left: none !important;
+          }
+        }
+
+        // Hover state
+        &:hover .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: var(--primary-green) !important;
+            border-width: 2.5px !important;
+          }
+        }
+
+        // Focus state
+        &.mat-focused {
+          .mat-mdc-text-field-wrapper {
+            box-shadow: 0 3px 12px rgba(16, 185, 129, 0.2), 0 0 0 2px rgba(16, 185, 129, 0.15);
+          }
+
+          .mdc-notched-outline {
+            .mdc-notched-outline__leading,
+            .mdc-notched-outline__notch,
+            .mdc-notched-outline__trailing {
+              border-color: var(--primary-green) !important;
+              border-width: 2.5px !important;
+            }
+          }
+        }
+
+        // Label styling - clean and readable
+        .mat-mdc-form-field-label {
+          color: var(--text-primary, #374151) !important;
+          font-weight: 500 !important;
+          font-size: 0.875rem !important;
+          line-height: 1.4 !important;
+          letter-spacing: normal !important;
+          text-transform: none !important;
+
+          &.mdc-floating-label--float-above {
+            color: var(--primary-green) !important;
+            font-weight: 600 !important;
+            font-size: 0.8125rem !important;
+            letter-spacing: normal !important;
+            text-transform: none !important;
+            background: var(--glass-bg, #ffffff) !important;
+            padding: 0 4px !important;
+          }
+        }
+
+        // Input element styling - compact size
+        .mat-mdc-input-element {
+          color: var(--text-primary, #1f2937) !important;
+          font-weight: 500 !important;
+          font-size: 0.875rem !important;
+          padding: 8px 12px !important;
+          background: transparent !important;
+          line-height: 1.4 !important;
+          height: auto !important;
+
+          &::placeholder {
+            color: var(--text-secondary, #6b7280) !important;
+            opacity: 0.7 !important;
+            font-weight: 400 !important;
+            font-size: 0.8125rem !important;
+          }
+        }
+
+        // Select styling - compact size
+        .mat-mdc-select {
+          .mat-mdc-select-trigger {
+            padding: 8px 12px !important;
+            min-height: auto !important;
+            height: 48px !important;
+            display: flex !important;
+            align-items: center !important;
+
+            .mat-mdc-select-value {
+              color: var(--text-primary, #1f2937) !important;
+              font-weight: 500 !important;
+              font-size: 0.875rem !important;
+              line-height: 1.4 !important;
+            }
+
+            .mat-mdc-select-arrow-wrapper {
+              transform: translateY(0) !important;
+              
+              .mat-mdc-select-arrow {
+                color: var(--primary-green) !important;
+                transition: all 0.3s ease !important;
+                font-size: 20px !important;
+                width: 20px !important;
+                height: 20px !important;
+              }
+            }
+          }
+        }
+
+        // Focused select
+        &.mat-focused .mat-mdc-select .mat-mdc-select-trigger {
+          .mat-mdc-select-arrow-wrapper .mat-mdc-select-arrow {
+            transform: rotate(180deg) scale(1.05) !important;
+          }
+        }
+
+        // Icon styling - enhanced visibility
+        .mat-mdc-form-field-icon-prefix,
+        .mat-mdc-form-field-icon-suffix {
+          color: var(--primary-green) !important;
+          margin: 0 8px 0 4px !important;
+          display: flex !important;
+          align-items: center !important;
+
+          mat-icon {
+            font-size: 22px !important;
+            width: 22px !important;
+            height: 22px !important;
+            opacity: 0.8 !important;
+            transition: opacity 0.2s ease !important;
+          }
+        }
+
+        // Enhanced icon on focus
+        &.mat-focused .mat-mdc-form-field-icon-prefix mat-icon {
+          opacity: 1 !important;
+          transform: scale(1.05) !important;
+        }
+
+        // Dropdown panel - reduced size
+        .mat-mdc-select-panel {
+          background: var(--glass-bg, #ffffff) !important;
+          border: 2px solid var(--primary-green) !important;
+          border-radius: 10px !important;
+          box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2) !important;
+          margin-top: 6px !important;
+          padding: 0.375rem 0 !important;
+          max-height: 280px !important;
+
+          .mat-mdc-option {
+            padding: 0.625rem 1rem !important;
+            margin: 0 0.375rem !important;
+            border-radius: 8px !important;
+            min-height: 40px !important;
+            font-weight: 500 !important;
+            font-size: 0.875rem !important;
+            line-height: 1.5 !important;
+
+            &:hover:not(.mdc-list-item--disabled) {
+              background: rgba(16, 185, 129, 0.1) !important;
+              color: var(--primary-green) !important;
+            }
+
+            &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08)) !important;
+              color: var(--primary-green) !important;
+              font-weight: 600 !important;
+
+              &::before {
+                content: '✓';
+                position: absolute;
+                left: 0.625rem;
+                color: var(--primary-green);
+                font-weight: bold;
+                font-size: 0.9375rem;
+              }
+            }
+          }
+
+          &::-webkit-scrollbar {
+            width: 8px;
+          }
+
+          &::-webkit-scrollbar-track {
+            background: rgba(16, 185, 129, 0.05);
+            border-radius: 4px;
+          }
+
+          &::-webkit-scrollbar-thumb {
+            background: var(--primary-green);
+            border-radius: 4px;
+
+            &:hover {
+              background: #059669;
+            }
+          }
+        }
+      }
     }
 
-    .toggle-filters-btn {
-      margin-top: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
+    // Search Field - Special styling for prominence
+    .search-field {
+      ::ng-deep {
+        .mat-mdc-form-field-icon-prefix mat-icon {
+          font-size: 24px !important;
+          width: 24px !important;
+          height: 24px !important;
+          opacity: 0.9 !important;
+        }
 
-      mat-icon {
-        transition: transform 0.3s ease;
+        &.mat-focused {
+          .mat-mdc-text-field-wrapper {
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25), 0 0 0 3px rgba(16, 185, 129, 0.12) !important;
+          }
+        }
+      }
+    }
+
+    // Tab Group Styling - Simple like table/timeline view
+    .actions-tabs {
+      background: var(--glass-bg, rgba(255, 255, 255, 0.95));
+      border-radius: 16px;
+      border: 1px solid var(--glass-border, rgba(0, 0, 0, 0.08));
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      padding: 0.75rem;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      transition: all 0.3s ease;
+
+      ::ng-deep {
+        .mat-mdc-tab-header {
+          border-bottom: 2px solid var(--glass-border, rgba(16, 185, 129, 0.2));
+          background: transparent;
+          padding: 0 0.5rem;
+        }
+
+        .mat-mdc-tab-labels {
+          gap: 0.5rem;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .mat-mdc-tab {
+          min-width: 140px;
+          padding: 0.5rem 1rem;
+          border-radius: 10px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: transparent;
+          border: 2px solid transparent;
+
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 10px;
+          }
+
+          &:hover:not(.mdc-tab--active)::before {
+            opacity: 1;
+          }
+
+          .mdc-tab__content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            .custom-tab-label {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+              font-weight: 500;
+              color: var(--text-secondary);
+              transition: all 0.3s ease;
+              width: 100%;
+              text-align: center;
+
+              .tab-icon {
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                flex-shrink: 0;
+              }
+
+              span {
+                font-size: 0.875rem;
+                white-space: nowrap;
+                text-align: center;
+                flex: 1;
+              }
+            }
+          }
+
+          &:hover:not(.mdc-tab--active) {
+            transform: translateY(-1px);
+            background: rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.2);
+
+            &::before {
+              opacity: 1;
+            }
+
+            .custom-tab-label {
+              color: var(--primary-green);
+
+              .tab-icon {
+                transform: scale(1.08);
+                color: var(--primary-green);
+              }
+            }
+          }
+
+          &.mdc-tab--active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08));
+            border-color: var(--primary-green);
+            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.25), inset 0 1px 1px rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--primary-green);
+
+            &::before {
+              opacity: 1;
+            }
+
+            .custom-tab-label {
+              color: var(--primary-green);
+              font-weight: 700;
+
+              .tab-icon {
+                color: var(--primary-green);
+                transform: scale(1.1);
+              }
+
+              span {
+                text-shadow: none;
+              }
+            }
+
+            .mdc-tab-indicator__content {
+              display: none;
+            }
+          }
+
+          @keyframes gentlePulse {
+            0%, 100% {
+              transform: scale(1.04);
+              opacity: 1;
+            }
+            50% {
+              transform: scale(1.05);
+              opacity: 0.9;
+            }
+          }
+
+          &:not(.mdc-tab--active) {
+            .custom-tab-label {
+              .tab-icon {
+                color: var(--text-secondary);
+              }
+            }
+          }
+        }
+
+        .mat-mdc-ink-bar {
+          display: none;
+        }
+      }
+
+      @media (max-width: 768px) {
+        padding: 0.25rem;
+
+        ::ng-deep {
+          .mat-mdc-tab {
+            min-width: 100px;
+            padding: 0.5rem 1rem;
+
+            .mdc-tab__content {
+              .custom-tab-label {
+                gap: 0.375rem;
+
+                .tab-icon {
+                  font-size: 18px;
+                  width: 18px;
+                  height: 18px;
+                }
+
+                span {
+                  font-size: 0.75rem;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .tab-content {
+      padding: 1.5rem 0;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    // Toggle Filters Button - Simple like table/timeline view
+    .toggle-filters-btn {
+      margin-top: 1rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 16px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--glass-bg, rgba(255, 255, 255, 0.95));
+      border: 1.5px solid var(--glass-border, rgba(0, 0, 0, 0.1));
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.625rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.08), transparent);
+        transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.2), transparent);
+        transform: translate(-50%, -50%);
+        transition: width 0.4s ease, height 0.4s ease;
+        pointer-events: none;
+      }
+
+      &:hover::before {
+        left: 100%;
+      }
+
+      &:active::after {
+        width: 300px;
+        height: 300px;
+      }
+
+      .toggle-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--primary-green);
+        transform-origin: center;
+      }
+
+      .toggle-text {
+        font-weight: 500;
+        transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        z-index: 1;
+        color: var(--text-primary);
+      }
+
+      &:hover {
+        background: rgba(16, 185, 129, 0.08);
+        border-color: var(--primary-green);
+        color: var(--primary-green);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.12);
+
+        .toggle-text {
+          color: var(--primary-green);
+        }
+
+        .toggle-icon {
+          transform: scale(1.08);
+        }
+      }
+
+      &:active {
+        transform: translateY(0) scale(0.98);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+      }
+
+      .toggle-icon.rotated {
+        transform: rotate(180deg) scale(1.05);
       }
     }
 
@@ -806,6 +1569,166 @@ interface ActionStats {
       gap: 1rem;
     }
 
+    .view-toggle-container {
+      display: flex;
+      gap: 0.375rem;
+      padding: 0.25rem;
+      background: var(--glass-bg, rgba(255, 255, 255, 0.7));
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.4));
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .view-toggle-btn {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      min-width: auto;
+      background: transparent;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 12px;
+      }
+
+      .toggle-icon-wrapper {
+        position: relative;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        .toggle-icon {
+          position: absolute;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toggle-icon-active {
+          position: absolute;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+          opacity: 0;
+          transform: scale(0.8) rotate(-90deg);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+      }
+
+      .toggle-label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: nowrap;
+      }
+
+      .toggle-indicator {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%) scaleX(0);
+        width: 70%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--primary-green), transparent);
+        border-radius: 2px;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      &:hover {
+        transform: translateY(-1px);
+        background: rgba(16, 185, 129, 0.05);
+        border-color: rgba(16, 185, 129, 0.2);
+
+        &::before {
+          opacity: 1;
+        }
+
+        .toggle-icon-wrapper {
+          transform: scale(1.08);
+        }
+
+        .toggle-label {
+          color: var(--primary-green);
+        }
+      }
+
+      &:active {
+        transform: translateY(0) scale(0.97);
+      }
+
+      &.active {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08));
+        border-color: var(--primary-green);
+        box-shadow: 0 2px 12px rgba(16, 185, 129, 0.25), inset 0 1px 1px rgba(16, 185, 129, 0.2);
+
+        &::before {
+          opacity: 1;
+        }
+
+        .toggle-icon-wrapper {
+          transform: scale(1.1);
+
+          .toggle-icon {
+            opacity: 0;
+            transform: scale(0.8) rotate(90deg);
+          }
+
+          .toggle-icon-active {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+            color: var(--primary-green);
+          }
+        }
+
+        .toggle-label {
+          color: var(--primary-green);
+          font-weight: 700;
+        }
+
+        .toggle-indicator {
+          transform: translateX(-50%) scaleX(1);
+        }
+
+        &:hover {
+          box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3), inset 0 1px 1px rgba(16, 185, 129, 0.3);
+        }
+      }
+
+      &.inactive {
+        .toggle-icon {
+          color: var(--text-secondary);
+        }
+
+        .toggle-label {
+          color: var(--text-secondary);
+        }
+      }
+    }
+
     .view-toggle-group {
       border-radius: 8px;
       overflow: hidden;
@@ -814,6 +1737,155 @@ interface ActionStats {
     .action-buttons {
       display: flex;
       gap: 0.5rem;
+    }
+
+    .export-buttons-container {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .export-btn {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      min-width: auto;
+      background: var(--glass-bg, rgba(255, 255, 255, 0.7));
+      backdrop-filter: blur(12px);
+      border: 2px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 10px;
+      }
+
+      .export-icon-wrapper {
+        position: relative;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .export-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .export-label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .export-loading {
+        position: absolute;
+        right: 0.5rem;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        animation: spin 1s linear infinite;
+        color: var(--primary-green);
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      &.pdf {
+        &::before {
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+        }
+
+        .export-icon {
+          color: #ef4444;
+        }
+
+        &:hover:not(:disabled) {
+          background: rgba(239, 68, 68, 0.1);
+          border-color: rgba(239, 68, 68, 0.3);
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+
+          &::before {
+            opacity: 1;
+          }
+
+          .export-icon-wrapper {
+            transform: scale(1.1);
+          }
+
+          .export-label {
+            color: #ef4444;
+          }
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0) scale(0.97);
+        }
+      }
+
+      &.csv {
+        &::before {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+        }
+
+        .export-icon {
+          color: var(--primary-green);
+        }
+
+        &:hover:not(:disabled) {
+          background: rgba(16, 185, 129, 0.1);
+          border-color: rgba(16, 185, 129, 0.3);
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+
+          &::before {
+            opacity: 1;
+          }
+
+          .export-icon-wrapper {
+            transform: scale(1.1);
+          }
+
+          .export-label {
+            color: var(--primary-green);
+          }
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0) scale(0.97);
+        }
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
     }
 
     // Table View Styling
@@ -1253,7 +2325,7 @@ interface ActionStats {
 
     // Dark Theme Support
     :host-context(body.dark-theme) {
-      .kpi-card, .glass-card {
+      .kpi-card, .glass-card, .view-toggle-container {
         background: var(--glass-bg, rgba(30, 41, 59, 0.7));
         border-color: var(--glass-border, rgba(100, 116, 139, 0.3));
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(100, 116, 139, 0.1);
@@ -1261,6 +2333,37 @@ interface ActionStats {
 
       .kpi-card:hover, .glass-card:hover {
         box-shadow: 0 12px 24px rgba(16, 185, 129, 0.2), inset 0 1px 1px rgba(100, 116, 139, 0.2);
+      }
+
+      .view-toggle-btn {
+        &.active {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15));
+          box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35), inset 0 1px 2px rgba(16, 185, 129, 0.3);
+
+          &:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4), inset 0 1px 2px rgba(16, 185, 129, 0.4);
+          }
+        }
+
+        &:hover {
+          background: rgba(16, 185, 129, 0.1);
+        }
+      }
+
+      .export-btn {
+        &.pdf {
+          &:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+          }
+        }
+
+        &.csv {
+          &:hover:not(:disabled) {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.4);
+          }
+        }
       }
 
       .actions-table th.sticky-header {
@@ -1272,6 +2375,180 @@ interface ActionStats {
           rgba(16, 185, 129, 0.5) 0%,
           rgba(16, 185, 129, 0.2) 50%,
           transparent 100%);
+      }
+
+      // Dark mode for time filter chips
+      .time-chip {
+        background: var(--card-bg, rgba(30, 41, 59, 0.8));
+        border-color: var(--border-color, rgba(100, 116, 139, 0.3));
+        color: var(--text-secondary, #cbd5e1);
+
+        &:hover {
+          background: rgba(16, 185, 129, 0.15);
+          border-color: var(--primary-green);
+          color: var(--primary-green);
+        }
+
+        &.active {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15));
+          border-color: var(--primary-green);
+          color: var(--primary-green);
+          box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35), inset 0 1px 2px rgba(16, 185, 129, 0.3);
+        }
+      }
+
+      // Dark mode for calendar trigger
+      .calendar-trigger {
+        background: var(--card-bg, rgba(30, 41, 59, 0.8));
+        border-color: var(--border-color, rgba(100, 116, 139, 0.3));
+
+        &:hover {
+          background: rgba(16, 185, 129, 0.15);
+          border-color: var(--primary-green);
+        }
+      }
+
+      // Dark mode for filter fields
+      .filter-field ::ng-deep {
+        .mat-mdc-text-field-wrapper {
+          background: var(--card-bg, #1e293b) !important;
+        }
+
+        .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: var(--primary-green) !important;
+            border-width: 2px !important;
+          }
+        }
+
+        &:hover .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-width: 2.5px !important;
+          }
+        }
+
+        &.mat-focused {
+          .mat-mdc-text-field-wrapper {
+            box-shadow: 0 3px 12px rgba(16, 185, 129, 0.3), 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+          }
+
+          .mdc-notched-outline {
+            .mdc-notched-outline__leading,
+            .mdc-notched-outline__notch,
+            .mdc-notched-outline__trailing {
+              border-width: 2.5px !important;
+            }
+          }
+        }
+
+        .mat-mdc-form-field-label {
+          color: var(--text-primary, #f1f5f9) !important;
+          font-weight: 600 !important;
+          font-size: 0.8125rem !important;
+
+          &.mdc-floating-label--float-above {
+            color: var(--primary-green) !important;
+            font-weight: 700 !important;
+            font-size: 0.75rem !important;
+          }
+        }
+
+        .mat-mdc-input-element {
+          color: var(--text-primary, #f1f5f9) !important;
+          font-weight: 500 !important;
+          font-size: 0.875rem !important;
+
+          &::placeholder {
+            color: var(--text-secondary, #94a3b8) !important;
+            opacity: 0.7 !important;
+          }
+        }
+
+        .mat-mdc-select-trigger .mat-mdc-select-value {
+          color: var(--text-primary, #f1f5f9) !important;
+          font-weight: 500 !important;
+          font-size: 0.875rem !important;
+        }
+
+        .mat-mdc-select-panel {
+          background: var(--card-bg, #1e293b) !important;
+          border-color: var(--primary-green) !important;
+
+          .mat-mdc-option {
+            color: var(--text-primary, #f1f5f9) !important;
+            font-weight: 500 !important;
+            font-size: 0.875rem !important;
+
+            &:hover:not(.mdc-list-item--disabled) {
+              background: rgba(16, 185, 129, 0.15) !important;
+            }
+
+            &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15)) !important;
+            }
+          }
+        }
+      }
+
+      // Dark mode for selected date range
+      .selected-date-range {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+        border-color: var(--primary-green);
+      }
+
+      // Dark mode for toggle filters button text
+      .toggle-filters-btn {
+        .toggle-text {
+          color: var(--text-primary, #f1f5f9);
+        }
+
+        &:hover .toggle-text {
+          color: var(--primary-green);
+        }
+      }
+
+      // Dark mode for dropdown panel
+      ::ng-deep .mat-mdc-select-panel {
+        background: var(--card-bg, rgba(30, 41, 59, 0.98));
+        border-color: var(--border-color, rgba(16, 185, 129, 0.3));
+
+        .mat-mdc-option {
+          color: var(--text-primary, #f1f5f9);
+
+          &:hover:not(.mdc-list-item--disabled) {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--primary-green);
+          }
+
+          &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15));
+            color: var(--primary-green);
+          }
+        }
+      }
+
+      // Dark mode for tabs
+      .actions-tabs {
+        background: var(--card-bg, rgba(30, 41, 59, 0.95));
+        border-color: var(--border-color, rgba(100, 116, 139, 0.3));
+
+        ::ng-deep .mat-mdc-tab {
+          color: var(--text-secondary, #cbd5e1);
+
+          &:hover:not(.mdc-tab--active) {
+            background: rgba(16, 185, 129, 0.1);
+          }
+
+          &.mdc-tab--active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15));
+            border-color: var(--primary-green);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35), inset 0 1px 2px rgba(16, 185, 129, 0.3);
+          }
+        }
       }
     }
 
@@ -1333,6 +2610,33 @@ interface ActionStats {
         gap: 1rem;
       }
 
+      .view-toggle-container {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .view-toggle-btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 0.5rem 0.75rem;
+        gap: 0.375rem;
+
+        .toggle-icon-wrapper {
+          width: 18px;
+          height: 18px;
+
+          .toggle-icon, .toggle-icon-active {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+        }
+
+        .toggle-label {
+          font-size: 0.75rem;
+        }
+      }
+
       .timeline-item {
         padding-left: 2.5rem;
       }
@@ -1378,6 +2682,7 @@ interface ActionStats {
         flex-direction: column;
       }
     }
+
   `]
 })
 export class ActionsComponent implements OnInit, OnDestroy {
@@ -1392,6 +2697,8 @@ export class ActionsComponent implements OnInit, OnDestroy {
   isLoading = signal(false);
   actions = signal<ActionLog[]>([]);
   devices = signal<Device[]>([]);
+  isExportingPDF = signal(false);
+  isExportingCSV = signal(false);
   farms = signal<Farm[]>([]);
   selectedTimeFilter = signal<'today' | 'yesterday' | 'week' | 'month'>('today');
 
@@ -1743,6 +3050,39 @@ export class ActionsComponent implements OnInit, OnDestroy {
     this.selectedTimeFilter.set(filter as 'today' | 'yesterday' | 'week' | 'month');
   }
 
+  openDateRangePicker(): void {
+    // Create a simple dialog with date range picker with backdrop blur
+    const dialogRef = this.dialog.open(DateRangePickerDialog, {
+      width: '90%',
+      maxWidth: '600px',
+      data: {
+        fromDate: this.fromDateFilter.value,
+        toDate: this.toDateFilter.value
+      },
+      panelClass: 'date-range-picker-dialog',
+      backdropClass: 'date-range-picker-backdrop',
+      disableClose: false,
+      hasBackdrop: true
+    });
+
+    dialogRef.afterClosed().subscribe((result: { fromDate: Date | null; toDate: Date | null } | undefined) => {
+      if (result) {
+        this.fromDateFilter.setValue(result.fromDate);
+        this.toDateFilter.setValue(result.toDate);
+        // Apply the date filter
+        if (result.fromDate && result.toDate) {
+          this.selectedTimeFilter.set('custom' as any);
+        }
+      }
+    });
+  }
+
+  clearDateRange(): void {
+    this.fromDateFilter.setValue(null);
+    this.toDateFilter.setValue(null);
+    this.selectedTimeFilter.set('today');
+  }
+
   getTimeFilterLabel(): string {
     switch (this.selectedTimeFilter()) {
       case 'today': return this.languageService.t()('actions.today');
@@ -1999,42 +3339,305 @@ export class ActionsComponent implements OnInit, OnDestroy {
   }
 
   exportToPDF(): void {
-    // Placeholder for PDF export
-    this.snackBar.open(
-      this.languageService.t()('actions.exportPDFComingSoon'),
-      this.languageService.t()('common.close'),
-      { duration: 3000 }
-    );
+    if (this.filteredActions().length === 0 || this.isExportingPDF()) return;
+
+    this.isExportingPDF.set(true);
+
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const filename = `actions-export-${timestamp}.pdf`;
+
+      // Create HTML content for PDF
+      const htmlContent = this.generatePDFHTML();
+
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Pop-up blocked. Please allow pop-ups for this site.');
+      }
+
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+
+      // Wait for content to load, then trigger print
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+
+        // Close window after print dialog
+        setTimeout(() => {
+          printWindow.close();
+          this.isExportingPDF.set(false);
+          this.snackBar.open(
+            this.languageService.t()('actions.exportPDF') + ' ' + this.languageService.t()('common.success'),
+            this.languageService.t()('common.close'),
+            { duration: 3000, panelClass: ['success-snackbar'] }
+          );
+        }, 250);
+      }, 500);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      this.isExportingPDF.set(false);
+      this.snackBar.open(
+        this.languageService.t()('common.error') + ': ' + (error instanceof Error ? error.message : 'Export failed'),
+        this.languageService.t()('common.close'),
+        { duration: 5000, panelClass: ['error-snackbar'] }
+      );
+    }
+  }
+
+  private generatePDFHTML(): string {
+    const actions = this.filteredActions();
+    const stats = this.kpiStats();
+    const currentDate = new Date().toLocaleString();
+    const farmName = this.selectedFarmFilter() !== 'all'
+      ? this.farms().find(f => f.farm_id === this.selectedFarmFilter())?.name || ''
+      : this.languageService.t()('actions.allFarms');
+
+    // Calculate additional stats
+    const successful = actions.filter(a => a.status === 'sent' || a.status === 'ack').length;
+    const failed = actions.filter(a => a.status === 'error' || a.status === 'failed').length;
+    const manual = actions.filter(a => a.trigger_source === 'manual').length;
+    const auto = actions.filter(a => a.trigger_source === 'auto').length;
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Actions Export</title>
+  <style>
+    @media print {
+      @page { margin: 1cm; }
+      body { margin: 0; }
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      color: #333;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 3px solid #10b981;
+      padding-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      color: #10b981;
+      font-size: 28px;
+    }
+    .header .meta {
+      color: #666;
+      font-size: 14px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #10b981;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #10b981;
+      margin-bottom: 5px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 12px;
+    }
+    th {
+      background: #10b981;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    tr:hover {
+      background: #f8f9fa;
+    }
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-sent { background: #d1fae5; color: #065f46; }
+    .status-confirmed { background: #dbeafe; color: #1e40af; }
+    .status-failed { background: #fee2e2; color: #991b1b; }
+    .status-queued { background: #fef3c7; color: #92400e; }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: #999;
+      font-size: 11px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${this.languageService.t()('actions.title')}</h1>
+    <div class="meta">
+      ${farmName} | ${currentDate} | ${actions.length} ${this.languageService.t()('actions.totalActions')}
+    </div>
+  </div>
+
+    <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value">${stats.total}</div>
+      <div class="stat-label">${this.languageService.t()('actions.totalActions')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${successful}</div>
+      <div class="stat-label">${this.languageService.t()('actions.successful')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${manual}</div>
+      <div class="stat-label">${this.languageService.t()('actions.manual')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${auto}</div>
+      <div class="stat-label">${this.languageService.t()('actions.automatic')}</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>${this.languageService.t()('actions.timestamp')}</th>
+        <th>${this.languageService.t()('actions.targetDevice')}</th>
+        <th>${this.languageService.t()('actions.actionType')}</th>
+        <th>${this.languageService.t()('actions.triggerSource')}</th>
+        <th>${this.languageService.t()('actions.status')}</th>
+        <th>${this.languageService.t()('actions.performedBy')}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${actions.map(action => `
+        <tr>
+          <td>${new Date(action.created_at).toLocaleString()}</td>
+          <td>${this.getDeviceName(action.device_id)}</td>
+          <td>${this.getActionName(action.action_uri)}</td>
+          <td>${this.getSourceText(action.trigger_source)}</td>
+          <td><span class="status-badge status-${action.status}">${this.getStatusText(action.status)}</span></td>
+          <td>${action.trigger_source === 'manual' ? this.languageService.t()('actions.operator') : this.languageService.t()('actions.system')}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    Generated by Smart Farm Management System | ${new Date().toLocaleString()}
+  </div>
+</body>
+</html>
+    `;
   }
 
   exportToCSV(): void {
-    // Simple CSV export implementation
-    const csvData = this.filteredActions().map(action => ({
-      timestamp: action.created_at,
-      action: this.getActionName(action.action_uri),
-      trigger: action.trigger_source,
-      status: action.status,
-      device: this.getDeviceName(action.device_id)
-    }));
+    if (this.filteredActions().length === 0 || this.isExportingCSV()) return;
 
-    const csv = this.convertToCSV(csvData);
-    this.downloadCSV(csv, 'actions-export.csv');
+    this.isExportingCSV.set(true);
+
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const filename = `actions-export-${timestamp}.csv`;
+
+      const csvData = this.filteredActions().map(action => ({
+        [this.languageService.t()('actions.timestamp')]: new Date(action.created_at).toLocaleString(),
+        [this.languageService.t()('actions.targetDevice')]: this.getDeviceName(action.device_id),
+        [this.languageService.t()('actions.actionType')]: this.getActionName(action.action_uri),
+        [this.languageService.t()('actions.triggerSource')]: this.getSourceText(action.trigger_source),
+        [this.languageService.t()('actions.status')]: this.getStatusText(action.status),
+        [this.languageService.t()('actions.performedBy')]: action.trigger_source === 'manual'
+          ? this.languageService.t()('actions.operator')
+          : this.languageService.t()('actions.system'),
+        [this.languageService.t()('actions.actionUri')]: action.action_uri || '',
+        'Device ID': action.device_id || '',
+        'Sensor ID': action.sensor_id || ''
+      }));
+
+      const csv = this.convertToCSV(csvData);
+      this.downloadCSV(csv, filename);
+
+      setTimeout(() => {
+        this.isExportingCSV.set(false);
+        this.snackBar.open(
+          this.languageService.t()('actions.exportCSV') + ' ' + this.languageService.t()('common.success'),
+          this.languageService.t()('common.close'),
+          { duration: 3000, panelClass: ['success-snackbar'] }
+        );
+      }, 300);
+    } catch (error) {
+      console.error('CSV export error:', error);
+      this.isExportingCSV.set(false);
+      this.snackBar.open(
+        this.languageService.t()('common.error') + ': ' + (error instanceof Error ? error.message : 'Export failed'),
+        this.languageService.t()('common.close'),
+        { duration: 5000, panelClass: ['error-snackbar'] }
+      );
+    }
   }
 
   private convertToCSV(data: any[]): string {
     if (data.length === 0) return '';
-    const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(row => Object.values(row).join(','));
+
+    // Escape function for CSV values
+    const escapeCSV = (value: any): string => {
+      if (value === null || value === undefined) return '';
+      const str = String(value);
+      // If value contains comma, quote, or newline, wrap in quotes and escape quotes
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+
+    const headers = Object.keys(data[0]).map(escapeCSV).join(',');
+    const rows = data.map(row =>
+      Object.values(row).map(escapeCSV).join(',')
+    );
+
     return [headers, ...rows].join('\n');
   }
 
   private downloadCSV(csv: string, filename: string): void {
-    const blob = new Blob([csv], { type: 'text/csv' });
+    // Add BOM for UTF-8 to ensure proper encoding in Excel
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   }
 }

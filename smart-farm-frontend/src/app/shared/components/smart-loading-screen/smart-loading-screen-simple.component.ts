@@ -1,11 +1,8 @@
 /**
- * Smart Loading Screen Component - CSS-Only Version
+ * Smart Loading Screen Component - Agriculture Theme
  *
- * This is a simplified version that works without external dependencies.
- * No need to install ngx-lottie - pure CSS animations!
- *
- * For the full Lottie animation version, see smart-loading-screen.component.ts
- * and follow LOADING_SCREEN_INSTALLATION.md
+ * Pure CSS animation loader with agriculture/plant growth theme.
+ * Lightweight, no external dependencies, smooth infinite loop.
  */
 
 import { Component, Input } from '@angular/core';
@@ -17,67 +14,48 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="loading-wrapper" *ngIf="isLoading" [@fadeInOut]>
-      <!-- Ambient Glow Particles -->
-      <div class="particle-container">
-        <div *ngFor="let i of particleIndexes" class="particle" [style.--particle-index]="i"></div>
+    <div class="loader-wrapper" *ngIf="isLoading" [@fadeInOut]>
+      <!-- Animated Gradient Background -->
+      <div class="gradient-background"></div>
+
+      <!-- Floating Particles -->
+      <div class="particles-container">
+        <div *ngFor="let i of particleIndexes" 
+             class="particle" 
+             [style.--particle-index]="i">
+        </div>
       </div>
 
-      <!-- Background Gradient Overlay -->
-      <div class="gradient-overlay"></div>
-
-      <!-- Animation Container -->
-      <div class="animation-container">
-        <!-- CSS-based Pulse/Ripple Effect -->
-        <div class="pulse-animation">
-          <div class="pulse-circle pulse-1"></div>
-          <div class="pulse-circle pulse-2"></div>
-          <div class="pulse-circle pulse-3"></div>
-        </div>
-
-        <!-- CSS-based Sprout Animation - ULTRA REALISTIC -->
-        <div class="sprout-animation">
-          <div class="sprout-seed"></div>
-          <div class="sprout-stem"></div>
-          <div class="sprout-leaf sprout-leaf-left"></div>
-          <div class="sprout-leaf sprout-leaf-right"></div>
-          <div class="sprout-leaf sprout-leaf-top"></div>
-          <div class="sprout-base"></div>
-        </div>
+      <!-- Main Loader Container -->
+      <div class="loader-container">
+        <!-- Agriculture SVG Animation -->
+        <svg class="agriculture-loader" 
+             xmlns="http://www.w3.org/2000/svg" 
+             viewBox="0 0 200 200"
+             aria-label="Loading animation">
+          <g class="loader-circle">
+            <path d="M100 197.6c-53.9 0-97.6-43.7-97.6-97.6S46.1 2.4 100 2.4s97.6 43.7 97.6 97.6-43.7 97.6-97.6 97.6z"/>
+          </g>
+          <path class="loader-stem-base" d="M100 197.5v-32.8c-.1-5.1-1.1-12.4-5.8-17.1-7.3-7.3-23-5.4-23-5.4s-2.5 15 5.4 23c3.5 3.5 8.8 4.9 13.5 5.4m9.9 26.9v-32.8c.1-5.1 1.1-12.4 5.8-17.1 7.3-7.3 23-5.4 23-5.4s2.5 15-5.4 23c-3.5 3.5-8.8 4.9-13.5 5.4"/>
+          <path class="loader-stem-mid" d="M100 162.5v-32.8c-.1-5.1-1.1-12.4-5.8-17.1-7.3-7.3-23-5.4-23-5.4s-2.5 15 5.4 23c3.5 3.5 8.8 4.9 13.5 5.4m9.9 26.9v-32.8c.1-5.1 1.1-12.4 5.8-17.1 7.3-7.3 23-5.4 23-5.4s2.5 15-5.4 23c-3.5 3.5-8.8 4.9-13.5 5.4"/>
+          <path class="loader-stem-top" d="M100 129.5V93.7c-.1-5.1-1.1-12.4-5.8-17.1-7.3-7.3-23-5.4-23-5.4s-2.5 15 5.4 23c3.5 3.5 8.8 4.9 13.5 5.4m9.9 29.9V93.7c.1-5.1 1.1-12.4 5.8-17.1 7.3-7.3 23-5.4 23-5.4s2.5 15-5.4 23c-3.5 3.5-8.8 4.9-13.5 5.4"/>
+          <path class="loader-leaf-top" d="M112.4 51.4c0 10.5-12.4 20.1-12.4 20.1s-12.4-9-12.4-20.1C87.6 41 100 31.3 100 31.3s12.4 8.9 12.4 20.1z"/>
+        </svg>
 
         <!-- Glow Effect -->
-        <div class="glow-effect"></div>
+        <div class="loader-glow"></div>
       </div>
 
-      <!-- Loading Text and Progress -->
-      <div class="loading-content">
-        <div class="loading-icon">🌱</div>
-        <h2 class="loading-message">{{ message }}</h2>
-
-        <!-- Custom Progress Ring -->
-        <div class="progress-ring">
-          <svg class="progress-ring-svg" width="60" height="60">
-            <circle
-              class="progress-ring-circle"
-              stroke="#A5D6A7"
-              stroke-width="3"
-              fill="transparent"
-              r="26"
-              cx="30"
-              cy="30"
-            />
-          </svg>
+      <!-- Loading Message -->
+      <div class="loader-content">
+        <h2 class="loader-message">{{ message }}</h2>
+        
+        <!-- Progress Dots -->
+        <div class="loader-dots">
+          <div class="dot dot-1"></div>
+          <div class="dot dot-2"></div>
+          <div class="dot dot-3"></div>
         </div>
-      </div>
-
-      <!-- Network Dots Animation -->
-      <div class="network-dots">
-        <div class="dot dot-1"></div>
-        <div class="dot dot-2"></div>
-        <div class="dot dot-3"></div>
-        <div class="connection connection-1"></div>
-        <div class="connection connection-2"></div>
-        <div class="connection connection-3"></div>
       </div>
     </div>
   `,
@@ -94,7 +72,7 @@ export class SmartLoadingScreenSimpleComponent {
   @Input() isLoading: boolean = true;
   @Input() message: string = 'Growing your smart network…';
 
-  // Generate array for particle loop
-  particleIndexes = Array.from({ length: 15 }, (_, i) => i);
+  // Generate array for floating particles
+  particleIndexes = Array.from({ length: 20 }, (_, i) => i);
 }
 

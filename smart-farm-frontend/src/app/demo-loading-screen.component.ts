@@ -28,13 +28,13 @@ import { SmartLoadingScreenSimpleComponent } from './shared/components/smart-loa
           <div class="features">
             <h3>✨ What You'll See:</h3>
             <ul>
-              <li>🌿 Animated sprout growing from seed to plant</li>
-              <li>〰️ Pulsing data ripples expanding outward</li>
-              <li>✨ 15 floating particles drifting upward</li>
-              <li>🔗 Network dots with connecting lines</li>
-              <li>⭕ Rotating progress ring</li>
-              <li>🎨 Beautiful green gradient background</li>
-              <li>💫 Smooth fade transitions</li>
+              <li>🌾 Agriculture SVG with line-drawing animation</li>
+              <li>🎨 Animated gradient background (15s loop)</li>
+              <li>✨ 20 floating particles drifting upward</li>
+              <li>🔄 Infinite seamless loop (3s cycle)</li>
+              <li>⚪ Three bouncing progress dots</li>
+              <li>💫 Smooth fade-in/fade-out transitions</li>
+              <li>♿ Accessibility-friendly (respects reduced motion)</li>
             </ul>
           </div>
 
@@ -48,7 +48,7 @@ import { SmartLoadingScreenSimpleComponent } from './shared/components/smart-loa
           </div>
 
           <div class="info">
-            <p><strong>Note:</strong> This is NOT just the bouncing emoji! This is the full component with all animations.</p>
+            <p><strong>Note:</strong> Pure CSS animations - no external dependencies! Lightweight and fast.</p>
           </div>
         </div>
       </div>

@@ -154,26 +154,33 @@ export function isDeviceOnline(lastSeen: string | Date, thresholdMinutes: number
  * @returns Formatted "time ago" string
  */
 export function formatTimeAgo(
-  lastSeen: string | Date,
+  lastSeen: string | Date | undefined,
   translator: (key: string) => string
 ): string {
-  if (!lastSeen) return translator('common.never');
+  if (!lastSeen) return translator('common.never') || 'Never';
 
   const lastSeenDate = new Date(lastSeen);
   const now = new Date();
   const diffSeconds = Math.floor((now.getTime() - lastSeenDate.getTime()) / 1000);
 
+  if (diffSeconds < 0) {
+    return translator('common.justNow') || 'Just now';
+  }
+  
   if (diffSeconds < 60) {
-    return translator('common.justNow');
+    return translator('common.justNow') || 'Just now';
   } else if (diffSeconds < 3600) {
     const minutes = Math.floor(diffSeconds / 60);
-    return `${minutes} ${translator('common.minutesAgo')}`;
+    return `${minutes}m ${translator('common.ago') || 'ago'}`;
   } else if (diffSeconds < 86400) {
     const hours = Math.floor(diffSeconds / 3600);
-    return `${hours} ${translator('common.hoursAgo')}`;
-  } else {
+    return `${hours}h ${translator('common.ago') || 'ago'}`;
+  } else if (diffSeconds < 2592000) { // 30 days
     const days = Math.floor(diffSeconds / 86400);
-    return `${days} ${translator('common.daysAgo')}`;
+    return `${days}d ${translator('common.ago') || 'ago'}`;
+  } else {
+    // For older dates, show the actual date
+    return lastSeenDate.toLocaleDateString();
   }
 }
 

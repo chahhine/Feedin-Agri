@@ -12,7 +12,6 @@ import { FormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { Farm } from '../../../../../core/models/farm.model';
 import { LanguageService } from '../../../../../core/services/language.service';
-import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 export interface FilterState {
   farmId: string;
@@ -34,8 +33,6 @@ export interface FilterState {
     MatIconModule,
     MatSlideToggleModule,
     MatTooltipModule,
-    MatMenuModule,
-    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
@@ -160,28 +157,6 @@ export interface FilterState {
           >
             <mat-icon>{{ density() === 'compact' ? 'view_comfortable' : 'view_compact' }}</mat-icon>
           </button>
-
-          <button
-            mat-icon-button
-            [matMenuTriggerFor]="languageMenu"
-            matTooltip="Language"
-            class="icon-btn language-btn"
-          >
-            <mat-icon>language</mat-icon>
-          </button>
-
-          <mat-menu #languageMenu="matMenu" class="language-menu">
-            @for (lang of languageService.getAvailableLanguages(); track lang.code) {
-              <button
-                mat-menu-item
-                (click)="changeLanguage(lang.code)"
-                [class.active-lang]="languageService.currentLanguage() === lang.code"
-              >
-                <span class="lang-flag">{{ lang.flag }}</span>
-                <span class="lang-name">{{ lang.nativeName }}</span>
-              </button>
-            }
-          </mat-menu>
         </div>
       </div>
     </header>
@@ -266,7 +241,7 @@ export interface FilterState {
       .header-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
         flex-shrink: 0;
       }
 
@@ -277,12 +252,27 @@ export interface FilterState {
       }
 
       .icon-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         color: #6b7280;
         background: transparent;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .icon-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, rgba(16, 185, 129, 0.1), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .icon-btn:hover::before {
+        opacity: 1;
       }
 
       .icon-btn mat-icon {
@@ -628,51 +618,6 @@ export interface FilterState {
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4),
                     inset 0 1px 1px rgba(255, 255, 255, 0.15);
       }
-
-      /* Language Menu Styles */
-      ::ng-deep .language-menu {
-        .mat-mdc-menu-content {
-          padding: 8px 0;
-        }
-
-        .mat-mdc-menu-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px 20px;
-          transition: all 0.2s;
-        }
-
-        .mat-mdc-menu-item:hover {
-          background: rgba(16, 185, 129, 0.08);
-        }
-
-        .mat-mdc-menu-item.active-lang {
-          background: rgba(16, 185, 129, 0.12);
-          color: #10b981;
-          font-weight: 600;
-        }
-
-        .lang-flag {
-          font-size: 1.5rem;
-          line-height: 1;
-        }
-
-        .lang-name {
-          font-size: 0.9rem;
-        }
-      }
-
-      :host-context(body.dark-theme) ::ng-deep .language-menu {
-        .mat-mdc-menu-item:hover {
-          background: rgba(16, 185, 129, 0.15);
-        }
-
-        .mat-mdc-menu-item.active-lang {
-          background: rgba(16, 185, 129, 0.2);
-          color: #34d399;
-        }
-      }
     `,
   ],
 })
@@ -709,10 +654,6 @@ export class GlobalFilterHeaderComponent {
 
   toggleFilters(): void {
     this.filtersVisible.update(v => !v);
-  }
-
-  changeLanguage(languageCode: string): void {
-    this.languageService.setLanguage(languageCode);
   }
 }
 
