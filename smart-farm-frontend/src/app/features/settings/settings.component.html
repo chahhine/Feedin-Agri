@@ -1,0 +1,199 @@
+<!-- Settings Container with Dashboard-consistent styling -->
+<div class="settings-container">
+
+  <!-- Settings Header -->
+  <div class="settings-header-card">
+    <div class="header-content">
+      <div class="header-title">
+        <mat-icon class="header-icon">settings</mat-icon>
+        <div>
+          <h1>Settings</h1>
+          <p class="subtitle">Manage your application preferences and configurations</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Content -->
+  <div class="settings-content">
+
+    <!-- Settings Grid/Cards -->
+    <div class="settings-grid">
+
+      <!-- Notifications Settings Card -->
+      <mat-card class="settings-card" routerLink="/settings/notifications">
+        <div class="card-icon-wrapper">
+          <div class="card-icon notifications">
+            <mat-icon>notifications_active</mat-icon>
+          </div>
+        </div>
+        <mat-card-header>
+          <mat-card-title>
+            <span>Notification Settings</span>
+            <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Configure quiet hours, categories, and cooldown periods for alerts
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="feature-tags">
+            <span class="feature-tag">Quiet Hours</span>
+            <span class="feature-tag">Categories</span>
+            <span class="feature-tag">Cooldown</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Appearance Settings Card (Coming Soon) -->
+      <mat-card class="settings-card coming-soon">
+        <div class="card-icon-wrapper">
+          <div class="card-icon appearance">
+            <mat-icon>palette</mat-icon>
+          </div>
+        </div>
+        <mat-card-header>
+          <mat-card-title>
+            <span>Appearance</span>
+            <span class="badge-coming-soon">Coming Soon</span>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Customize theme, colors, and display preferences
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="feature-tags">
+            <span class="feature-tag">Theme</span>
+            <span class="feature-tag">Dark Mode</span>
+            <span class="feature-tag">Colors</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Language Settings Card (Coming Soon) -->
+      <mat-card class="settings-card coming-soon">
+        <div class="card-icon-wrapper">
+          <div class="card-icon language">
+            <mat-icon>language</mat-icon>
+          </div>
+        </div>
+        <mat-card-header>
+          <mat-card-title>
+            <span>Language & Region</span>
+            <span class="badge-coming-soon">Coming Soon</span>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Set your preferred language and regional formats
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="feature-tags">
+            <span class="feature-tag">Language</span>
+            <span class="feature-tag">Timezone</span>
+            <span class="feature-tag">Date Format</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Privacy & Security Card (Coming Soon) -->
+      <mat-card class="settings-card coming-soon">
+        <div class="card-icon-wrapper">
+          <div class="card-icon security">
+            <mat-icon>security</mat-icon>
+          </div>
+        </div>
+        <mat-card-header>
+          <mat-card-title>
+            <span>Privacy & Security</span>
+            <span class="badge-coming-soon">Coming Soon</span>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Manage data privacy, sessions, and security settings
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="feature-tags">
+            <span class="feature-tag">2FA</span>
+            <span class="feature-tag">Sessions</span>
+            <span class="feature-tag">Data Export</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- System Settings Card (Coming Soon) -->
+      <mat-card class="settings-card coming-soon">
+        <div class="card-icon-wrapper">
+          <div class="card-icon system">
+            <mat-icon>tune</mat-icon>
+          </div>
+        </div>
+        <mat-card-header>
+          <mat-card-title>
+            <span>System Preferences</span>
+            <span class="badge-coming-soon">Coming Soon</span>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Configure system behavior and advanced options
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="feature-tags">
+            <span class="feature-tag">Auto-refresh</span>
+            <span class="feature-tag">Cache</span>
+            <span class="feature-tag">API</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Help & Support Card (Coming Soon) -->
+      <mat-card class="settings-card coming-soon">
+        <div class="card-icon-wrapper">
+          <div class="card-icon support">
+            <mat-icon>help_outline</mat-icon>
+          </div>
+        </div>
+        <mat-card-header>
+          <mat-card-title>
+            <span>Help & Support</span>
+            <span class="badge-coming-soon">Coming Soon</span>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Access documentation, FAQs, and contact support
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="feature-tags">
+            <span class="feature-tag">Docs</span>
+            <span class="feature-tag">FAQ</span>
+            <span class="feature-tag">Contact</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+
+    <!-- Quick Info Section -->
+    <div class="info-section">
+      <mat-card class="info-card">
+        <mat-card-content>
+          <div class="info-content">
+            <mat-icon class="info-icon">info</mat-icon>
+            <div class="info-text">
+              <h3>Need Help?</h3>
+              <p>Settings allow you to customize your TerraFlow experience. Changes are saved automatically and take effect immediately.</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+
+
+
+

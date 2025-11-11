@@ -1,0 +1,325 @@
+<!-- Profile Container with Dashboard-consistent styling -->
+<div class="profile-container">
+
+  <!-- Enhanced Profile Header with Avatar -->
+  <div class="profile-header-card">
+    <div class="avatar-section">
+      <div class="avatar-wrapper">
+        <div class="avatar-circle">
+          <mat-icon class="avatar-icon">person</mat-icon>
+        </div>
+        <button mat-mini-fab class="avatar-edit-btn" color="primary" aria-label="Change profile picture">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+      <div class="user-info">
+        <h1 class="user-name" *ngIf="user()">
+          {{ user()?.first_name }} {{ user()?.last_name }}
+        </h1>
+        <p class="user-role" *ngIf="user()">
+          <mat-icon>work_outline</mat-icon>
+          {{ user()?.role | titlecase }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs for Different Sections -->
+  <div class="profile-content">
+    <mat-tab-group animationDuration="300ms" class="profile-tabs">
+
+      <!-- Profile Information Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">person</mat-icon>
+          <span class="tab-label">Personal Info</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title">
+                <mat-icon>badge</mat-icon>
+                <h2>Personal Information</h2>
+              </div>
+              <p class="section-subtitle">Update your personal details and contact information</p>
+            </div>
+
+            <form [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()" class="profile-form">
+
+              <!-- Name Fields -->
+              <div class="form-section">
+                <h3 class="form-section-title">Full Name</h3>
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>First Name</mat-label>
+                    <input matInput formControlName="first_name" placeholder="Enter first name">
+                    <mat-icon matPrefix>person_outline</mat-icon>
+                    <mat-error *ngIf="profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched">
+                      {{ getErrorMessage(profileForm, 'first_name') }}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Last Name</mat-label>
+                    <input matInput formControlName="last_name" placeholder="Enter last name">
+                    <mat-icon matPrefix>person_outline</mat-icon>
+                    <mat-error *ngIf="profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched">
+                      {{ getErrorMessage(profileForm, 'last_name') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Contact Information -->
+              <div class="form-section">
+                <h3 class="form-section-title">Contact Information</h3>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Email Address</mat-label>
+                  <input matInput type="email" formControlName="email" placeholder="your@email.com">
+                  <mat-icon matPrefix>email</mat-icon>
+                  <mat-error *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+                    {{ getErrorMessage(profileForm, 'email') }}
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Phone Number</mat-label>
+                  <input matInput type="tel" formControlName="phone" placeholder="+1 (555) 000-0000">
+                  <mat-icon matPrefix>phone</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <!-- Location -->
+              <div class="form-section">
+                <h3 class="form-section-title">Location</h3>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Address</mat-label>
+                  <textarea matInput formControlName="address" placeholder="Street address" rows="2"></textarea>
+                  <mat-icon matPrefix>location_on</mat-icon>
+                </mat-form-field>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>City</mat-label>
+                    <input matInput formControlName="city" placeholder="City">
+                    <mat-icon matPrefix>location_city</mat-icon>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Country</mat-label>
+                    <input matInput formControlName="country" placeholder="Country">
+                    <mat-icon matPrefix>public</mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Additional Details -->
+              <div class="form-section">
+                <h3 class="form-section-title">Additional Details</h3>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Date of Birth</mat-label>
+                    <input matInput type="date" formControlName="date_of_birth" title="Select your date of birth">
+                    <mat-icon matPrefix>cake</mat-icon>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Gender</mat-label>
+                    <input matInput formControlName="gender" placeholder="Gender">
+                    <mat-icon matPrefix>wc</mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="form-actions">
+                <button mat-stroked-button type="button" class="cancel-button">
+                  <mat-icon>close</mat-icon>
+                  Cancel
+                </button>
+                <button mat-raised-button color="primary" type="submit" class="save-button" [disabled]="isLoading || profileForm.invalid">
+                  <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
+                  <mat-icon *ngIf="!isLoading">save</mat-icon>
+                  <span *ngIf="!isLoading">Save Changes</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Security Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">lock</mat-icon>
+          <span class="tab-label">Security</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title">
+                <mat-icon>shield</mat-icon>
+                <h2>Change Password</h2>
+              </div>
+              <p class="section-subtitle">Keep your account secure with a strong password</p>
+            </div>
+
+            <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()" class="password-form">
+
+              <div class="security-notice">
+                <mat-icon>info</mat-icon>
+                <div>
+                  <p class="notice-title">Password Requirements</p>
+                  <ul class="notice-list">
+                    <li>At least 6 characters long</li>
+                    <li>Use a combination of letters and numbers</li>
+                    <li>Don't reuse passwords from other accounts</li>
+                  </ul>
+                </div>
+              </div>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Current Password</mat-label>
+                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="currentPassword" placeholder="Enter current password">
+                <mat-icon matPrefix>lock_outline</mat-icon>
+                <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword" [attr.aria-label]="'Toggle password visibility'">
+                  <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                <mat-error *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched">
+                  {{ getErrorMessage(passwordForm, 'currentPassword') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>New Password</mat-label>
+                <input matInput [type]="hideNewPassword ? 'password' : 'text'" formControlName="newPassword" placeholder="Enter new password">
+                <mat-icon matPrefix>vpn_key</mat-icon>
+                <button mat-icon-button matSuffix type="button" (click)="hideNewPassword = !hideNewPassword" [attr.aria-label]="'Toggle password visibility'">
+                  <mat-icon>{{hideNewPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                <mat-error *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+                  {{ getErrorMessage(passwordForm, 'newPassword') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Confirm New Password</mat-label>
+                <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" formControlName="confirmPassword" placeholder="Confirm new password">
+                <mat-icon matPrefix>check_circle_outline</mat-icon>
+                <button mat-icon-button matSuffix type="button" (click)="hideConfirmPassword = !hideConfirmPassword" [attr.aria-label]="'Toggle password visibility'">
+                  <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                <mat-error *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched">
+                  {{ getErrorMessage(passwordForm, 'confirmPassword') }}
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Action Buttons -->
+              <div class="form-actions">
+                <button mat-stroked-button type="button" class="cancel-button">
+                  <mat-icon>close</mat-icon>
+                  Cancel
+                </button>
+                <button mat-raised-button color="primary" type="submit" class="save-button" [disabled]="isPasswordLoading || passwordForm.invalid">
+                  <mat-spinner *ngIf="isPasswordLoading" diameter="20" class="button-spinner"></mat-spinner>
+                  <mat-icon *ngIf="!isPasswordLoading">security</mat-icon>
+                  <span *ngIf="!isPasswordLoading">Update Password</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Account Information Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">info</mat-icon>
+          <span class="tab-label">Account Info</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title">
+                <mat-icon>admin_panel_settings</mat-icon>
+                <h2>Account Details</h2>
+              </div>
+              <p class="section-subtitle">View your account information and activity</p>
+            </div>
+
+            <div class="account-info" *ngIf="user()">
+
+              <div class="info-grid">
+                <div class="info-card">
+                  <div class="info-icon">
+                    <mat-icon>fingerprint</mat-icon>
+                  </div>
+                  <div class="info-details">
+                    <span class="info-label">User ID</span>
+                    <span class="info-value">{{ user()?.user_id }}</span>
+                  </div>
+                </div>
+
+                <div class="info-card">
+                  <div class="info-icon">
+                    <mat-icon>badge</mat-icon>
+                  </div>
+                  <div class="info-details">
+                    <span class="info-label">Role</span>
+                    <span class="info-value">{{ user()?.role | titlecase }}</span>
+                  </div>
+                </div>
+
+                <div class="info-card">
+                  <div class="info-icon status-active">
+                    <mat-icon>verified</mat-icon>
+                  </div>
+                  <div class="info-details">
+                    <span class="info-label">Account Status</span>
+                    <span class="info-value status-badge">{{ user()?.status | titlecase }}</span>
+                  </div>
+                </div>
+
+                <div class="info-card">
+                  <div class="info-icon">
+                    <mat-icon>event</mat-icon>
+                  </div>
+                  <div class="info-details">
+                    <span class="info-label">Member Since</span>
+                    <span class="info-value">{{ user()?.created_at | date:'mediumDate' }}</span>
+                  </div>
+                </div>
+
+                <div class="info-card" *ngIf="user()?.last_login">
+                  <div class="info-icon">
+                    <mat-icon>schedule</mat-icon>
+                  </div>
+                  <div class="info-details">
+                    <span class="info-label">Last Login</span>
+                    <span class="info-value">{{ user()?.last_login | date:'short' }}</span>
+                  </div>
+                </div>
+
+                <div class="info-card">
+                  <div class="info-icon">
+                    <mat-icon>mail_outline</mat-icon>
+                  </div>
+                  <div class="info-details">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">{{ user()?.email }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

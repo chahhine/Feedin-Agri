@@ -1,0 +1,356 @@
+<div class="devices-container" role="main" [attr.aria-label]="languageService.t()('devices.title')">
+  <!-- Enhanced Header with Floating UI -->
+  <div class="devices-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1 id="page-title">{{ languageService.t()('devices.title') }}</h1>
+        <p>{{ languageService.t()('devices.subtitle') }}</p>
+      </div>
+      <div class="header-actions" role="toolbar" aria-label="Device actions">
+        <!-- View Mode Toggle -->
+        <button
+          mat-icon-button
+          (click)="toggleViewMode()"
+          appTooltip="{{ languageService.t()('devices.toggleView') }}"
+          [tooltipOptions]="{ placement: 'bottom', delay: 300 }"
+          class="action-btn"
+          [attr.aria-label]="'Toggle to ' + (viewMode === 'table' ? 'card' : 'table') + ' view'"
+          [attr.title]="languageService.t()('devices.toggleView')"
+          aria-live="polite"
+          type="button">
+          <mat-icon aria-hidden="true">{{ viewMode === 'table' ? 'view_module' : 'table_view' }}</mat-icon>
+        </button>
+
+        <!-- Refresh Button -->
+        <button
+          mat-icon-button
+          (click)="refreshDevices()"
+          [disabled]="isLoading"
+          appTooltip="{{ languageService.t()('common.refresh') }}"
+          [tooltipOptions]="{ placement: 'bottom', delay: 300 }"
+          class="action-btn"
+          [class.refreshing]="isLoading"
+          [attr.aria-label]="languageService.t()('common.refresh')"
+          [attr.title]="languageService.t()('common.refresh')"
+          [attr.aria-busy]="isLoading"
+          type="button">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+        </button>
+
+        <!-- Device Actions Dropdown -->
+        <button
+          mat-icon-button
+          appDropdown="device-actions-menu"
+          [dropdownOptions]="{ placement: 'bottom-end', trigger: 'click' }"
+          class="action-btn"
+          [attr.aria-label]="languageService.t()('devices.moreActions')"
+          [attr.title]="languageService.t()('devices.moreActions')"
+          type="button">
+          <mat-icon aria-hidden="true">more_vert</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Filters Panel -->
+  <div class="filters-panel" role="search" aria-label="Device filters">
+    <div class="filters-content">
+      <div class="filters-header">
+        <h3>
+          <mat-icon aria-hidden="true">filter_list</mat-icon>
+          {{ languageService.t()('devices.searchAndFilter') }}
+          <button
+            mat-icon-button
+            appTooltip="{{ languageService.t()('devices.clearAllFilters') }}"
+            [tooltipOptions]="{ placement: 'top', delay: 300 }"
+            (click)="clearFilters()"
+            [disabled]="!hasActiveFilters"
+            class="clear-btn-icon"
+            [attr.aria-label]="languageService.t()('devices.clearAllFilters')"
+            [attr.title]="languageService.t()('devices.clearAllFilters')"
+            type="button">
+            <mat-icon aria-hidden="true">clear</mat-icon>
+          </button>
+        </h3>
+        <span *ngIf="activeFilterCount > 0" class="active-filters-badge">
+          {{ activeFilterCount }} {{ languageService.t()('devices.activeFilters') }}
+        </span>
+      </div>
+
+      <div class="filters-grid" role="group" aria-label="Filter controls">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label id="device-search-label">{{ languageService.t()('devices.search') }}</mat-label>
+          <input
+            matInput
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            [placeholder]="languageService.t()('devices.searchPlaceholder')"
+            [attr.aria-label]="languageService.t()('devices.search')"
+            [attr.aria-labelledby]="'device-search-label'"
+            [attr.title]="languageService.t()('devices.searchPlaceholder')"
+            role="searchbox"
+            id="device-search-input"
+            name="device-search"
+            type="search"
+            autocomplete="off">
+          <mat-icon matSuffix aria-hidden="true">search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>{{ languageService.t()('devices.filterByStatus') }}</mat-label>
+          <mat-select
+            [(ngModel)]="statusFilter"
+            (selectionChange)="onFilterChange()"
+            [attr.aria-label]="languageService.t()('devices.filterByStatus')">
+            <mat-option value="">{{ languageService.t()('devices.allStatuses') }}</mat-option>
+            <mat-option *ngFor="let status of availableStatuses" [value]="status">
+              {{ getStatusTranslation(status) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>{{ languageService.t()('devices.filterByType') }}</mat-label>
+          <mat-select
+            [(ngModel)]="deviceTypeFilter"
+            (selectionChange)="onFilterChange()"
+            [attr.aria-label]="languageService.t()('devices.filterByType')">
+            <mat-option value="">{{ languageService.t()('devices.allTypes') }}</mat-option>
+            <mat-option *ngFor="let type of availableDeviceTypes" [value]="type">
+              {{ getDeviceTypeTranslation(type) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Loader -->
+  <div class="skeleton-container" *ngIf="isLoading && !devices.length">
+    <div class="skeleton-grid" *ngIf="viewMode === 'cards'">
+      <div class="skeleton-card" *ngFor="let item of [1,2,3,4,5,6]">
+        <div class="skeleton-header">
+          <div class="skeleton-avatar"></div>
+          <div class="skeleton-title"></div>
+        </div>
+        <div class="skeleton-content">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device Cards View -->
+  <div class="devices-grid" *ngIf="viewMode === 'cards' && !isLoading">
+    <mat-card
+      *ngFor="let device of paginatedDevices; trackBy: trackByDeviceId"
+      class="device-card"
+      [class.offline]="device.status === 'offline'"
+      [class.maintenance]="device.status === 'maintenance'"
+      tabindex="0"
+      role="article"
+      [attr.aria-label]="device.name + ' device card'">
+
+      <mat-card-header>
+        <div mat-card-avatar class="device-avatar" [style.background]="getDeviceTypeGradient(device.device_type || 'unknown')">
+          <mat-icon>{{ getDeviceIcon(device.device_type || 'unknown') }}</mat-icon>
+        </div>
+        <mat-card-title>{{ device.name }}</mat-card-title>
+        <mat-card-subtitle>{{ device.location }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="device-info">
+          <div class="info-item">
+            <span class="label">{{ languageService.t()('devices.type') }}:</span>
+            <span class="value">{{ getDeviceTypeTranslation(device.device_type || 'unknown') }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">{{ languageService.t()('devices.lastSeen') }}:</span>
+            <span class="value">{{ formatLastSeen(device.last_seen) }}</span>
+          </div>
+        </div>
+
+        <div class="device-status">
+          <mat-chip
+            [class]="'status-chip ' + device.status"
+            appTooltip="{{ getStatusDescription(device.status) }}"
+            [tooltipOptions]="{ placement: 'top', delay: 300 }">
+            <mat-icon class="status-icon">{{ getStatusIcon(device.status) }}</mat-icon>
+            {{ getStatusTranslation(device.status) }}
+          </mat-chip>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button
+          mat-button
+          (click)="viewDeviceDetails(device)"
+          appTooltip="{{ languageService.t()('devices.viewDetailsTooltip') }}"
+          [tooltipOptions]="{ placement: 'top', delay: 300 }">
+          <mat-icon>visibility</mat-icon>
+          {{ languageService.t()('common.view') }}
+        </button>
+
+        <button
+          mat-button
+          (click)="toggleDeviceStatus(device)"
+          [disabled]="device.status === 'maintenance' || isTogglingStatus[device.device_id]"
+          appTooltip="{{ getToggleActionTooltip(device) }}"
+          [tooltipOptions]="{ placement: 'top', delay: 300 }">
+          <mat-spinner *ngIf="isTogglingStatus[device.device_id]" diameter="20" class="button-spinner"></mat-spinner>
+          <mat-icon *ngIf="!isTogglingStatus[device.device_id]">{{ getToggleActionIcon(device) }}</mat-icon>
+          {{ getToggleActionText(device) }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- Table View -->
+  <div class="table-container" *ngIf="viewMode === 'table' && !isLoading">
+    <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSortChange($event)" class="devices-table">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>
+          {{ languageService.t()('devices.name') }}
+        </th>
+        <td mat-cell *matCellDef="let device">
+          <div class="device-name-cell">
+            <mat-icon class="device-icon" [style.color]="getDeviceIconColor(device.device_type)">
+              {{ getDeviceIcon(device.device_type || 'unknown') }}
+            </mat-icon>
+            <span>{{ device.name }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>
+          {{ languageService.t()('devices.type') }}
+        </th>
+        <td mat-cell *matCellDef="let device">
+          {{ getDeviceTypeTranslation(device.device_type || 'unknown') }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="location">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>
+          {{ languageService.t()('devices.location') }}
+        </th>
+        <td mat-cell *matCellDef="let device">
+          {{ device.location }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>
+          {{ languageService.t()('devices.status') }}
+        </th>
+        <td mat-cell *matCellDef="let device">
+          <mat-chip
+            [class]="'status-chip ' + device.status"
+            appTooltip="{{ getStatusDescription(device.status) }}"
+            [tooltipOptions]="{ placement: 'top', delay: 300 }">
+            <mat-icon class="status-icon">{{ getStatusIcon(device.status) }}</mat-icon>
+            {{ getStatusTranslation(device.status) }}
+          </mat-chip>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="lastSeen">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>
+          {{ languageService.t()('devices.lastSeen') }}
+        </th>
+        <td mat-cell *matCellDef="let device">
+          <span
+            appTooltip="{{ formatLastSeenDetailed(device.last_seen) }}"
+            [tooltipOptions]="{ placement: 'top', delay: 300 }">
+            {{ formatLastSeen(device.last_seen) }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>
+          {{ languageService.t()('common.actions') }}
+        </th>
+        <td mat-cell *matCellDef="let device">
+          <button
+            mat-icon-button
+            (click)="viewDeviceDetails(device)"
+            appTooltip="{{ languageService.t()('devices.viewDetails') }}"
+            [tooltipOptions]="{ placement: 'top', delay: 300 }"
+            [attr.aria-label]="'View ' + device.name + ' details'">
+            <mat-icon>visibility</mat-icon>
+          </button>
+
+          <button
+            mat-icon-button
+            (click)="toggleDeviceStatus(device)"
+            [disabled]="device.status === 'maintenance' || isTogglingStatus[device.device_id]"
+            appTooltip="{{ getToggleActionTooltip(device) }}"
+            [tooltipOptions]="{ placement: 'top', delay: 300 }"
+            [attr.aria-label]="getToggleActionText(device)">
+            <mat-spinner *ngIf="isTogglingStatus[device.device_id]" diameter="20"></mat-spinner>
+            <mat-icon *ngIf="!isTogglingStatus[device.device_id]">{{ getToggleActionIcon(device) }}</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+    </table>
+
+    <mat-paginator
+      [length]="totalDevices"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPageChange($event)"
+      [showFirstLastButtons]="true"
+      [attr.aria-label]="languageService.t()('common.pagination')">
+    </mat-paginator>
+  </div>
+
+  <!-- Loading Overlay for Refresh -->
+  <div class="loading-overlay" *ngIf="isLoading && devices.length > 0">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>{{ languageService.t()('common.loading') }}</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && filteredDevices.length === 0 && devices.length > 0">
+    <mat-icon class="empty-icon">search_off</mat-icon>
+    <h3>{{ languageService.t()('devices.noResultsFound') }}</h3>
+    <p>{{ languageService.t()('devices.tryAdjustingFilters') }}</p>
+    <button mat-raised-button color="primary" (click)="clearFilters()">
+      <mat-icon>clear</mat-icon>
+      {{ languageService.t()('devices.clearFilters') }}
+    </button>
+  </div>
+
+  <!-- No Devices State -->
+  <div class="empty-state" *ngIf="!isLoading && devices.length === 0">
+    <mat-icon class="empty-icon">devices_other</mat-icon>
+    <h3>{{ languageService.t()('devices.noDevicesFound') }}</h3>
+    <p>{{ languageService.t()('devices.noDevicesDescription') }}</p>
+    <button mat-raised-button color="primary" (click)="refreshDevices()">
+      <mat-icon>refresh</mat-icon>
+      {{ languageService.t()('common.refresh') }}
+    </button>
+  </div>
+</div>
+
+<!-- Hidden Dropdown Content Template (used by FloatingUI) -->
+<div id="device-actions-menu" class="dropdown-template">
+  <div class="dropdown-menu" role="menu">
+    <button class="dropdown-item" (click)="exportDeviceData()" tabindex="0" type="button" role="menuitem">
+      <mat-icon>download</mat-icon>
+      <span>{{ languageService.t()('devices.exportData') }}</span>
+    </button>
+    <button class="dropdown-item" (click)="showDeviceStatistics()" tabindex="0" type="button" role="menuitem">
+      <mat-icon>analytics</mat-icon>
+      <span>{{ languageService.t()('devices.viewStatistics') }}</span>
+    </button>
+  </div>
+</div>
