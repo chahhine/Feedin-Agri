@@ -33,6 +33,11 @@ export class CropsController {
     return this.cropsService.getCropsByDateRange(start, end);
   }
 
+  @Get(':id/sensors')
+  async getCropSensors(@Param('id') id: string) {
+    return this.cropsService.getCropSensors(id);
+  }
+
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -40,11 +45,6 @@ export class CropsController {
   ) {
     const shouldIncludeSensors = includeSensors === 'true';
     return this.cropsService.findOne(id, shouldIncludeSensors);
-  }
-
-  @Get(':id/sensors')
-  async getCropSensors(@Param('id') id: string) {
-    return this.cropsService.getCropSensors(id);
   }
 
   @Patch(':id')

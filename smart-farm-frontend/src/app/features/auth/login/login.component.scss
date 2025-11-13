@@ -109,9 +109,9 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
 // Login card - Neumorphic Press & Lift Effect
 .login-card {
   z-index: 10;
-  padding: 40px;
-  border-radius: 20px;
-  max-width: 450px;
+  padding: 32px 36px;
+  border-radius: 18px;
+  max-width: 420px;
   width: 90%;
   text-align: center;
   // MORE SOLID background for shadow visibility
@@ -186,33 +186,33 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
 
 // Logo section
 .logo-section {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
   color: white;
 
   img {
-    max-width: 150px;
+    max-width: 120px;
     height: auto;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     object-fit: contain;
   }
 
   .fallback-icon {
-    font-size: 60px;
-    width: 60px;
-    height: 60px;
-    margin-bottom: 15px;
+    font-size: 52px;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 12px;
     color: $primary-color;
   }
 
   h2 {
     margin: 0;
-    font-size: 1.8em;
+    font-size: 1.6em;
     font-weight: 600;
   }
 
   p {
-    margin: 5px 0 0;
-    font-size: 1em;
+    margin: 4px 0 0;
+    font-size: 0.95em;
     opacity: 0.8;
   }
 }
@@ -221,7 +221,7 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
 .login-form {
   .full-width {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 
     ::ng-deep {
       .mat-mdc-form-field-subscript-wrapper {
@@ -432,10 +432,10 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  font-size: 0.9em;
+  margin-bottom: 20px;
+  font-size: 0.875em;
   color: white;
-  min-height: 40px; // Ensure consistent height
+  min-height: 36px; // Ensure consistent height
 
   .forgot-password-link {
     color: rgba(255, 255, 255, 0.8);
@@ -529,11 +529,11 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
 .login-button {
   background: linear-gradient(135deg, $primary-color 0%, color.adjust($primary-color, $lightness: -10%) 100%) !important;
   color: white !important;
-  height: 54px;
-  font-size: 1.1em;
+  height: 48px;
+  font-size: 1.05em;
   font-weight: 600;
-  border-radius: 16px !important;
-  box-shadow: 0 8px 20px rgba($primary-color, 0.4);
+  border-radius: 14px !important;
+  box-shadow: 0 6px 18px rgba($primary-color, 0.4);
   transition: all $transition-standard;
   position: relative;
   overflow: hidden;
@@ -577,8 +577,8 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
 
 // Register prompt
 .register-prompt {
-  margin-top: 20px;
-  font-size: 0.95em;
+  margin-top: 16px;
+  font-size: 0.9em;
   color: rgba(255, 255, 255, 0.8);
 
   a {

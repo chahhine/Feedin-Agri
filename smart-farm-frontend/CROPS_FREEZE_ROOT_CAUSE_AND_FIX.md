@@ -213,3 +213,7 @@ The crops page is now optimized with:
 **Memory**: Stable with bounded caches  
 **UX**: Smooth, responsive, no freezing
 
+
+
+
+

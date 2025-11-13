@@ -36,6 +36,14 @@ interface ControlKPIs {
   safeMode: boolean;
 }
 
+interface ActuatorAction {
+  command: string;      // 'fan_on', 'pump_off', etc.
+  label: string;        // Display name
+  icon: string;         // Material icon
+  color: 'primary' | 'accent' | 'warn';
+  isOn: boolean;        // Current state
+}
+
 @Component({
   selector: 'app-manual-control',
   standalone: true,
@@ -247,6 +255,25 @@ interface ControlKPIs {
                   <mat-icon>{{ control.isOn ? 'power_off' : 'power' }}</mat-icon>
                   {{ control.isOn ? languageService.t()('manualControl.turnOff') : languageService.t()('manualControl.turnOn') }}
                 </button>
+              </div>
+
+              <!-- 🆕 Dynamic Actuator Action Buttons -->
+              <div class="actuator-actions-panel">
+                <div class="actions-label">
+                  <mat-icon>touch_app</mat-icon>
+                  <span>Quick Actions</span>
+                </div>
+                <div class="actuator-buttons-grid">
+                  <button 
+                    mat-mini-fab 
+                    *ngFor="let actuatorAction of getDeviceActions(control.device)"
+                    [color]="actuatorAction.color"
+                    [disabled]="isLoading() || safeModeEnabled()"
+                    [matTooltip]="actuatorAction.label"
+                    (click)="executeActuatorCommand(control.device, actuatorAction); $event.stopPropagation()">
+                    <mat-icon>{{ actuatorAction.icon }}</mat-icon>
+                  </button>
+                </div>
               </div>
 
               <!-- Last Action Timestamp -->
@@ -811,6 +838,66 @@ interface ControlKPIs {
           height: 16px;
         }
       }
+
+      // 🆕 Actuator Actions Panel Styles
+      .actuator-actions-panel {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--glass-bg-light, rgba(255, 255, 255, 0.5));
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 12px;
+        border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.3));
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: var(--glass-bg-light, rgba(255, 255, 255, 0.7));
+          border-color: rgba(16, 185, 129, 0.3);
+        }
+      }
+
+      .actions-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+
+        mat-icon {
+          font-size: 1.125rem;
+          width: 1.125rem;
+          height: 1.125rem;
+          color: var(--primary-green);
+        }
+      }
+
+      .actuator-buttons-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
+        gap: 0.5rem;
+        max-width: 100%;
+      }
+
+      .actuator-buttons-grid button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        &:hover:not([disabled]) {
+          transform: scale(1.1) translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        &:active:not([disabled]) {
+          transform: scale(0.95);
+        }
+
+        &[disabled] {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
     }
 
     @keyframes fadeInDown {
@@ -1089,6 +1176,15 @@ interface ControlKPIs {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
       }
+
+      .actuator-actions-panel {
+        padding: 0.75rem;
+      }
+
+      .actuator-buttons-grid {
+        grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+        gap: 0.375rem;
+      }
     }
 
     @media (max-width: 480px) {
@@ -1217,6 +1313,38 @@ export class ManualControlComponent implements OnInit, OnDestroy {
   // Automation signals
   automationEnabled = signal(true); // Default to ON for safety
   safeModeEnabled = signal(false);
+
+  // Actuator commands mapping
+  private actuatorCommands: { [key: string]: ActuatorAction[] } = {
+    pump: [
+      { command: 'pump_on', label: 'Pump On', icon: 'water_drop', color: 'primary', isOn: false },
+      { command: 'pump_off', label: 'Pump Off', icon: 'water_drop', color: 'accent', isOn: false }
+    ],
+    irrigation: [
+      { command: 'irrigation_on', label: 'Irrigation On', icon: 'water', color: 'primary', isOn: false },
+      { command: 'irrigation_off', label: 'Irrigation Off', icon: 'water', color: 'accent', isOn: false }
+    ],
+    fan: [
+      { command: 'fan_on', label: 'Fan On', icon: 'air', color: 'primary', isOn: false },
+      { command: 'fan_off', label: 'Fan Off', icon: 'mode_fan_off', color: 'accent', isOn: false }
+    ],
+    heater: [
+      { command: 'heater_on', label: 'Heater On', icon: 'local_fire_department', color: 'warn', isOn: false },
+      { command: 'heater_off', label: 'Heater Off', icon: 'ac_unit', color: 'primary', isOn: false }
+    ],
+    lights: [
+      { command: 'lights_on', label: 'Lights On', icon: 'lightbulb', color: 'accent', isOn: false },
+      { command: 'lights_off', label: 'Lights Off', icon: 'lightbulb_outline', color: 'primary', isOn: false }
+    ],
+    ventilator: [
+      { command: 'ventilator_on', label: 'Ventilator On', icon: 'mode_fan', color: 'primary', isOn: false },
+      { command: 'ventilator_off', label: 'Ventilator Off', icon: 'mode_fan_off', color: 'accent', isOn: false }
+    ],
+    alarm: [
+      { command: 'alarm_on', label: 'Alarm On', icon: 'alarm', color: 'warn', isOn: false },
+      { command: 'alarm_off', label: 'Alarm Off', icon: 'alarm_off', color: 'primary', isOn: false }
+    ]
+  };
 
   // Computed properties
   kpiStats = computed((): ControlKPIs => {
@@ -1626,13 +1754,15 @@ export class ManualControlComponent implements OnInit, OnDestroy {
 
       // Show success message with glassmorphic snackbar
       const alertTexts = this.languageService.t()('alerts') as any;
-      this.showSuccessSnackbar(
-        alertTexts[isOn ? 'deviceTurnedOn' : 'deviceTurnedOff'].replace('{{device}}', device.name)
-      );
+      const messageKey = isOn ? 'deviceTurnedOn' : 'deviceTurnedOff';
+      const message = alertTexts && alertTexts[messageKey] 
+        ? alertTexts[messageKey].replace('{{device}}', device.name)
+        : `Device ${device.name} turned ${isOn ? 'on' : 'off'} successfully`;
+      this.showSuccessSnackbar(message);
     } catch (error) {
       console.error('Error executing device action:', error);
       const alertTexts = this.languageService.t()('alerts') as any;
-      this.showErrorSnackbar(alertTexts.actionError);
+      this.showErrorSnackbar(alertTexts?.actionError || 'Action failed');
     }
   }
 
@@ -1837,6 +1967,125 @@ export class ManualControlComponent implements OnInit, OnDestroy {
     }
     
     return '';
+  }
+
+  /**
+   * Get available actuator actions for a device based on its type
+   */
+  getDeviceActions(device: Device): ActuatorAction[] {
+    const type = device.device_type?.toLowerCase() || '';
+    const name = device.name?.toLowerCase() || '';
+    
+    console.log(`🔍 [getDeviceActions] Device: ${device.name}, Type: "${type}", Name: "${name}"`);
+    
+    // Map device types to available actions (using bracket notation for index signature)
+    if (type.includes('pump') || name.includes('pump')) {
+      console.log('  → Matched: pump');
+      return this.actuatorCommands['pump'] || [];
+    }
+    if (type.includes('irrigation') || name.includes('irrigation')) {
+      console.log('  → Matched: irrigation');
+      return this.actuatorCommands['irrigation'] || [];
+    }
+    if (type.includes('fan') || name.includes('fan')) {
+      console.log('  → Matched: fan');
+      return this.actuatorCommands['fan'] || [];
+    }
+    if (type.includes('heater') || type.includes('heating') || name.includes('heater')) {
+      console.log('  → Matched: heater');
+      return this.actuatorCommands['heater'] || [];
+    }
+    if (type.includes('light') || name.includes('light')) {
+      console.log('  → Matched: lights');
+      return this.actuatorCommands['lights'] || [];
+    }
+    if (type.includes('ventilator') || type.includes('ventilation') || name.includes('ventilator')) {
+      console.log('  → Matched: ventilator');
+      return this.actuatorCommands['ventilator'] || [];
+    }
+    if (type.includes('alarm') || name.includes('alarm')) {
+      console.log('  → Matched: alarm');
+      return this.actuatorCommands['alarm'] || [];
+    }
+    
+    // Default: generic on/off
+    console.log('  → Matched: default (on/off)');
+    const defaultActions = [
+      { command: 'on', label: 'On', icon: 'power', color: 'primary' as const, isOn: false },
+      { command: 'off', label: 'Off', icon: 'power_off', color: 'accent' as const, isOn: false }
+    ];
+    console.log('  → Returning actions:', defaultActions);
+    return defaultActions;
+  }
+
+  /**
+   * Execute a specific actuator command via MQTT
+   */
+  async executeActuatorCommand(device: Device, action: ActuatorAction): Promise<void> {
+    // Check if manual control is allowed
+    if (this.automationEnabled()) {
+      this.showErrorSnackbar(
+        this.languageService.t()('manualControl.automationActiveError')
+      );
+      return;
+    }
+
+    // Check safe mode
+    if (this.safeModeEnabled()) {
+      this.showErrorSnackbar(
+        this.languageService.t()('manualControl.safeModeActiveError')
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    const confirmed = await this.showActuatorConfirmation(device, action);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      // Execute action via API using MQTT actuator topic format
+      await this.apiService.executeAction({
+        deviceId: device.device_id,
+        action: `mqtt:smartfarm/actuators/${device.device_id}/${action.command}`,
+        actionType: action.color === 'warn' ? 'important' : 'normal',
+        context: {
+          sensorId: device.device_id,
+          value: action.command.includes('_on') ? 1 : 0
+        }
+      }).toPromise();
+
+      // Show success message
+      this.showSuccessSnackbar(
+        `${action.label} executed successfully on ${device.name}`
+      );
+    } catch (error) {
+      console.error('Error executing actuator command:', error);
+      const alertTexts = this.languageService.t()('alerts') as any;
+      this.showErrorSnackbar(alertTexts.actionError || 'Action failed');
+    }
+  }
+
+  /**
+   * Show confirmation dialog for actuator actions
+   */
+  private async showActuatorConfirmation(device: Device, action: ActuatorAction): Promise<boolean> {
+    const dialogRef = this.dialog.open(ActionConfirmationDialogComponent, {
+      width: '500px',
+      panelClass: 'glass-dialog',
+      data: {
+        device,
+        action: action.command,
+        actionLabel: action.label,
+        actionType: 'turnOn', // Generic action type for actuator commands
+        icon: action.icon,
+        message: `Execute ${action.label} on ${device.name}?`
+      } as ActionConfirmationData,
+    });
+
+    const result = await dialogRef.afterClosed().toPromise();
+    return result === true;
   }
 
 }

@@ -36,18 +36,6 @@
           type="button">
           <mat-icon aria-hidden="true">refresh</mat-icon>
         </button>
-
-        <!-- Device Actions Dropdown -->
-        <button
-          mat-icon-button
-          appDropdown="device-actions-menu"
-          [dropdownOptions]="{ placement: 'bottom-end', trigger: 'click' }"
-          class="action-btn"
-          [attr.aria-label]="languageService.t()('devices.moreActions')"
-          [attr.title]="languageService.t()('devices.moreActions')"
-          type="button">
-          <mat-icon aria-hidden="true">more_vert</mat-icon>
-        </button>
       </div>
     </div>
   </div>
@@ -341,16 +329,3 @@
   </div>
 </div>
 
-<!-- Hidden Dropdown Content Template (used by FloatingUI) -->
-<div id="device-actions-menu" class="dropdown-template">
-  <div class="dropdown-menu" role="menu">
-    <button class="dropdown-item" (click)="exportDeviceData()" tabindex="0" type="button" role="menuitem">
-      <mat-icon>download</mat-icon>
-      <span>{{ languageService.t()('devices.exportData') }}</span>
-    </button>
-    <button class="dropdown-item" (click)="showDeviceStatistics()" tabindex="0" type="button" role="menuitem">
-      <mat-icon>analytics</mat-icon>
-      <span>{{ languageService.t()('devices.viewStatistics') }}</span>
-    </button>
-  </div>
-</div>

@@ -21,9 +21,7 @@ import { FarmManagementService } from '../../core/services/farm-management.servi
 import { Device, DeviceStatus } from '../../core/models/farm.model';
 import { LanguageService } from '../../core/services/language.service';
 import { AlertService } from '../../core/services/alert.service';
-import { FloatingUIService } from '../../core/services/floating-ui.service';
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
-import { DropdownDirective } from '../../shared/directives/dropdown.directive';
 import { DeviceDetailsDialogComponent, DeviceDetailsDialogData } from './components/device-details-dialog/device-details-dialog.component';
 import * as DeviceUtils from './device.utils';
 import { DEVICES_CONFIG, DEVICE_TABLE_COLUMNS } from './devices.constants';
@@ -46,8 +44,7 @@ import { environment } from '../../../environments/environment';
     MatSelectModule,
     MatSortModule,
     MatPaginatorModule,
-    TooltipDirective,
-    DropdownDirective
+    TooltipDirective
   ],
   templateUrl: './devices.component.html',
   styleUrls: [
@@ -117,15 +114,6 @@ export class DevicesComponent implements OnInit, OnDestroy {
     this.setupSearchDebounce();
     this.loadDevices();
     this.subscribeFarmChanges();
-    this.createDropdownMenu();
-  }
-
-  /**
-   * Create dropdown menu content programmatically
-   */
-  private createDropdownMenu(): void {
-    // The dropdown will be created when the button is clicked via the directive
-    // We don't need to create it here, but we ensure the element exists
   }
 
   ngOnDestroy(): void {
