@@ -26,17 +26,18 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         // Server-side error
         switch (error.status) {
           case 401:
-            // Only logout if it's an actual authentication failure, not a connection error
-            // Check if we're already on login page or if this is an initial auth check
+            // Don't show error message or logout automatically for 401 errors
+            // Let the auth guard handle authentication failures
+            // This prevents false positives from temporary network issues or CSRF problems
             const isAuthEndpoint = req.url.includes('/auth/') || req.url.includes('/users/register');
             const isOnLoginPage = router.url === '/login' || router.url === '/register';
             
-            if (!isAuthEndpoint && !isOnLoginPage) {
-              errorMessage = 'Your session has expired. Please login again.';
-              shouldLogout = true;
-            } else {
+            if (isAuthEndpoint || isOnLoginPage) {
               errorMessage = 'Invalid credentials';
-              // Don't logout if we're already on login/register pages
+            } else {
+              // Silently handle 401 errors - don't show message or logout
+              // The auth guard will handle redirects if needed
+              errorMessage = '';
             }
             break;
           case 403:
@@ -53,9 +54,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      // Only show error message if it's not a silent auth check
+      // Only show error message if it's not a silent auth check and message is not empty
       const isSilentAuthCheck = req.url.includes('/auth/me') || req.url.includes('/auth/csrf');
-      if (!isSilentAuthCheck) {
+      if (!isSilentAuthCheck && errorMessage) {
         snackBar.open(errorMessage, 'Close', {
           duration: 5000,
           horizontalPosition: 'right',

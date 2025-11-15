@@ -33,7 +33,7 @@ import {
   SensorStatusResult,
 } from './utils/sensor-status.util';
 import { normalizeThresholds } from './utils/sensor-thresholds.util';
-import { generateUniqueSensorId, parseUniqueSensorId } from './utils/sensor-display.util';
+import { generateUniqueSensorId, parseUniqueSensorId, extractActionPurpose } from './utils/sensor-display.util';
 
 // Child Components
 import { GlobalFilterHeaderComponent, FilterState } from './components/global-filter-header/global-filter-header.component';
@@ -635,6 +635,8 @@ export class SensorReadingsComponent implements OnInit {
           ? new Date(item.statusResult.lastReading.createdAt)
           : null,
         isPinned: pinned.has(uniqueId),
+        actionPurpose: extractActionPurpose(item.sensor.action_low, item.sensor.action_high),
+        sensorDbId: item.sensor.id, // Store database ID for direct matching
       };
     });
 
@@ -662,20 +664,35 @@ export class SensorReadingsComponent implements OnInit {
     const uniqueSensorId = this.selectedSensorId();
     if (!uniqueSensorId) return null;
 
-    // Parse the unique ID to get base sensor ID and type
-    const { baseSensorId, type } = parseUniqueSensorId(uniqueSensorId);
-
-    // Find the sensor that matches both the base ID and type
-    const sensors = this.sensors();
-    const sensor = sensors.find((s) => {
-      const matches = s.sensor_id === baseSensorId;
-      const typeMatches = s.type?.toLowerCase().replace(/\s+/g, '-') === type;
-      return matches && typeMatches;
-    });
+    // First, try to find the sensor by database ID from the device list items
+    // This handles cases where duplicate sensors have index suffixes (e.g., "dht11-humidity-1")
+    const items = this.deviceListItems();
+    const selectedItem = items.find(item => item.id === uniqueSensorId);
+    
+    let sensor: SensorWithThresholds | undefined;
+    
+    if (selectedItem?.sensorDbId) {
+      // Direct match by database ID (most reliable for duplicate sensors)
+      sensor = this.sensors().find(s => s.id === selectedItem.sensorDbId);
+    }
+    
+    if (!sensor) {
+      // Fallback: Parse the unique ID to get base sensor ID and type
+      const { baseSensorId, type } = parseUniqueSensorId(uniqueSensorId);
+      
+      // Find the sensor that matches both the base ID and type
+      const sensors = this.sensors();
+      sensor = sensors.find((s) => {
+        const matches = s.sensor_id === baseSensorId;
+        const typeMatches = s.type?.toLowerCase().replace(/\s+/g, '-') === type;
+        return matches && typeMatches;
+      });
+    }
 
     if (!sensor) return null;
 
     const statuses = this.sensorStatuses();
+    const sensors = this.sensors();
     const statusIndex = sensors.findIndex((s) => s === sensor);
     const statusResult = statusIndex >= 0 ? statuses[statusIndex] : null;
 

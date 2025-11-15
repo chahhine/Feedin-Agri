@@ -48,6 +48,12 @@ export class Sensor {
   @Column({ type: 'text', nullable: true })
   action_high: string;
 
+  @Column({ type: 'timestamp', precision: 6, default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
+
+  @Column({ type: 'timestamp', precision: 6, default: () => 'CURRENT_TIMESTAMP' })
+  updated_at: Date;
+
   // Relationship with Farm
   @ManyToOne(() => Farm, (farm) => farm.sensors)
   @JoinColumn({ name: 'farm_id' })

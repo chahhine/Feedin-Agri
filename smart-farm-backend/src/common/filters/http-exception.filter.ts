@@ -65,10 +65,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error: typeof message === 'string' ? { message } : message,
     };
 
-    this.logger.error(
-      `${request.method} ${request.url}`,
-      exception instanceof Error ? exception.stack : exception,
-    );
+    // Log full error details for debugging
+    if (exception instanceof Error) {
+      this.logger.error(
+        `${request.method} ${request.url} - ${exception.message}`,
+        exception.stack,
+      );
+      // Also log the error message in the response for development
+      if (process.env.NODE_ENV !== 'production') {
+        errorResponse.error = {
+          ...(typeof message === 'string' ? { message } : message),
+          stack: exception.stack,
+        };
+      }
+    } else {
+      this.logger.error(
+        `${request.method} ${request.url}`,
+        exception,
+      );
+    }
 
     response.status(status).json(errorResponse);
   }

@@ -53,7 +53,11 @@ export class AuthService {
       if (error?.status === 0) {
         console.warn('⚠️ Unable to connect to backend server. Authentication will be retried on first API call.');
       } else if (error?.status === 401) {
-        console.log('No active session found');
+        // 401 is expected when no session exists - silently handle it
+        // No need to log or clear state, just continue without authentication
+      } else {
+        // Only log unexpected errors
+        console.error('Auth initialization error:', error);
       }
       // No valid session, clear auth state without making logout request
       this.clearAuthState(false);

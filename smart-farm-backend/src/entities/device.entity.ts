@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Farm } from '../modules/farms/farm.entity';
 
 @Entity('devices')
@@ -17,6 +17,12 @@ export class Device {
 
   @Column({ type: 'varchar', length: 36 })
   farm_id: string;
+
+  @CreateDateColumn({ type: 'timestamp', precision: 6 })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamp', precision: 6 })
+  updated_at: Date;
 
   // @Column({ type: 'varchar', length: 50, nullable: true })
   // device_type: string; // 'sensor_hub', 'gateway', 'controller'

@@ -438,3 +438,61 @@ export function parseUniqueSensorId(uniqueId: string): { baseSensorId: string; t
   };
 }
 
+/**
+ * Extract action purpose from sensor action fields
+ * Identifies the purpose (roof, humidifier, etc.) from MQTT action strings
+ * 
+ * @param actionLow - Action string for low threshold (e.g., "mqtt:smartfarm/actuators/dht11H/close_roof")
+ * @param actionHigh - Action string for high threshold (e.g., "mqtt:smartfarm/actuators/dht11H/open_roof")
+ * @returns Human-readable purpose label (e.g., "Roof Control", "Humidifier Control", or null)
+ */
+export function extractActionPurpose(actionLow?: string, actionHigh?: string): string | null {
+  // Combine both actions to check for purpose
+  const actions = [actionLow, actionHigh].filter(Boolean).join(' ');
+  
+  if (!actions) return null;
+  
+  // Extract action commands from MQTT topics
+  // Format: "mqtt:smartfarm/actuators/dht11H/close_roof"
+  const actionPatterns = [
+    { keywords: ['roof', 'open_roof', 'close_roof'], label: 'Roof Control', icon: 'roofing' },
+    { keywords: ['humidifier', 'humidifier_on', 'humidifier_off'], label: 'Humidifier Control', icon: 'humidity_high' },
+    { keywords: ['fan', 'fan_on', 'fan_off'], label: 'Fan Control', icon: 'air' },
+    { keywords: ['heater', 'heater_on', 'heater_off'], label: 'Heater Control', icon: 'local_fire_department' },
+    { keywords: ['irrigation', 'irrigation_on', 'irrigation_off'], label: 'Irrigation Control', icon: 'water_drop' },
+    { keywords: ['ventilator', 'ventilator_on', 'ventilator_off'], label: 'Ventilator Control', icon: 'air' },
+    { keywords: ['water_pump', 'water_pump_on', 'water_pump_off'], label: 'Water Pump Control', icon: 'water_pump' },
+    { keywords: ['light', 'light_on', 'light_off'], label: 'Light Control', icon: 'light_mode' },
+  ];
+  
+  const lowerActions = actions.toLowerCase();
+  
+  for (const pattern of actionPatterns) {
+    if (pattern.keywords.some(keyword => lowerActions.includes(keyword))) {
+      return pattern.label;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Get icon for action purpose
+ */
+export function getActionPurposeIcon(purpose: string | null): string {
+  if (!purpose) return 'settings';
+  
+  const iconMap: Record<string, string> = {
+    'Roof Control': 'roofing',
+    'Humidifier Control': 'humidity_high',
+    'Fan Control': 'air',
+    'Heater Control': 'local_fire_department',
+    'Irrigation Control': 'water_drop',
+    'Ventilator Control': 'air',
+    'Water Pump Control': 'water_pump',
+    'Light Control': 'light_mode',
+  };
+  
+  return iconMap[purpose] || 'settings';
+}
+

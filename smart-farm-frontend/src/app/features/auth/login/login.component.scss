@@ -114,6 +114,9 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
   max-width: 420px;
   width: 90%;
   text-align: center;
+  // Add vertical spacing (up and down)
+  margin-top: clamp(40px, 8vh, 80px);
+  margin-bottom: clamp(40px, 8vh, 80px);
   // MORE SOLID background for shadow visibility
   background: linear-gradient(145deg,
     rgba(255, 255, 255, 0.25) 0%,
@@ -278,6 +281,18 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
           -webkit-text-fill-color: white !important;
           transition: background-color 5000s ease-in-out 0s;
           background-color: transparent !important;
+          // Trigger animation to detect autofill
+          animation-name: onAutoFillStart;
+        }
+
+        // Animation to detect autofill (browsers trigger this)
+        @keyframes onAutoFillStart {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 0;
+          }
         }
       }
 
@@ -525,7 +540,7 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
   }
 }
 
-// Submit button
+// Submit button - Alive and animated
 .login-button {
   background: linear-gradient(135deg, $primary-color 0%, color.adjust($primary-color, $lightness: -10%) 100%) !important;
   color: white !important;
@@ -537,6 +552,26 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
   transition: all $transition-standard;
   position: relative;
   overflow: hidden;
+  
+  // Pulsing glow animation - makes it look alive
+  animation: buttonPulse 2.5s ease-in-out infinite;
+
+  // Shimmer effect
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transition: left 0.5s;
+  }
 
   &::before {
     content: '';
@@ -552,8 +587,14 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
   }
 
   &:hover:not([disabled]) {
-    box-shadow: 0 12px 30px rgba($primary-color, 0.6);
-    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba($primary-color, 0.6),
+                0 0 40px rgba($primary-color, 0.4);
+    transform: translateY(-3px) scale(1.02);
+    animation: buttonPulseHover 1.5s ease-in-out infinite;
+
+    &::after {
+      left: 100%;
+    }
 
     &::before {
       width: 300px;
@@ -562,16 +603,45 @@ $transition-neumorphic: 0.3s cubic-bezier(0.4, 0, 0.2, 1); // Smooth
   }
 
   &:active:not([disabled]) {
-    transform: translateY(-1px);
+    transform: translateY(-1px) scale(0.98);
+    animation: none;
+    box-shadow: 0 4px 12px rgba($primary-color, 0.5);
   }
 
   &[disabled] {
     opacity: 0.5;
     cursor: not-allowed;
+    animation: none;
   }
 
   ::ng-deep mat-progress-spinner circle {
     stroke: white !important;
+  }
+}
+
+// Pulsing animation for button - makes it look alive
+@keyframes buttonPulse {
+  0%, 100% {
+    box-shadow: 0 6px 18px rgba($primary-color, 0.4),
+                0 0 20px rgba($primary-color, 0.2);
+  }
+  50% {
+    box-shadow: 0 6px 18px rgba($primary-color, 0.5),
+                0 0 30px rgba($primary-color, 0.3);
+  }
+}
+
+// Enhanced pulse on hover
+@keyframes buttonPulseHover {
+  0%, 100% {
+    box-shadow: 0 12px 30px rgba($primary-color, 0.6),
+                0 0 40px rgba($primary-color, 0.4),
+                0 0 60px rgba($primary-color, 0.2);
+  }
+  50% {
+    box-shadow: 0 12px 30px rgba($primary-color, 0.7),
+                0 0 50px rgba($primary-color, 0.5),
+                0 0 80px rgba($primary-color, 0.3);
   }
 }
 
@@ -642,9 +712,9 @@ $breakpoint-4xl: 2560px; // Ultra-wide
   padding: clamp(24px, 5vw, 40px);
   margin: auto;
 
-  // Ensure card doesn't touch viewport edges
-  margin-top: clamp(10px, 2vh, 20px);
-  margin-bottom: clamp(10px, 2vh, 20px);
+  // Ensure card doesn't touch viewport edges - maintain vertical spacing
+  margin-top: clamp(40px, 8vh, 80px);
+  margin-bottom: clamp(40px, 8vh, 80px);
 }
 
 .logo-section {

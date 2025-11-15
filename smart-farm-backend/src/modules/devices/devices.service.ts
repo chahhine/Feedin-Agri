@@ -37,16 +37,28 @@ export class DevicesService {
   }
 
   async findAll(includeSensors = false, ownerId?: string): Promise<Device[]> {
+    console.log('DevicesService.findAll called with:', { includeSensors, ownerId });
+    
     const relations = includeSensors ? ['sensors'] : [];
     relations.push('farm');
     
     const whereCondition = ownerId ? { farm: { owner_id: ownerId } } : {};
     
-    return this.devicesRepository.find({
+    const devices = await this.devicesRepository.find({
       where: whereCondition,
       relations
       // order: { created_at: 'DESC' } // Commented out - column doesn't exist
     });
+    
+    console.log(`✅ Found ${devices.length} devices`, ownerId ? `for owner ${ownerId}` : '(all devices)');
+    
+    // If no devices found with owner filter, check if there are any devices at all
+    if (devices.length === 0 && ownerId) {
+      const allDevicesCount = await this.devicesRepository.count();
+      console.log(`⚠️ No devices found for owner ${ownerId}, but there are ${allDevicesCount} total devices in database`);
+    }
+    
+    return devices;
   }
 
   async findOne(id: string, includeSensors = false): Promise<Device> {

@@ -249,8 +249,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private checkScreenSize(): void {
     const width = window.innerWidth;
-    this.isMobile.set(width <= 768);
-    this.isTablet.set(width > 768 && width <= 1024);
+    // Mobile: 320px - 767px
+    this.isMobile.set(width <= 767);
+    // Tablet: 768px - 1024px
+    this.isTablet.set(width >= 768 && width <= 1024);
   }
 
   ngOnDestroy(): void {

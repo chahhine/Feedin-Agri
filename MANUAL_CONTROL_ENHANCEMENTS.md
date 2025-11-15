@@ -239,3 +239,5 @@ getDeviceActions(device: Device): ActuatorAction[] {
 
 The manual control component now provides a modern, efficient way to control devices with type-specific actions!
 
+
+

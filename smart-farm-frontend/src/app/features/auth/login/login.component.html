@@ -95,12 +95,9 @@
       <button mat-raised-button
               color="primary"
               type="submit"
-              class="login-button full-width"
-              [disabled]="isLoading() || loginForm.invalid || isRateLimited()">
+              class="login-button full-width">
         <span *ngIf="!isLoading()">
-          {{ isRateLimited() ?
-             (languageService.t()('auth.rateLimited') || 'Too Many Attempts') :
-             (languageService.t()('auth.loginButton') || 'Log In') }}
+          {{ languageService.t()('auth.loginButton') || 'Log In' }}
         </span>
         <mat-progress-spinner *ngIf="isLoading()"
                               [diameter]="24"
