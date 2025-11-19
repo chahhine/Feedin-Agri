@@ -47,24 +47,38 @@ body.dark-theme .feedin-header {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
-// ===== HEADER CONTENT (Single Row) =====
+// ===== HEADER CONTENT (Three Flex Groups) =====
 .header-content {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
-  gap: 1.5rem;
+  justify-content: space-between;
+  gap: 2rem; // Increased gap for better separation
   padding: 1rem 2rem;
   width: 100%;
   margin: 0 auto;
   min-height: 80px; // Ensure consistent header height
-  overflow: visible; // Ensure all content is visible
+  height: 80px; // Fixed height to match padding-top
+  overflow: visible;
   box-sizing: border-box;
 }
 
 @media (max-width: 1400px) {
   .header-content {
-    gap: 1.25rem;
+    gap: 1.75rem; // Slightly reduced but still good spacing
     padding: 1rem 1.75rem;
+  }
+
+  .logo-section {
+    margin-right: 1.25rem;
+  }
+
+  .center-section {
+    margin-left: 0.75rem;
+    margin-right: 1rem;
+  }
+
+  .actions-section {
+    margin-left: 0.75rem;
   }
   
   .nav-link {
@@ -76,10 +90,23 @@ body.dark-theme .feedin-header {
 
 @media (max-width: 1200px) {
   .header-content {
-    grid-template-columns: auto 1fr auto;
-    gap: 1rem;
+    gap: 1.5rem; // Maintain good spacing
     padding: 1rem 1.5rem;
     min-height: 76px; // Slightly smaller on medium screens
+    height: 76px; // Fixed height to match padding-top
+  }
+
+  .logo-section {
+    margin-right: 1rem;
+  }
+
+  .center-section {
+    margin-left: 0.5rem;
+    margin-right: 0.75rem;
+  }
+
+  .actions-section {
+    margin-left: 0.75rem;
   }
   
   .nav-link {
@@ -97,26 +124,77 @@ body.dark-theme .feedin-header {
 @media (max-width: 1024px) {
   .header-content {
     min-height: 72px; // Tablet height
+    height: 72px; // Fixed height to match padding-top
+    gap: 1rem; // Reduced gap for tablet
+    padding: 1rem 1.25rem;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .logo-section {
+    margin-right: 0.75rem;
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: calc(100% - 300px); // Leave space for actions
+  }
+
+  .center-section {
+    margin-left: 0.5rem;
+    margin-right: 0.75rem;
+    padding: 0 0.25rem;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .actions-section {
+    margin-left: 0.5rem;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 900px) {
+  .header-content {
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 }
 
 @media (max-width: 768px) {
   .header-content {
-    grid-template-columns: auto 1fr auto;
-    gap: 0.75rem;
-    padding: 1rem;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
     min-height: 68px; // Mobile height
+    height: 68px; // Fixed height to match padding-top
+    flex-wrap: nowrap; // Prevent wrapping
+    align-items: center;
+  }
+
+  .logo-section {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: calc(100% - 200px); // Leave space for actions
+    gap: 0.5rem;
+  }
+
+  .actions-section {
+    flex: 0 0 auto;
+    min-width: fit-content;
   }
 }
 
-// ===== LEFT: LOGO SECTION =====
+// ===== LEFT: LOGO + FARM SELECTOR =====
 .logo-section {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  flex-shrink: 0; // Prevent logo from shrinking
-  min-width: fit-content;
-  overflow: visible;
+  gap: 1rem;
+  flex-shrink: 1; // Allow shrinking but with min-width constraint
+  min-width: 0; // Allow flex item to shrink below content size
+  overflow: hidden; // Prevent overflow
+  flex-basis: auto;
+  margin-right: 1.5rem; // Extra spacing from navigation tabs
+  max-width: fit-content; // Prevent excessive width
 }
 
 .logo-wrapper {
@@ -159,9 +237,16 @@ body.dark-theme .feedin-header {
 .mobile-farm-selector {
   display: none;
 
+  @media (max-width: 767px) {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .mobile-farm-selector-trigger {
     display: flex;
-    align-items: center;
+    align-items: center; // Keep center for mobile (single line)
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
     background: var(--card-bg, #ffffff);
@@ -172,9 +257,11 @@ body.dark-theme .feedin-header {
     font-weight: 500;
     color: var(--text-primary, #1f2937);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    white-space: nowrap;
-    max-width: 140px;
+    width: 100%;
+    max-width: 100%;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    // Allow button to shrink and text to wrap
+    flex-shrink: 1;
 
     &:hover {
       border-color: #10b981;
@@ -201,8 +288,19 @@ body.dark-theme .feedin-header {
 
     .selector-text {
       flex: 1;
+      min-width: 0;
+      max-width: 100%;
       overflow: hidden;
-      text-overflow: ellipsis;
+      // Allow word wrapping for better readability with spaces
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-word;
+      // Limit to 1 line max with ellipsis for mobile
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      line-height: 1.3;
+      max-height: 1.3em;
     }
 
     .selector-arrow {
@@ -234,21 +332,26 @@ body.dark-theme .mobile-farm-selector {
   }
 }
 
-// ===== CENTER: FARM SELECTOR + NAVIGATION =====
+// ===== CENTER: NAVIGATION TABS =====
 .center-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
   justify-content: center;
-  flex: 1;
+  flex: 1 1 auto; // Allow growing and shrinking
   min-width: 0; // Allow flex item to shrink below content size
-  overflow: visible;
+  max-width: none; // Let flexbox handle it naturally
+  overflow: visible; // Allow underline to be visible below
+  margin-left: 1rem; // Extra spacing from farm selector
+  margin-right: 1.5rem; // Extra spacing from right icons
+  padding: 0 0.5rem; // Internal padding for breathing room
+  padding-bottom: 0.75rem; // Space for active tab underline
 }
 
-// Farm Selector in Center
+// Farm Selector in Left (Desktop)
 .nav-farm-selector {
-  flex-shrink: 0;
-  min-width: fit-content;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 100%;
 
   .farm-selector-trigger {
     padding: 0.5rem 1rem;
@@ -256,6 +359,8 @@ body.dark-theme .mobile-farm-selector {
     background: var(--light-bg, #f9fafb);
     border: 1px solid var(--border-color, #e5e7eb);
     border-radius: 0.75rem;
+    // Allow button to shrink and text to wrap
+    flex-shrink: 1;
 
     &:hover {
       background: rgba(16, 185, 129, 0.05);
@@ -270,10 +375,37 @@ body.dark-theme .mobile-farm-selector {
     .selector-icon {
       width: 18px;
       height: 18px;
+      flex-shrink: 0;
     }
 
     .selector-text {
       font-weight: 500;
+      flex: 1;
+      min-width: 0;
+      max-width: 180px;
+      overflow: hidden;
+      // Allow word wrapping for better readability with spaces
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-word;
+      // Limit to 2 lines max with ellipsis for desktop
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.3;
+      max-height: 2.6em; // 2 lines * 1.3 line-height
+
+      @media (max-width: 1200px) {
+        max-width: 150px;
+        -webkit-line-clamp: 1; // Single line on smaller screens
+        max-height: 1.3em;
+      }
+
+      @media (max-width: 768px) {
+        max-width: 120px;
+        -webkit-line-clamp: 1; // Single line on mobile
+        max-height: 1.3em;
+      }
     }
 
     .selector-arrow {
@@ -302,7 +434,7 @@ body.dark-theme .nav-farm-selector {
 // Farm Selector Trigger Button
 .farm-selector-trigger {
   display: flex;
-  align-items: center;
+  align-items: center; // Keep center for better icon alignment
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
   background: var(--card-bg, #ffffff);
@@ -313,8 +445,11 @@ body.dark-theme .nav-farm-selector {
   font-weight: 500;
   color: var(--text-primary, #1f2937);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+  min-width: 0;
+  // Allow button to shrink and text to wrap
+  flex-shrink: 1;
 
   &:hover {
     border-color: #10b981;
@@ -341,8 +476,35 @@ body.dark-theme .nav-farm-selector {
 
   .selector-text {
     flex: 1;
+    min-width: 0;
+    max-width: 200px; // Prevent excessive width
     overflow: hidden;
-    text-overflow: ellipsis;
+    // Allow word wrapping for better readability with spaces
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+    // Limit to 2 lines max with ellipsis
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.3;
+    max-height: 2.6em; // 2 lines * 1.3 line-height
+
+    @media (max-width: 1400px) {
+      max-width: 180px;
+    }
+
+    @media (max-width: 1200px) {
+      max-width: 150px;
+      -webkit-line-clamp: 1; // Single line on smaller screens
+      max-height: 1.3em;
+    }
+
+    @media (max-width: 768px) {
+      max-width: 120px;
+      -webkit-line-clamp: 1; // Single line on mobile
+      max-height: 1.3em;
+    }
   }
 
   .selector-arrow {
@@ -350,6 +512,7 @@ body.dark-theme .nav-farm-selector {
     height: 16px;
     color: var(--text-secondary, #6b7280);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
 
     &.rotated {
       transform: rotate(180deg);
@@ -369,7 +532,7 @@ body.dark-theme .farm-selector-trigger {
 }
 
 
-// ===== RIGHT: ACTIONS SECTION =====
+// ===== RIGHT: ICONS + USER MENU =====
 .actions-section {
   display: flex;
   align-items: center;
@@ -378,6 +541,13 @@ body.dark-theme .farm-selector-trigger {
   flex-shrink: 0; // Prevent actions from shrinking
   min-width: fit-content; // Ensure all actions are visible
   overflow: visible;
+  margin-left: 1rem; // Extra spacing from navigation tabs
+  padding-left: 0.5rem; // Internal padding
+
+  @media (max-width: 900px) {
+    flex-wrap: nowrap; // Keep icons on one row
+    margin-left: 0.5rem;
+  }
 }
 
 // Consistent Action Buttons (Theme, Language, Notifications)
@@ -568,16 +738,17 @@ body.dark-theme .hamburger-line {
 .header-nav {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   flex: 1;
-  justify-content: center;
   min-width: 0; // Allow navigation to shrink
   flex-wrap: nowrap; // Keep items in one line
-  overflow: visible;
+  overflow: visible; // Allow active tab underline to be visible
+  max-width: 100%; // Ensure it doesn't exceed parent
 }
 
-// Hide navigation on tablet and mobile (≤1024px)
-@media (max-width: 1024px) {
+// Hide navigation tabs below 900px (collapse completely on mobile)
+@media (max-width: 900px) {
   .header-nav {
     display: none;
   }
@@ -597,8 +768,9 @@ body.dark-theme .hamburger-line {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   white-space: nowrap;
-  flex-shrink: 0; // Prevent nav links from shrinking
-  min-width: fit-content;
+  flex-shrink: 1; // Allow shrinking when needed
+  min-width: 0; // Allow shrinking below content size
+  max-width: 100%; // Prevent overflow
 
   &::after {
     content: '';
@@ -652,6 +824,28 @@ body.dark-theme .hamburger-line {
   height: 20px;
   color: var(--text-secondary, #6b7280);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: none; // Hide SVG when Font Awesome is used
+}
+
+// Font Awesome icon styles
+.nav-icon-fa {
+  font-size: 1rem;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #6b7280);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover .nav-icon-fa {
+  transform: scale(1.1);
+  color: #10b981;
+}
+
+.nav-link.active .nav-icon-fa {
+  color: #10b981;
 }
 
 body.dark-theme .nav-link {
@@ -664,6 +858,10 @@ body.dark-theme .nav-link {
     .nav-icon {
       color: #34d399;
     }
+
+    .nav-icon-fa {
+      color: #34d399;
+    }
   }
 
   &.active {
@@ -673,6 +871,10 @@ body.dark-theme .nav-link {
     .nav-icon {
       color: #34d399;
       fill: #34d399;
+    }
+
+    .nav-icon-fa {
+      color: #34d399;
     }
   }
 }
@@ -2220,6 +2422,19 @@ body.dark-theme .mobile-bottom-nav {
   margin: 0 auto;
   padding: 0 1.5rem;
   gap: 0.5rem;
+  width: 100%;
+  
+  @media (max-width: 767px) {
+    gap: 0.375rem;
+    padding: 0 1rem;
+    max-width: 100%;
+  }
+  
+  @media (min-width: 768px) and (max-width: 1024px) {
+    gap: 0.75rem;
+    padding: 0 1.75rem;
+    max-width: 700px;
+  }
 }
 
 .bottom-nav-item {
@@ -2275,6 +2490,29 @@ body.dark-theme .mobile-bottom-nav {
   height: 24px;
   color: var(--text-secondary, #6b7280);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: none; // Hide SVG when Font Awesome is used
+}
+
+// Font Awesome icon styles for bottom nav
+.nav-item-icon-fa {
+  font-size: 1.25rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #6b7280);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottom-nav-item:hover .nav-item-icon-fa {
+  transform: scale(1.1);
+  color: #10b981;
+}
+
+.bottom-nav-item.active .nav-item-icon-fa {
+  color: #10b981;
+  transform: scale(1.15);
 }
 
 .nav-item-label {
@@ -2339,84 +2577,18 @@ body.dark-theme .nav-item-label {
   color: var(--text-secondary, #cbd5e1);
 }
 
-// ===== FLOATING ACTION BUTTON (FAB) - CENTERED =====
-.mobile-fab {
-  position: fixed;
-  bottom: calc(80px + env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4),
-              0 8px 32px rgba(16, 185, 129, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 998;
-
-  &:hover {
-    transform: translateX(-50%) translateY(-4px) scale(1.05);
-    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5),
-                0 12px 48px rgba(16, 185, 129, 0.4);
-  }
-
-  &:active {
-    transform: translateX(-50%) translateY(-2px) scale(0.95);
-  }
-
-  .fab-icon {
-    width: 28px;
-    height: 28px;
-    color: white;
-    z-index: 2;
-    position: relative;
-    transition: transform 0.3s ease;
-  }
-
-  &:hover .fab-icon {
-    transform: rotate(90deg);
-  }
-
-  .fab-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.6) 0%, transparent 70%);
-    border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
-    z-index: 1;
-  }
+body.dark-theme .nav-item-icon-fa {
+  color: var(--text-secondary, #cbd5e1);
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: translate(-50%, -50%) scale(1.2);
-  }
+body.dark-theme .bottom-nav-item:hover .nav-item-icon-fa {
+  color: #34d399;
 }
 
-body.dark-theme .mobile-fab {
-  background: linear-gradient(135deg, #10b981, #34d399);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.5),
-              0 8px 32px rgba(16, 185, 129, 0.4);
-
-  &:hover {
-    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.6),
-                0 12px 48px rgba(16, 185, 129, 0.5);
-  }
+body.dark-theme .bottom-nav-item.active .nav-item-icon-fa {
+  color: #34d399;
 }
+
 
 // ===== RTL SUPPORT =====
 .feedin-header.rtl {
@@ -2455,23 +2627,66 @@ body.dark-theme .mobile-fab {
     flex-direction: row-reverse;
   }
 
-  .mobile-fab {
-    left: 50%;
-    transform: translateX(-50%);
-  }
 }
 
 // ===== RESPONSIVE ADJUSTMENTS =====
-// Tablet and Mobile (≤1024px)
-@media (max-width: 1024px) {
+// Below 900px: Tabs collapse, farm selector goes full-width on mobile
+@media (max-width: 900px) {
   .header-content {
-    grid-template-columns: auto auto;
+    flex-wrap: wrap;
     gap: 1rem;
-    padding: 1rem 1.5rem;
+  }
+
+  .logo-section {
+    order: 1;
+    flex: 1 1 100%; // Full width on mobile
+    min-width: 0;
+    max-width: 100%;
+
+    @media (min-width: 769px) {
+      flex: 0 1 auto; // Auto width on tablet
+    }
   }
 
   .center-section {
+    order: 3;
     display: none; // Navigation moved to bottom nav
+    width: 100%;
+  }
+
+  .actions-section {
+    order: 2;
+    gap: 0.5rem;
+    flex-shrink: 0;
+
+    .action-btn,
+    .user-avatar {
+      width: 42px;
+      height: 42px;
+    }
+
+    .action-icon {
+      width: 22px;
+      height: 22px;
+    }
+    
+    // Ensure theme toggle is always visible on tablet and mobile
+    .action-btn:first-child {
+      display: flex !important; // Theme toggle - always visible
+    }
+    
+    // Hide language switcher on tablet/mobile (available in mobile menu)
+    .language-switcher {
+      display: none;
+    }
+  }
+}
+
+// Tablet and Mobile (≤1024px)
+@media (max-width: 1024px) {
+  .header-content {
+    gap: 1rem;
+    padding: 1rem 1.5rem;
   }
 
   .actions-section {
@@ -2486,16 +2701,6 @@ body.dark-theme .mobile-fab {
     .action-icon {
       width: 20px;
       height: 20px;
-    }
-    
-    // Ensure theme toggle is always visible on tablet and mobile
-    .action-btn:first-child {
-      display: flex !important; // Theme toggle - always visible
-    }
-    
-    // Hide language switcher on tablet/mobile (available in mobile menu)
-    .language-switcher {
-      display: none;
     }
   }
 
@@ -2521,24 +2726,103 @@ body.dark-theme .mobile-fab {
     border-bottom-right-radius: 1.5rem;
   }
 
-  .logo-section {
-    flex: 1;
+  .header-content {
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    min-height: 64px;
+    height: auto;
+    flex-wrap: nowrap;
+    align-items: center;
     justify-content: space-between;
   }
 
+  .logo-section {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: calc(100% - 180px); // Leave space for actions
+    gap: 0.5rem;
+    order: 1;
+
+    .logo-wrapper {
+      flex-shrink: 0;
+      padding: 0.25rem;
+    }
+
+    .feedin-logo {
+      height: 40px; // Smaller logo on mobile
+    }
+  }
+
   .mobile-farm-selector {
-    display: block;
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    
+    .mobile-farm-selector-trigger {
+      padding: 0.5rem;
+      font-size: 0.8rem;
+      gap: 0.375rem;
+      
+      .selector-icon {
+        width: 14px;
+        height: 14px;
+      }
+      
+      .selector-text {
+        font-size: 0.75rem;
+      }
+      
+      .selector-arrow {
+        width: 10px;
+        height: 10px;
+      }
+    }
   }
 
   .actions-section {
-    // Keep theme toggle visible on mobile - it's important for accessibility
+    gap: 0.375rem;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    order: 2;
+    min-width: fit-content;
+
+    .action-btn,
+    .user-avatar,
+    .mobile-menu-toggle {
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+    }
+
+    .action-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .notification-badge {
+      top: 2px;
+      right: 2px;
+      min-width: 16px;
+      height: 16px;
+      font-size: 0.65rem;
+      padding: 0 4px;
+    }
+
+    // Hide language switcher on mobile (available in mobile menu)
     .language-switcher {
       display: none;
     }
     
     // Theme toggle should always be visible
     .action-btn:first-child {
-      display: flex !important; // Force show theme toggle
+      display: flex !important;
+    }
+    
+    // Mobile menu toggle should be visible
+    .mobile-menu-toggle {
+      display: flex !important;
+      margin-left: 0.25rem;
     }
   }
 
@@ -2549,11 +2833,17 @@ body.dark-theme .mobile-fab {
 
   .mobile-bottom-nav {
     display: flex;
+    padding: 0.625rem 0 calc(0.625rem + env(safe-area-inset-bottom));
   }
 
   // Hide more menu on mobile
   .more-menu-wrapper {
     display: none;
+  }
+  
+  // Hide center section navigation on mobile (using bottom nav)
+  .center-section {
+    display: none !important;
   }
 }
 
@@ -2563,8 +2853,79 @@ body.dark-theme .mobile-fab {
     border-bottom-right-radius: 1rem;
   }
 
+  .header-content {
+    padding: 0.625rem 0.875rem;
+    gap: 0.375rem;
+    min-height: 60px;
+  }
+
   .feedin-logo {
-    height: 44px;
+    height: 36px;
+  }
+  
+  .logo-section {
+    max-width: calc(100% - 160px); // Less space for actions on small screens
+    gap: 0.375rem;
+    
+    .logo-wrapper {
+      padding: 0.125rem;
+    }
+  }
+  
+  .mobile-farm-selector {
+    .mobile-farm-selector-trigger {
+      padding: 0.375rem;
+      font-size: 0.7rem;
+      
+      .selector-icon {
+        width: 12px;
+        height: 12px;
+      }
+      
+      .selector-text {
+        font-size: 0.7rem;
+      }
+      
+      .selector-arrow {
+        width: 8px;
+        height: 8px;
+      }
+    }
+  }
+  
+  .actions-section {
+    gap: 0.25rem;
+    
+    .action-btn,
+    .user-avatar,
+    .mobile-menu-toggle {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+    }
+    
+    .action-icon {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .notification-badge {
+      top: 1px;
+      right: 1px;
+      min-width: 14px;
+      height: 14px;
+      font-size: 0.6rem;
+      padding: 0 3px;
+    }
+    
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+    }
+    
+    .avatar-initials {
+      font-size: 0.75rem;
+    }
   }
 
   // Mobile language section adjustments for small screens
@@ -2597,6 +2958,12 @@ body.dark-theme .mobile-fab {
   }
 
   // Smaller bottom nav items
+  .nav-item-icon-fa {
+    font-size: 1.1rem;
+    width: 22px;
+    height: 22px;
+  }
+
   .nav-item-icon {
     width: 22px;
     height: 22px;
@@ -2604,42 +2971,119 @@ body.dark-theme .mobile-fab {
 
   .nav-item-label {
     font-size: 0.65rem;
-    max-width: 60px;
+    max-width: 55px;
+  }
+  
+  .bottom-nav-item {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .bottom-nav-content {
+    gap: 0.25rem;
+    padding: 0 0.75rem;
   }
 
-  .mobile-fab {
-    width: 52px;
-    height: 52px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
-    right: 0.75rem;
-
-    &:hover {
-      transform: translateY(-4px) scale(1.05);
-    }
-
-    .fab-icon {
-      width: 26px;
-      height: 26px;
-    }
-  }
 }
 
-// RTL Support for FAB
-.mobile-bottom-nav.rtl .mobile-fab {
-  right: auto;
-  left: 1rem;
-}
 
 // Tablet specific adjustments (768px - 1024px)
 @media (min-width: 768px) and (max-width: 1024px) {
+  .feedin-header {
+    border-bottom-left-radius: 1.5rem;
+    border-bottom-right-radius: 1.5rem;
+  }
+
+  .header-content {
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    min-height: 70px;
+    height: auto;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .logo-section {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 280px; // Limit logo section width
+    gap: 0.75rem;
+    order: 1;
+
+    .feedin-logo {
+      height: 48px; // Medium logo on tablet
+    }
+
+    .nav-farm-selector {
+      .farm-selector-trigger {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.85rem;
+        
+        .selector-icon {
+          width: 16px;
+          height: 16px;
+        }
+        
+        .selector-text {
+          max-width: 140px;
+        }
+        
+        .selector-arrow {
+          width: 12px;
+          height: 12px;
+        }
+      }
+    }
+  }
+
   .center-section {
-    display: none; // Hide center section on tablet - navigation moved to bottom nav
+    display: none !important; // Hide center section on tablet - navigation moved to bottom nav
+  }
+
+  .actions-section {
+    gap: 0.375rem;
+    flex-shrink: 0;
+    order: 2;
+    margin-left: auto;
+    min-width: fit-content;
+
+    .action-btn,
+    .user-avatar,
+    .mobile-menu-toggle {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+    }
+
+    .action-icon {
+      width: 19px;
+      height: 19px;
+    }
+
+    .avatar-circle {
+      width: 36px;
+      height: 36px;
+    }
+
+    .avatar-initials {
+      font-size: 0.875rem;
+    }
+
+    // Hide language switcher on tablet (available in mobile menu)
+    .language-switcher {
+      display: none;
+    }
+    
+    // Mobile menu toggle should be visible on tablet
+    .mobile-menu-toggle {
+      display: flex !important;
+    }
   }
 
   // Show bottom navigation on tablet
   .mobile-bottom-nav {
     display: flex;
-    margin: 0 1rem; // More margin on tablet
+    margin: 0 1rem;
+    padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
     border-top-left-radius: 1.75rem;
     border-top-right-radius: 1.75rem;
   }
@@ -2653,6 +3097,12 @@ body.dark-theme .mobile-fab {
   .bottom-nav-item {
     padding: 0.625rem 0.5rem;
     
+    .nav-item-icon-fa {
+      font-size: 1.35rem;
+      width: 26px;
+      height: 26px;
+    }
+    
     .nav-item-icon {
       width: 26px;
       height: 26px;
@@ -2663,17 +3113,11 @@ body.dark-theme .mobile-fab {
       max-width: 70px;
     }
   }
-
-  // FAB positioning for tablet
-  .mobile-fab {
-    bottom: calc(85px + env(safe-area-inset-bottom));
-    width: 60px;
-    height: 60px;
-    
-    .fab-icon {
-      width: 30px;
-      height: 30px;
-    }
+  
+  .bottom-nav-content {
+    gap: 0.75rem;
+    padding: 0 1.75rem;
+    max-width: 700px;
   }
 }
 

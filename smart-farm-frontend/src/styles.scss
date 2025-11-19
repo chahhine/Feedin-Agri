@@ -1,7 +1,49 @@
-/* You can add global styles to this file, and also import other style files */
+
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
 
 // Modern Glassmorphic Toast Notifications - MUST be at top before any other rules
 @use './app/core/styles/toast-notifications.scss';
+
+// Font Awesome Icons - Using @use instead of deprecated @import
+// Must be at top before any other CSS rules
+@use '@fortawesome/fontawesome-free/scss/fontawesome' as *;
+@use '@fortawesome/fontawesome-free/scss/solid' as *;
+@use '@fortawesome/fontawesome-free/scss/regular' as *;
+@use '@fortawesome/fontawesome-free/scss/brands' as *;
+
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+body {
+  // Default the application to a light color theme. This can be changed to
+  // `dark` to enable the dark color theme, or to `light dark` to defer to the
+  // user's system settings.
+  color-scheme: light;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  // Reset the user agent margin.
+  margin: 0;
+}
+/* You can add global styles to this file, and also import other style files */
 
 // @import '@angular/material/theming';
 // @include mat-core();
@@ -95,6 +137,20 @@ body.rtl {
   -webkit-backdrop-filter: blur(12px) !important;
   backdrop-filter: blur(12px) !important;
   animation: fadeInBackdrop 0.3s ease !important;
+}
+
+.device-details-dialog-backdrop.cdk-overlay-backdrop {
+  background: rgba(15, 23, 42, 0.65) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  animation: fadeInBackdrop 0.3s ease !important;
+}
+
+.device-details-dialog-container .mat-mdc-dialog-surface {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 24px !important;
 }
 
 // ===== SENSORS TABS GLOBAL OVERRIDE (Backup for view encapsulation issues) =====
@@ -338,37 +394,341 @@ html.theme-transitioning *::after {
   }
 }
 
-// Custom scrollbar
+// Custom scrollbar - Theme-aware
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--light-bg, #f1f1f1);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: var(--border-color, #888);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--text-secondary, #555);
 }
 
-// Snackbar styles
+body.dark-theme {
+  ::-webkit-scrollbar-track {
+    background: var(--card-bg, #1e293b);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-color, #475569);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary, #64748b);
+  }
+}
+
+// ===========================
+// Material Select Dropdowns - Theme-Aware
+// ===========================
+.mat-mdc-select-panel {
+  background: var(--user-menu-bg, #ffffff) !important;
+  border: 1px solid var(--user-menu-border, rgba(0, 0, 0, 0.08)) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--user-menu-shadow, 0 8px 32px rgba(0, 0, 0, 0.12)) !important;
+  padding: 8px !important;
+  margin-top: 4px !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+
+  // Scrollbar in select panels
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--light-bg, #f1f1f1);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color, #cbd5e1);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--text-secondary, #94a3b8);
+    }
+  }
+
+  // Options styling
+  .mat-mdc-option {
+    color: var(--text-primary, #1f2937) !important;
+    background: transparent !important;
+    border-radius: 8px !important;
+    margin: 2px 0 !important;
+    padding: 10px 16px !important;
+    min-height: 44px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &:hover:not(.mdc-list-item--disabled) {
+      background: var(--nav-item-hover, rgba(16, 185, 129, 0.08)) !important;
+      color: var(--primary-green, #10b981) !important;
+      transform: translateX(4px);
+    }
+
+    &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+      background: var(--nav-item-active, rgba(16, 185, 129, 0.15)) !important;
+      color: var(--primary-green, #10b981) !important;
+      font-weight: 600 !important;
+
+      &::before {
+        content: '✓';
+        position: absolute;
+        left: 12px;
+        color: var(--primary-green, #10b981);
+        font-weight: bold;
+        font-size: 16px;
+      }
+    }
+
+    &.mdc-list-item--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    // Option text
+    .mdc-list-item__primary-text {
+      color: inherit !important;
+    }
+  }
+}
+
+body.dark-theme .mat-mdc-select-panel {
+  background: var(--user-menu-bg, #1e293b) !important;
+  border-color: var(--user-menu-border, rgba(255, 255, 255, 0.1)) !important;
+  box-shadow: var(--user-menu-shadow, 0 8px 32px rgba(0, 0, 0, 0.4)) !important;
+
+  &::-webkit-scrollbar-track {
+    background: var(--card-bg, #1e293b);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color, #475569);
+  }
+
+  .mat-mdc-option {
+    color: var(--text-primary, #f1f5f9) !important;
+
+    &:hover:not(.mdc-list-item--disabled) {
+      background: var(--nav-item-hover, rgba(16, 185, 129, 0.12)) !important;
+    }
+
+    &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+      background: var(--nav-item-active, rgba(16, 185, 129, 0.2)) !important;
+    }
+  }
+}
+
+// Material Select Trigger
+.mat-mdc-select-trigger {
+  color: var(--text-primary, #1f2937) !important;
+
+  .mat-mdc-select-value {
+    color: inherit !important;
+  }
+
+  .mat-mdc-select-arrow-wrapper {
+    .mat-mdc-select-arrow {
+      color: var(--primary-green, #10b981) !important;
+    }
+  }
+}
+
+body.dark-theme .mat-mdc-select-trigger {
+  color: var(--text-primary, #f1f5f9) !important;
+}
+
+// ===========================
+// Material Menu Dropdowns - Theme-Aware
+// ===========================
+.mat-mdc-menu-panel {
+  background: var(--user-menu-bg, #ffffff) !important;
+  border: 1px solid var(--user-menu-border, rgba(0, 0, 0, 0.08)) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--user-menu-shadow, 0 8px 32px rgba(0, 0, 0, 0.12)) !important;
+  padding: 8px !important;
+  max-height: 400px !important;
+  overflow-y: auto !important;
+
+  // Scrollbar in menu panels
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--light-bg, #f1f1f1);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color, #cbd5e1);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--text-secondary, #94a3b8);
+    }
+  }
+
+  .mat-mdc-menu-content {
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .mat-mdc-menu-item {
+    color: var(--text-primary, #1f2937) !important;
+    background: transparent !important;
+    border-radius: 8px !important;
+    margin: 2px 0 !important;
+    padding: 10px 16px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &:hover:not([disabled]) {
+      background: var(--nav-item-hover, rgba(16, 185, 129, 0.08)) !important;
+      color: var(--primary-green, #10b981) !important;
+      transform: translateX(4px);
+    }
+
+    &[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .mdc-list-item__primary-text {
+      color: inherit !important;
+    }
+
+    mat-icon {
+      color: inherit !important;
+    }
+  }
+}
+
+body.dark-theme .mat-mdc-menu-panel {
+  background: var(--user-menu-bg, #1e293b) !important;
+  border-color: var(--user-menu-border, rgba(255, 255, 255, 0.1)) !important;
+  box-shadow: var(--user-menu-shadow, 0 8px 32px rgba(0, 0, 0, 0.4)) !important;
+
+  &::-webkit-scrollbar-track {
+    background: var(--card-bg, #1e293b);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color, #475569);
+  }
+
+  .mat-mdc-menu-item {
+    color: var(--text-primary, #f1f5f9) !important;
+
+    &:hover:not([disabled]) {
+      background: var(--nav-item-hover, rgba(16, 185, 129, 0.12)) !important;
+    }
+  }
+}
+
+// ===========================
+// Date Picker Dropdowns - Theme-Aware
+// ===========================
+.mat-datepicker-popup {
+  .mat-calendar {
+    background: var(--user-menu-bg, #ffffff) !important;
+    border: 1px solid var(--user-menu-border, rgba(0, 0, 0, 0.08)) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--user-menu-shadow, 0 8px 32px rgba(0, 0, 0, 0.12)) !important;
+    padding: 8px !important;
+
+    .mat-calendar-header {
+      background: transparent !important;
+      color: var(--text-primary, #1f2937) !important;
+      border-bottom: 1px solid var(--border-color, #e5e7eb) !important;
+    }
+
+    .mat-calendar-body {
+      color: var(--text-primary, #1f2937) !important;
+
+      .mat-calendar-body-cell {
+        .mat-calendar-body-cell-content {
+          color: var(--text-primary, #1f2937) !important;
+
+          &:hover:not(.mat-calendar-body-selected) {
+            background: var(--nav-item-hover, rgba(16, 185, 129, 0.08)) !important;
+          }
+        }
+
+        &.mat-calendar-body-selected {
+          .mat-calendar-body-cell-content {
+            background: var(--primary-green, #10b981) !important;
+            color: white !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+body.dark-theme .mat-datepicker-popup {
+  .mat-calendar {
+    background: var(--user-menu-bg, #1e293b) !important;
+    border-color: var(--user-menu-border, rgba(255, 255, 255, 0.1)) !important;
+    box-shadow: var(--user-menu-shadow, 0 8px 32px rgba(0, 0, 0, 0.4)) !important;
+
+    .mat-calendar-header {
+      color: var(--text-primary, #f1f5f9) !important;
+      border-bottom-color: var(--border-color, #334155) !important;
+    }
+
+    .mat-calendar-body {
+      color: var(--text-primary, #f1f5f9) !important;
+
+      .mat-calendar-body-cell {
+        .mat-calendar-body-cell-content {
+          color: var(--text-primary, #f1f5f9) !important;
+
+          &:hover:not(.mat-calendar-body-selected) {
+            background: var(--nav-item-hover, rgba(16, 185, 129, 0.12)) !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ===========================
+// Snackbar/Toast Styles - Theme-Aware
+// ===========================
 .success-snackbar {
-  background-color: #4caf50 !important;
+  background-color: var(--success, #4caf50) !important;
   color: white !important;
 }
 
 .error-snackbar {
-  background-color: #f44336 !important;
+  background-color: var(--danger, #f44336) !important;
   color: white !important;
 }
 
-// Glassmorphic Snackbar Styles
-.glass-snackbar {
+.warning-snackbar {
+  background-color: var(--warning, #f59e0b) !important;
+  color: white !important;
+}
+
+.info-snackbar {
+  background-color: var(--primary-blue, #3b82f6) !important;
+  color: white !important;
+}
+
+// Glassmorphic Snackbar Styles - Full Theme-Aware
+.glass-snackbar,
+.glass-toast,
+.dark-theme-toast,
+.light-theme-toast {
   .mdc-snackbar__surface,
   .mat-mdc-snack-bar-container {
     background: var(--glass-bg, rgba(255, 255, 255, 0.85)) !important;
@@ -399,17 +759,22 @@ html.theme-transitioning *::after {
     font-size: 1.1rem !important;
     min-width: auto !important;
     padding: 0 8px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
 
     &:hover {
       background: rgba(16, 185, 129, 0.1) !important;
+      transform: scale(1.05);
     }
   }
 
-  &.success-snackbar {
+  // Success Toast
+  &.success-toast {
     .mdc-snackbar__surface,
     .mat-mdc-snack-bar-container {
       background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95)) !important;
       border-color: rgba(110, 231, 183, 0.5) !important;
+      border-left: 4px solid var(--success, #10b981) !important;
     }
 
     .mat-mdc-snack-bar-label,
@@ -427,11 +792,13 @@ html.theme-transitioning *::after {
     }
   }
 
-  &.error-snackbar {
+  // Error Toast
+  &.error-toast {
     .mdc-snackbar__surface,
     .mat-mdc-snack-bar-container {
       background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95)) !important;
       border-color: rgba(254, 202, 202, 0.5) !important;
+      border-left: 4px solid var(--danger, #ef4444) !important;
     }
 
     .mat-mdc-snack-bar-label,
@@ -447,12 +814,70 @@ html.theme-transitioning *::after {
         background: rgba(255, 255, 255, 0.2) !important;
       }
     }
+  }
+
+  // Warning Toast
+  &.warning-toast {
+    .mdc-snackbar__surface,
+    .mat-mdc-snack-bar-container {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(217, 119, 6, 0.95)) !important;
+      border-color: rgba(254, 243, 199, 0.5) !important;
+      border-left: 4px solid var(--warning, #f59e0b) !important;
+    }
+
+    .mat-mdc-snack-bar-label,
+    .mdc-snackbar__label {
+      color: white !important;
+    }
+
+    .mat-mdc-button.mat-mdc-snack-bar-action,
+    .mdc-snackbar__actions button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+      }
+    }
+  }
+
+  // Info Toast
+  &.info-toast {
+    .mdc-snackbar__surface,
+    .mat-mdc-snack-bar-container {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 0.95)) !important;
+      border-color: rgba(191, 219, 254, 0.5) !important;
+      border-left: 4px solid var(--primary-blue, #3b82f6) !important;
+    }
+
+    .mat-mdc-snack-bar-label,
+    .mdc-snackbar__label {
+      color: white !important;
+    }
+
+    .mat-mdc-button.mat-mdc-snack-bar-action,
+    .mdc-snackbar__actions button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+      }
+    }
+  }
+
+  // Legacy class support
+  &.success-snackbar {
+    @extend .success-toast;
+  }
+
+  &.error-snackbar {
+    @extend .error-toast;
   }
 }
 
 // Dark theme snackbar adjustments
 body.dark-theme {
-  .glass-snackbar {
+  .glass-snackbar,
+  .glass-toast {
     .mdc-snackbar__surface,
     .mat-mdc-snack-bar-container {
       background: var(--glass-bg, rgba(30, 41, 59, 0.85)) !important;
@@ -461,6 +886,7 @@ body.dark-theme {
                   inset 0 1px 1px rgba(100, 116, 139, 0.2) !important;
     }
 
+    &.success-toast,
     &.success-snackbar {
       .mdc-snackbar__surface,
       .mat-mdc-snack-bar-container {
@@ -468,10 +894,25 @@ body.dark-theme {
       }
     }
 
+    &.error-toast,
     &.error-snackbar {
       .mdc-snackbar__surface,
       .mat-mdc-snack-bar-container {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)) !important;
+      }
+    }
+
+    &.warning-toast {
+      .mdc-snackbar__surface,
+      .mat-mdc-snack-bar-container {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9)) !important;
+      }
+    }
+
+    &.info-toast {
+      .mdc-snackbar__surface,
+      .mat-mdc-snack-bar-container {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9)) !important;
       }
     }
   }
@@ -511,9 +952,16 @@ body.dark-theme {
   }
 }
 
-// Dialog overlay fade animation
+// Dialog overlay fade animation - Theme-Aware
 .cdk-overlay-backdrop {
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+body.dark-theme .cdk-overlay-backdrop {
+  background: rgba(0, 0, 0, 0.7) !important;
 }
 
 // Dialog enter/exit animations
@@ -658,11 +1106,15 @@ body.dark-theme {
   }
 }
 
-// Dialog overlay
+// Dialog overlay - Theme-Aware
 .cdk-overlay-dark-backdrop {
-  background: rgba(15, 23, 42, 0.7) !important;
+  background: rgba(0, 0, 0, 0.7) !important;
   -webkit-backdrop-filter: blur(8px) !important;
   backdrop-filter: blur(8px) !important;
+}
+
+body.dark-theme .cdk-overlay-dark-backdrop {
+  background: rgba(0, 0, 0, 0.8) !important;
 }
 
 // Material form field glass style
@@ -705,3 +1157,6 @@ mat-chip-listbox.glass-chips {
     }
   }
 }
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

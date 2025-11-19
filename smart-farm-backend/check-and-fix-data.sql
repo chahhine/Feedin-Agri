@@ -60,3 +60,9 @@ FROM farms f
 LEFT JOIN users u ON f.owner_id = u.user_id
 ORDER BY f.name;
 
+
+
+
+
+
+

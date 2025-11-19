@@ -29,7 +29,7 @@ export class Notification {
   @Column({ type: 'text', nullable: true })
   message?: string;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   context?: any;
 
   @Index()

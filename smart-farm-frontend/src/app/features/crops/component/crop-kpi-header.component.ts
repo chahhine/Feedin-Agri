@@ -1,9 +1,11 @@
-import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, computed, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { LanguageService } from '../../../core/services/language.service';
 
 @Component({
   selector: 'app-crop-kpi-header',
@@ -12,7 +14,8 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
     CommonModule,
     MatCardModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    TranslatePipe
   ],
   template: `
     <section class="kpi-header">
@@ -21,13 +24,13 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
         class="kpi-card clickable"
         [class.active]="activeFilter() === 'all'"
         (click)="onCardClick('all')"
-        matTooltip="View all crops">
+        [matTooltip]="'crops.kpi.tooltips.all' | translate">
         <mat-card-content>
           <div class="kpi-icon" [class.pulse]="kpis().totalCrops > 0">
             <mat-icon>agriculture</mat-icon>
           </div>
           <div class="kpi-data">
-            <span class="kpi-label">Total Crops</span>
+            <span class="kpi-label">{{ 'crops.kpi.labels.total' | translate }}</span>
             <span class="kpi-value">{{ kpis().totalCrops }}</span>
           </div>
           <div class="ripple"></div>
@@ -39,13 +42,13 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
         class="kpi-card clickable health-ratio"
         [class.active]="activeFilter() === 'healthy' || activeFilter() === 'stressed'"
         (click)="onCardClick('healthy')"
-        matTooltip="Healthy vs Stressed crops">
+        [matTooltip]="'crops.kpi.tooltips.healthRatio' | translate">
         <mat-card-content>
           <div class="kpi-icon success">
             <mat-icon>eco</mat-icon>
           </div>
           <div class="kpi-data">
-            <span class="kpi-label">Health Ratio</span>
+            <span class="kpi-label">{{ 'crops.kpi.labels.healthRatio' | translate }}</span>
             <div class="ratio-display">
               <span class="healthy">{{ kpis().healthyCount }}</span>
               <span class="divider">/</span>
@@ -65,13 +68,13 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
       <!-- Growth Stage -->
       <mat-card
         class="kpi-card growth-stage"
-        matTooltip="Current growth stage">
+        [matTooltip]="'crops.kpi.tooltips.growthStage' | translate">
         <mat-card-content>
           <div class="kpi-icon">
             <mat-icon>{{ getGrowthStageIcon() }}</mat-icon>
           </div>
           <div class="kpi-data">
-            <span class="kpi-label">Growth Stage</span>
+            <span class="kpi-label">{{ 'crops.kpi.labels.growthStage' | translate }}</span>
             <span class="kpi-value stage">{{ kpis().currentGrowthStage }}</span>
           </div>
         </mat-card-content>
@@ -84,13 +87,13 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
         [class.critical]="isCritical('moisture')"
         [class.warning]="isWarning('moisture')"
         (click)="onCardClick('moisture')"
-        matTooltip="Average soil moisture across all sensors">
+        [matTooltip]="'crops.kpi.tooltips.soilMoisture' | translate">
         <mat-card-content>
           <div class="kpi-icon" [class.warning]="isWarning('moisture')">
             <mat-icon>water_drop</mat-icon>
           </div>
           <div class="kpi-data">
-            <span class="kpi-label">Soil Moisture</span>
+            <span class="kpi-label">{{ 'crops.kpi.labels.soilMoisture' | translate }}</span>
             <span class="kpi-value">
               {{ kpis().avgSoilMoisture !== null ? (kpis().avgSoilMoisture | number:'1.1-1') + '%' : '--' }}
             </span>
@@ -108,13 +111,13 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
         [class.active]="activeFilter() === 'temperature'"
         [class.warning]="isWarning('temperature')"
         (click)="onCardClick('temperature')"
-        matTooltip="Average temperature across all sensors">
+        [matTooltip]="'crops.kpi.tooltips.temperature' | translate">
         <mat-card-content>
           <div class="kpi-icon warm">
             <mat-icon>thermostat</mat-icon>
           </div>
           <div class="kpi-data">
-            <span class="kpi-label">Temperature</span>
+            <span class="kpi-label">{{ 'crops.kpi.labels.temperature' | translate }}</span>
             <span class="kpi-value">
               {{ kpis().avgTemperature !== null ? (kpis().avgTemperature | number:'1.1-1') + '°C' : '--' }}
             </span>
@@ -128,13 +131,13 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
         class="kpi-card clickable"
         [class.active]="activeFilter() === 'humidity'"
         (click)="onCardClick('humidity')"
-        matTooltip="Average humidity across all sensors">
+        [matTooltip]="'crops.kpi.tooltips.humidity' | translate">
         <mat-card-content>
           <div class="kpi-icon">
             <mat-icon>cloud</mat-icon>
           </div>
           <div class="kpi-data">
-            <span class="kpi-label">Humidity</span>
+            <span class="kpi-label">{{ 'crops.kpi.labels.humidity' | translate }}</span>
             <span class="kpi-value">
               {{ kpis().avgHumidity !== null ? (kpis().avgHumidity | number:'1.1-1') + '%' : '--' }}
             </span>
@@ -150,9 +153,9 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
             <mat-icon>schedule</mat-icon>
           </div>
           <div class="kpi-data">
-            <span class="kpi-label">Last Updated</span>
+            <span class="kpi-label">{{ 'crops.kpi.labels.lastUpdated' | translate }}</span>
             <span class="kpi-value small">
-              {{ kpis().lastUpdated ? getRelativeTime(kpis().lastUpdated!) : 'Never' }}
+              {{ kpis().lastUpdated ? getRelativeTime(kpis().lastUpdated!) : ('crops.kpi.relative.never' | translate) }}
             </span>
           </div>
         </mat-card-content>
@@ -457,6 +460,7 @@ import { CropKPIs, HealthStatus, KPIFilter } from '../../../core/services/crop.s
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CropKpiHeaderComponent {
+  private languageService = inject(LanguageService);
   // Inputs
   kpis = input.required<CropKPIs>();
   healthStatus = input<HealthStatus>('unknown');
@@ -527,11 +531,27 @@ export class CropKpiHeaderComponent {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days}d ago`;
-    return new Date(date).toLocaleDateString();
+    if (minutes < 1) {
+      return this.languageService.translate('crops.common.relative.justNow');
+    }
+    if (minutes < 60) {
+      return this.languageService.translate('crops.common.relative.minutesAgo', { count: minutes });
+    }
+    if (hours < 24) {
+      return this.languageService.translate('crops.common.relative.hoursAgo', { count: hours });
+    }
+    if (days === 1) {
+      return this.languageService.translate('crops.common.relative.yesterday');
+    }
+    if (days < 7) {
+      return this.languageService.translate('crops.common.relative.daysAgo', { count: days });
+    }
+
+    const formatter = new Intl.DateTimeFormat(this.languageService.getCurrentLanguageCode(), {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+    return formatter.format(new Date(date));
   }
 }

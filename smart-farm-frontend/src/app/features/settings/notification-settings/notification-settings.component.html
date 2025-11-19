@@ -1,5 +1,5 @@
 <!-- Notification Settings Container -->
-<div class="notification-settings-container">
+<div class="notification-settings-container" [attr.dir]="languageService.getCurrentLanguage().direction">
 
   <!-- Header Card -->
   <div class="settings-header-card">
@@ -8,8 +8,8 @@
         <mat-icon class="header-icon">notifications_active</mat-icon>
       </div>
       <div class="header-text">
-        <h1>{{ languageService.t()('notifications.title') }}</h1>
-        <p class="subtitle">{{ languageService.t()('notifications.subtitle') }}</p>
+        <h1>{{ 'notifications.settingsPage.title' | translate }}</h1>
+        <p class="subtitle">{{ 'notifications.settingsPage.subtitle' | translate }}</p>
       </div>
     </div>
   </div>
@@ -25,8 +25,8 @@
             <mat-icon>nightlight</mat-icon>
           </div>
           <div>
-            <h2>{{ languageService.t()('notifications.quietHours') }}</h2>
-            <p class="section-description">Silence notifications during specific hours</p>
+            <h2>{{ 'notifications.quietHours' | translate }}</h2>
+            <p class="section-description">{{ 'notifications.settingsPage.quietHoursDescription' | translate }}</p>
           </div>
         </div>
         <mat-slide-toggle
@@ -41,7 +41,7 @@
           <div class="time-config-card">
             <mat-icon class="time-icon">bedtime</mat-icon>
             <div class="time-info">
-              <span class="time-label">{{ languageService.t()('notifications.startHour') }}</span>
+              <span class="time-label">{{ 'notifications.startHour' | translate }}</span>
               <mat-form-field appearance="outline" class="time-field">
                 <input
                   matInput
@@ -49,8 +49,8 @@
                   [(ngModel)]="startHour"
                   min="0"
                   max="23"
-                  placeholder="22">
-                <span matSuffix>:00</span>
+                  [placeholder]="'notifications.settingsPage.placeholders.startHour' | translate">
+                <span matSuffix>{{ 'notifications.settingsPage.labels.hourSuffix' | translate }}</span>
               </mat-form-field>
             </div>
           </div>
@@ -62,7 +62,7 @@
           <div class="time-config-card">
             <mat-icon class="time-icon">wb_twilight</mat-icon>
             <div class="time-info">
-              <span class="time-label">{{ languageService.t()('notifications.endHour') }}</span>
+              <span class="time-label">{{ 'notifications.endHour' | translate }}</span>
               <mat-form-field appearance="outline" class="time-field">
                 <input
                   matInput
@@ -70,8 +70,8 @@
                   [(ngModel)]="endHour"
                   min="0"
                   max="23"
-                  placeholder="6">
-                <span matSuffix>:00</span>
+                  [placeholder]="'notifications.settingsPage.placeholders.endHour' | translate">
+                <span matSuffix>{{ 'notifications.settingsPage.labels.hourSuffix' | translate }}</span>
               </mat-form-field>
             </div>
           </div>
@@ -79,7 +79,7 @@
 
         <div class="info-box">
           <mat-icon>info_outline</mat-icon>
-          <span>Notifications will be silenced from <strong>{{ startHour }}:00</strong> to <strong>{{ endHour }}:00</strong></span>
+          <span [innerHTML]="'notifications.settingsPage.quietHoursInfo' | translate:{ start: (startHour + ':00'), end: (endHour + ':00') }"></span>
         </div>
       </mat-card-content>
     </mat-card>
@@ -92,8 +92,8 @@
             <mat-icon>schedule</mat-icon>
           </div>
           <div>
-            <h2>{{ languageService.t()('notifications.cooldown') }}</h2>
-            <p class="section-description">Minimum time between repeated notifications</p>
+            <h2>{{ 'notifications.cooldown' | translate }}</h2>
+            <p class="section-description">{{ 'notifications.settingsPage.cooldownDescription' | translate }}</p>
           </div>
         </div>
       </div>
@@ -103,22 +103,22 @@
           <mat-icon class="cooldown-icon">timer</mat-icon>
           <div class="cooldown-slider">
             <mat-form-field appearance="outline" class="cooldown-field">
-              <mat-label>{{ languageService.t()('notifications.cooldownMinutes') }}</mat-label>
+              <mat-label>{{ 'notifications.cooldownMinutes' | translate }}</mat-label>
               <input
                 matInput
                 type="number"
                 [(ngModel)]="cooldown"
                 min="0"
                 max="120"
-                placeholder="15">
-              <span matSuffix>minutes</span>
+                [placeholder]="'notifications.settingsPage.placeholders.cooldown' | translate">
+              <span matSuffix>{{ 'notifications.settingsPage.labels.minutes' | translate }}</span>
             </mat-form-field>
           </div>
         </div>
 
         <div class="info-box">
           <mat-icon>info_outline</mat-icon>
-          <span>Same notification type won't repeat within <strong>{{ cooldown }}</strong> minutes</span>
+          <span [innerHTML]="'notifications.settingsPage.cooldownInfo' | translate:{ minutes: cooldown }"></span>
         </div>
       </mat-card-content>
     </mat-card>
@@ -131,8 +131,8 @@
             <mat-icon>priority_high</mat-icon>
           </div>
           <div>
-            <h2>{{ languageService.t()('notifications.categories') }} - Levels</h2>
-            <p class="section-description">Choose which severity levels to receive</p>
+            <h2>{{ 'notifications.settingsPage.levelsTitle' | translate }}</h2>
+            <p class="section-description">{{ 'notifications.settingsPage.levelsDescription' | translate }}</p>
           </div>
         </div>
       </div>
@@ -144,8 +144,8 @@
               <mat-icon>error</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.critical') }}</span>
-              <span class="toggle-description">Urgent issues requiring immediate attention</span>
+              <span class="toggle-label">{{ 'notifications.critical' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.levelDescriptions.critical' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="levels.critical"
@@ -158,8 +158,8 @@
               <mat-icon>warning</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.warning') }}</span>
-              <span class="toggle-description">Important alerts needing attention</span>
+              <span class="toggle-label">{{ 'notifications.warning' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.levelDescriptions.warning' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="levels.warning"
@@ -172,8 +172,8 @@
               <mat-icon>info</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.info') }}</span>
-              <span class="toggle-description">General information and updates</span>
+              <span class="toggle-label">{{ 'notifications.info' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.levelDescriptions.info' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="levels.info"
@@ -186,8 +186,8 @@
               <mat-icon>check_circle</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.success') }}</span>
-              <span class="toggle-description">Successful operations and completions</span>
+              <span class="toggle-label">{{ 'notifications.success' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.levelDescriptions.success' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="levels.success"
@@ -206,8 +206,8 @@
             <mat-icon>source</mat-icon>
           </div>
           <div>
-            <h2>{{ languageService.t()('notifications.categories') }} - Sources</h2>
-            <p class="section-description">Select notification sources to monitor</p>
+            <h2>{{ 'notifications.settingsPage.sourcesTitle' | translate }}</h2>
+            <p class="section-description">{{ 'notifications.settingsPage.sourcesDescription' | translate }}</p>
           </div>
         </div>
       </div>
@@ -219,8 +219,8 @@
               <mat-icon>sensors</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.sensors') }}</span>
-              <span class="toggle-description">Temperature, humidity, soil sensors</span>
+              <span class="toggle-label">{{ 'notifications.sensors' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.sourceDescriptions.sensors' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="sources.sensor"
@@ -233,8 +233,8 @@
               <mat-icon>devices</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.devices') }}</span>
-              <span class="toggle-description">Connected IoT devices and equipment</span>
+              <span class="toggle-label">{{ 'notifications.devices' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.sourceDescriptions.devices' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="sources.device"
@@ -247,8 +247,8 @@
               <mat-icon>bolt</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.actions') }}</span>
-              <span class="toggle-description">Automated actions and triggers</span>
+              <span class="toggle-label">{{ 'notifications.actions' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.sourceDescriptions.actions' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="sources.action"
@@ -261,8 +261,8 @@
               <mat-icon>computer</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.system') }}</span>
-              <span class="toggle-description">System status and health updates</span>
+              <span class="toggle-label">{{ 'notifications.system' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.sourceDescriptions.system' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="sources.system"
@@ -275,8 +275,8 @@
               <mat-icon>build</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.maintenance') }}</span>
-              <span class="toggle-description">Maintenance reminders and schedules</span>
+              <span class="toggle-label">{{ 'notifications.maintenance' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.sourceDescriptions.maintenance' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="sources.maintenance"
@@ -289,8 +289,8 @@
               <mat-icon>security</mat-icon>
             </div>
             <div class="toggle-info">
-              <span class="toggle-label">{{ languageService.t()('notifications.security') }}</span>
-              <span class="toggle-description">Security alerts and access logs</span>
+              <span class="toggle-label">{{ 'notifications.security' | translate }}</span>
+              <span class="toggle-description">{{ 'notifications.settingsPage.sourceDescriptions.security' | translate }}</span>
             </div>
             <mat-slide-toggle
               [(ngModel)]="sources.security"
@@ -305,7 +305,7 @@
     <div class="actions-bar">
       <div class="actions-info">
         <mat-icon>auto_awesome</mat-icon>
-        <span>Changes are applied immediately after saving</span>
+        <span>{{ 'notifications.settingsPage.actionsInfo' | translate }}</span>
       </div>
       <button
         mat-raised-button
@@ -313,7 +313,7 @@
         class="save-button"
         (click)="save()">
         <mat-icon>save</mat-icon>
-        <span>{{ languageService.t()('notifications.saveSettings') }}</span>
+        <span>{{ 'notifications.saveSettings' | translate }}</span>
       </button>
     </div>
 

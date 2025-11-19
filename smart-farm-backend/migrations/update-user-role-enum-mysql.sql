@@ -15,3 +15,9 @@ MODIFY COLUMN role ENUM('admin', 'farmer', 'moderator') NOT NULL DEFAULT 'farmer
 -- Verify the migration
 SELECT DISTINCT role FROM users;
 
+
+
+
+
+
+

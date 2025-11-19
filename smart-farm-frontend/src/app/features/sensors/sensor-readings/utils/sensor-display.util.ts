@@ -13,7 +13,6 @@ export type SensorStatus = 'normal' | 'warning' | 'critical' | 'offline';
 export interface SensorDisplayConfig {
   icon: string;
   displayName: string;
-  emoji: string;
   color: {
     light: string;
     dark: string;
@@ -31,7 +30,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   temperature: {
     icon: 'thermostat',
     displayName: 'Temperature',
-    emoji: '🌡️',
     color: {
       light: '#ef4444',
       dark: '#fca5a5',
@@ -44,7 +42,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   humidity: {
     icon: 'water_drop',
     displayName: 'Humidity',
-    emoji: '💧',
     color: {
       light: '#3b82f6',
       dark: '#93c5fd',
@@ -57,7 +54,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   soil_moisture: {
     icon: 'grass',
     displayName: 'Soil Moisture',
-    emoji: '🌱',
     color: {
       light: '#84cc16',
       dark: '#bef264',
@@ -70,7 +66,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   light: {
     icon: 'light_mode',
     displayName: 'Light Intensity',
-    emoji: '☀️',
     color: {
       light: '#f59e0b',
       dark: '#fcd34d',
@@ -83,7 +78,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   ph: {
     icon: 'science',
     displayName: 'pH Level',
-    emoji: '⚗️',
     color: {
       light: '#8b5cf6',
       dark: '#c4b5fd',
@@ -96,7 +90,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   pressure: {
     icon: 'speed',
     displayName: 'Pressure',
-    emoji: '🌀',
     color: {
       light: '#06b6d4',
       dark: '#67e8f9',
@@ -109,7 +102,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   irrigation: {
     icon: 'sprinkler',
     displayName: 'Irrigation',
-    emoji: '💦',
     color: {
       light: '#0284c7',
       dark: '#7dd3fc',
@@ -122,7 +114,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   water_flow: {
     icon: 'waves',
     displayName: 'Water Flow',
-    emoji: '🌊',
     color: {
       light: '#0369a1',
       dark: '#93c5fd',
@@ -135,7 +126,6 @@ export const SENSOR_TYPE_CONFIG: Record<string, SensorDisplayConfig> = {
   all: {
     icon: 'sensors',
     displayName: 'All Sensors',
-    emoji: '📡',
     color: {
       light: '#10b981',
       dark: '#34d399',
@@ -253,13 +243,6 @@ export function getSensorDisplayName(type: string): string {
   return SENSOR_TYPE_CONFIG[normalizedType]?.displayName || type;
 }
 
-/**
- * Get sensor emoji
- */
-export function getSensorEmoji(type: string): string {
-  const normalizedType = type.toLowerCase().replace(/[_-]/g, '_');
-  return SENSOR_TYPE_CONFIG[normalizedType]?.emoji || '📊';
-}
 
 /**
  * Get sensor color for light/dark mode

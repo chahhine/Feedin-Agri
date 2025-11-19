@@ -66,3 +66,9 @@ If you still get errors after running the migration:
 3. Ensure no users have 'viewer' role before modifying the enum
 4. If using TypeORM synchronize, try disabling it and running migrations manually
 
+
+
+
+
+
+

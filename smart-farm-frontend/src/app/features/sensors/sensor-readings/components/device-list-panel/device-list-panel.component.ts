@@ -13,7 +13,7 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { SensorStatus } from '../../utils/sensor-status.util';
-import { getSensorIcon, getSensorEmoji, getActionPurposeIcon as getActionIcon } from '../../utils/sensor-display.util';
+import { getSensorIcon, getActionPurposeIcon as getActionIcon } from '../../utils/sensor-display.util';
 
 export interface DeviceListItem {
   id: string;

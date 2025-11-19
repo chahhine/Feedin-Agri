@@ -12,6 +12,7 @@ import { map, catchError } from 'rxjs/operators';
 
 import { CropService, SensorWithReading } from '../../../core/services/crop.service';
 import { SensorReading } from '../../../core/models/farm.model';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 // Lazy load echarts for better initial bundle size
 // import type { EChartsOption } from 'echarts';
@@ -27,34 +28,35 @@ type EChartsOption = any; // Placeholder until echarts is installed
     MatIconModule,
     MatTabsModule,
     MatProgressSpinnerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    TranslatePipe
   ],
   template: `
     <mat-card class="health-analytics">
       <mat-card-header>
         <mat-card-title>
           <mat-icon>timeline</mat-icon>
-          Health Analytics
+          {{ 'crops.health.title' | translate }}
         </mat-card-title>
         <mat-card-subtitle>
-          Real-time sensor monitoring
+          {{ 'crops.health.subtitle' | translate }}
         </mat-card-subtitle>
         <div class="header-actions">
           <button
             mat-icon-button
             [class.active]="timeRange() === 7"
             (click)="setTimeRange(7)"
-            matTooltip="Last 7 days">
+            [matTooltip]="'crops.health.timeRange.last7' | translate">
             <span class="range-label">7D</span>
           </button>
           <button
             mat-icon-button
             [class.active]="timeRange() === 30"
             (click)="setTimeRange(30)"
-            matTooltip="Last 30 days">
+            [matTooltip]="'crops.health.timeRange.last30' | translate">
             <span class="range-label">30D</span>
           </button>
-          <button mat-icon-button (click)="refreshData()" matTooltip="Refresh">
+          <button mat-icon-button (click)="refreshData()" [matTooltip]="'common.refresh' | translate">
             <mat-icon>refresh</mat-icon>
           </button>
         </div>
@@ -64,14 +66,14 @@ type EChartsOption = any; // Placeholder until echarts is installed
         <!-- Loading State -->
         <div *ngIf="loading()" class="loading-state">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Loading sensor data...</p>
+          <p>{{ 'crops.health.loading' | translate }}</p>
         </div>
 
         <!-- Empty State -->
         <div *ngIf="!loading() && sensors().length === 0" class="empty-state">
           <mat-icon>sensors_off</mat-icon>
-          <h3>No Sensors Connected</h3>
-          <p>Connect sensors to this crop to start monitoring its health.</p>
+          <h3>{{ 'crops.health.empty.title' | translate }}</h3>
+          <p>{{ 'crops.health.empty.description' | translate }}</p>
         </div>
 
         <!-- Charts -->
@@ -81,17 +83,19 @@ type EChartsOption = any; // Placeholder until echarts is installed
             <mat-tab *ngIf="moistureSensors().length > 0">
               <ng-template mat-tab-label>
                 <mat-icon>water_drop</mat-icon>
-                Soil Moisture
+                {{ 'crops.health.tabs.soilMoisture' | translate }}
               </ng-template>
               <div class="chart-wrapper">
                 <div class="chart-container">
-                  <p class="chart-placeholder">Chart visualization ready - Install ngx-echarts to enable</p>
+                  <p class="chart-placeholder">{{ 'crops.health.chartPlaceholder' | translate }}</p>
                   <!-- TODO: Add echarts directive after installing ngx-echarts -->
                 </div>
                 <div class="sensor-legend">
                   <div *ngFor="let sensor of moistureSensors()" class="sensor-item">
                     <span class="sensor-dot" [style.background]="getSensorColor(sensor)"></span>
-                    <span class="sensor-name">{{ sensor.type }} ({{ sensor.location || 'No location' }})</span>
+                    <span class="sensor-name">
+                      {{ sensor.type }} ({{ sensor.location ? sensor.location : ('crops.common.noLocation' | translate) }})
+                    </span>
                     <span class="sensor-value" [class.critical]="sensor.status === 'critical'" [class.warning]="sensor.status === 'warning'">
                       {{ sensor.latestReading?.value1 !== undefined ? (sensor.latestReading?.value1 | number:'1.1-1') + (sensor.unit || '') : '--' }}
                     </span>
@@ -104,17 +108,19 @@ type EChartsOption = any; // Placeholder until echarts is installed
             <mat-tab *ngIf="temperatureSensors().length > 0">
               <ng-template mat-tab-label>
                 <mat-icon>thermostat</mat-icon>
-                Temperature
+                {{ 'crops.health.tabs.temperature' | translate }}
               </ng-template>
               <div class="chart-wrapper">
                 <div class="chart-container">
-                  <p class="chart-placeholder">Chart visualization ready - Install ngx-echarts to enable</p>
+                  <p class="chart-placeholder">{{ 'crops.health.chartPlaceholder' | translate }}</p>
                   <!-- TODO: Add echarts directive after installing ngx-echarts -->
                 </div>
                 <div class="sensor-legend">
                   <div *ngFor="let sensor of temperatureSensors()" class="sensor-item">
                     <span class="sensor-dot" [style.background]="getSensorColor(sensor)"></span>
-                    <span class="sensor-name">{{ sensor.type }} ({{ sensor.location || 'No location' }})</span>
+                    <span class="sensor-name">
+                      {{ sensor.type }} ({{ sensor.location ? sensor.location : ('crops.common.noLocation' | translate) }})
+                    </span>
                     <span class="sensor-value">
                       {{ sensor.latestReading?.value1 !== undefined ? (sensor.latestReading?.value1 | number:'1.1-1') + (sensor.unit || '') : '--' }}
                     </span>
@@ -127,17 +133,19 @@ type EChartsOption = any; // Placeholder until echarts is installed
             <mat-tab *ngIf="humiditySensors().length > 0">
               <ng-template mat-tab-label>
                 <mat-icon>cloud</mat-icon>
-                Humidity
+                {{ 'crops.health.tabs.humidity' | translate }}
               </ng-template>
               <div class="chart-wrapper">
                 <div class="chart-container">
-                  <p class="chart-placeholder">Chart visualization ready - Install ngx-echarts to enable</p>
+                  <p class="chart-placeholder">{{ 'crops.health.chartPlaceholder' | translate }}</p>
                   <!-- TODO: Add echarts directive after installing ngx-echarts -->
                 </div>
                 <div class="sensor-legend">
                   <div *ngFor="let sensor of humiditySensors()" class="sensor-item">
                     <span class="sensor-dot" [style.background]="getSensorColor(sensor)"></span>
-                    <span class="sensor-name">{{ sensor.type }} ({{ sensor.location || 'No location' }})</span>
+                    <span class="sensor-name">
+                      {{ sensor.type }} ({{ sensor.location ? sensor.location : ('crops.common.noLocation' | translate) }})
+                    </span>
                     <span class="sensor-value">
                       {{ sensor.latestReading?.value1 !== undefined ? (sensor.latestReading?.value1 | number:'1.1-1') + (sensor.unit || '') : '--' }}
                     </span>

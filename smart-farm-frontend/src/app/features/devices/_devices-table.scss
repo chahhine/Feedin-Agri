@@ -114,6 +114,16 @@
         outline-offset: 2px;
       }
     }
+
+    .table-actions {
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
+
+      button {
+        margin: 0;
+      }
+    }
   }
 
   ::ng-deep {
@@ -174,6 +184,15 @@
         font-size: 0.6875rem;
         padding: 0.2rem 0.5rem;
         min-width: 80px;
+      }
+
+      .table-actions {
+        gap: 0.25rem;
+
+        button {
+          width: 36px;
+          height: 36px;
+        }
       }
     }
 

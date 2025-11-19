@@ -2,6 +2,8 @@ export interface Farm {
   farm_id: string;
   name: string;
   location?: string;
+  latitude?: number;
+  longitude?: number;
   owner_id: string;
   created_at?: Date;
   updated_at?: Date;

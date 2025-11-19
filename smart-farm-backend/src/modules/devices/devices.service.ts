@@ -46,8 +46,8 @@ export class DevicesService {
     
     const devices = await this.devicesRepository.find({
       where: whereCondition,
-      relations
-      // order: { created_at: 'DESC' } // Commented out - column doesn't exist
+      relations,
+      order: { created_at: 'DESC' }
     });
     
     console.log(`✅ Found ${devices.length} devices`, ownerId ? `for owner ${ownerId}` : '(all devices)');
@@ -99,16 +99,16 @@ export class DevicesService {
 
     return this.devicesRepository.find({
       where: { farm_id: farmId },
-      relations: ['sensors']
-      // order: { created_at: 'DESC' } // Commented out - column doesn't exist
+      relations: ['sensors'],
+      order: { created_at: 'DESC' }
     });
   }
 
   async getDevicesByStatus(status: string): Promise<Device[]> {
     return this.devicesRepository.find({
       where: { status },
-      relations: ['farm']
-      // order: { created_at: 'DESC' } // Commented out - column doesn't exist
+      relations: ['farm'],
+      order: { created_at: 'DESC' }
     });
   }
 

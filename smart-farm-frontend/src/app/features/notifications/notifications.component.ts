@@ -903,27 +903,24 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     await this.load(currentOffset, true);
   }
 
-  // NEW: Auto-load with default farm selection
+  // NEW: Auto-load all notifications without filters
   async loadDefaultNotifications() {
     try {
-      // Check if there's a selected farm from farm management service
-      const farms = await this.farmManagement.farms();
-      if (farms && farms.length > 0) {
-        // Use the first farm as default if no specific farm is selected
-        const defaultFarm = farms[0];
-        this.selectedFarm.set(defaultFarm.name);
-        console.log('🏗️ [NOTIFICATIONS] Auto-loading with default farm:', defaultFarm.name);
-      } else {
-        console.log('🏗️ [NOTIFICATIONS] No farms available, loading all notifications');
-        this.selectedFarm.set(null);
-      }
+      // Ensure no filters are applied - load all notifications directly
+      this.selectedFarm.set(null);
+      this.selectedDevice.set(null);
+      this.activeFilters = 'all';
+      this.searchQuery = '';
       
-      // Load notifications with the selected farm filter
+      console.log('🏗️ [NOTIFICATIONS] Loading all notifications without filters');
+      
+      // Load notifications without any filters
       await this.load();
     } catch (error) {
       console.error('❌ [NOTIFICATIONS] Error in loadDefaultNotifications:', error);
       // Fallback to loading all notifications
       this.selectedFarm.set(null);
+      this.selectedDevice.set(null);
       await this.load();
     }
   }

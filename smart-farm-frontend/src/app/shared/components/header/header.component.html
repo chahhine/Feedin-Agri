@@ -2,7 +2,7 @@
 <header class="feedin-header" *ngIf="isAuthenticated()" role="banner" [class.rtl]="isRTL()">
   <div class="header-content">
 
-    <!-- LEFT: Feedin Logo -->
+    <!-- LEFT: Logo + Farm Selector -->
     <div class="logo-section">
       <div class="logo-wrapper" routerLink="/dashboard" [attr.aria-label]="'Navigate to dashboard'">
         <img
@@ -11,6 +11,25 @@
           class="feedin-logo"
           (error)="onLogoError($event)" />
         <mat-icon class="logo-fallback" *ngIf="false">agriculture</mat-icon>
+      </div>
+
+      <!-- Desktop Farm Selector (hidden on mobile) -->
+      <div class="nav-farm-selector" *ngIf="!isMobile()">
+        <button
+          class="farm-selector-trigger"
+          (click)="toggleFarmSelector()"
+          [class.active]="showFarmSelector"
+          [attr.aria-label]="'Select farm'"
+          [attr.aria-expanded]="showFarmSelector"
+          type="button">
+          <svg class="selector-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+          </svg>
+          <span class="selector-text" [title]="getCurrentFarmName()">{{ getCurrentFarmName() }}</span>
+          <svg class="selector-arrow" [class.rotated]="showFarmSelector" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
       </div>
 
       <!-- Mobile Farm Selector (shown only on mobile when nav becomes bottom bar) -->
@@ -25,7 +44,7 @@
           <svg class="selector-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
           </svg>
-          <span class="selector-text">{{ getCurrentFarmName() }}</span>
+          <span class="selector-text" [title]="getCurrentFarmName()">{{ getCurrentFarmName() }}</span>
           <svg class="selector-arrow" [class.rotated]="showFarmSelector" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
           </svg>
@@ -33,27 +52,8 @@
       </div>
     </div>
 
-    <!-- CENTER: Farm Selector + Navigation -->
+    <!-- CENTER: Navigation Tabs -->
     <div class="center-section">
-      <!-- Farm Selector -->
-      <div class="nav-farm-selector">
-        <button
-          class="farm-selector-trigger"
-          (click)="toggleFarmSelector()"
-          [class.active]="showFarmSelector"
-          [attr.aria-label]="'Select farm'"
-          [attr.aria-expanded]="showFarmSelector"
-          type="button">
-          <svg class="selector-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
-          </svg>
-          <span class="selector-text">{{ getCurrentFarmName() }}</span>
-          <svg class="selector-arrow" [class.rotated]="showFarmSelector" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-          </svg>
-        </button>
-      </div>
-
       <!-- Navigation Links -->
       <nav class="header-nav" role="navigation" aria-label="Main navigation">
         <a *ngFor="let item of navItems"
@@ -61,6 +61,7 @@
            [routerLink]="item.route"
            routerLinkActive="active"
            [attr.aria-current]="isRouteActive(item.route) ? 'page' : null">
+          <i [class]="item.fontAwesomeIcon" class="nav-icon-fa"></i>
           <svg class="nav-icon" [class.solid]="isRouteActive(item.route)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.svgPath" />
           </svg>
@@ -483,6 +484,7 @@
        [attr.aria-current]="isRouteActive(item.route) ? 'page' : null"
        [attr.aria-label]="getNavLabel(item.translationKey)">
       <div class="nav-item-content">
+        <i [class]="item.fontAwesomeIcon" class="nav-item-icon-fa"></i>
         <svg class="nav-item-icon" [class.active]="isRouteActive(item.route)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.svgPath" />
         </svg>
@@ -491,18 +493,4 @@
       <div class="active-indicator" *ngIf="isRouteActive(item.route)"></div>
     </a>
   </div>
-
-  <!-- Floating Action Button (FAB) - Centered -->
-  <button
-    class="mobile-fab"
-    (click)="handleQuickAction()"
-    [attr.aria-label]="'Quick actions'"
-    [attr.title]="'Add new action'"
-    type="button">
-    <svg class="fab-icon" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-    <div class="fab-glow"></div>
-    <span class="sr-only">Quick actions</span>
-  </button>
 </nav>

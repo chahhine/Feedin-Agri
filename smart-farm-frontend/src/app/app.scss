@@ -463,15 +463,19 @@ body.rtl .action-buttons, body.rtl .stats-grid { direction: rtl; }
 
 // Header is fixed, so we need to add padding to account for header height
 .main-content.with-header {
-  padding-top: 80px; // Default header height (1rem top + 56px logo + 1rem bottom + border radius)
+  padding-top: 92px; // Header height (80px) + underline space (12px)
+  
+  @media (max-width: 1200px) {
+    padding-top: 88px; // Header height (76px) + underline space (12px)
+  }
   
   @media (max-width: 1024px) {
-    padding-top: 72px; // Smaller header on tablet
+    padding-top: 84px; // Header height (72px) + underline space (12px)
     padding-bottom: 80px; // Space for bottom navigation
   }
   
   @media (max-width: 767px) {
-    padding-top: 68px; // Smaller header on mobile
+    padding-top: 80px; // Header height (68px) + underline space (12px)
     padding-bottom: 80px; // Space for bottom navigation
   }
 }
@@ -681,12 +685,16 @@ body.rtl .action-buttons, body.rtl .stats-grid { direction: rtl; }
     0 0 0 1px rgba(255, 152, 0, 0.3) inset !important;
 
   &::before {
-    content: '⚠';
+    content: '';
     position: absolute;
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff9800'%3E%3Cpath d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
     font-weight: bold;
     color: #ff9800;
     text-shadow: 0 2px 8px rgba(255, 152, 0, 0.6);
@@ -908,4 +916,15 @@ body.rtl .action-buttons, body.rtl .stats-grid { direction: rtl; }
   &:hover mat-icon {
     transform: scale(1.1);
   }
+}
+
+// Hide Material pseudo-checkbox ticks
+.mat-pseudo-checkbox,
+.mat-pseudo-checkbox-checked,
+.mat-pseudo-checkbox-minimal {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
 }

@@ -12,17 +12,21 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ApiService } from '../../../core/services/api.service';
 import { Device, Sensor } from '../../../core/models/farm.model';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { LanguageService } from '../../../core/services/language.service';
 
 interface DeviceAction {
   device_id: string;
   device_name: string;
-  action_type: string;
+  action_type: DeviceActionTypeKey;
   current_status: 'on' | 'off' | 'auto';
   icon: string;
   color: string;
   description: string;
   available_actions: string[];
 }
+
+type DeviceActionTypeKey = 'irrigation' | 'ventilation' | 'lighting' | 'heating' | 'pump' | 'control';
 
 @Component({
   selector: 'app-crop-smart-actions',
@@ -36,17 +40,18 @@ interface DeviceAction {
     MatChipsModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    TranslatePipe
   ],
   template: `
     <mat-card class="smart-actions">
       <mat-card-header>
         <mat-card-title>
           <mat-icon>touch_app</mat-icon>
-          Smart Actions
+          {{ 'crops.smartActions.title' | translate }}
         </mat-card-title>
         <mat-card-subtitle>
-          Control devices for this crop zone
+          {{ 'crops.smartActions.subtitle' | translate }}
         </mat-card-subtitle>
         <div class="header-actions">
           <mat-chip-set>
@@ -54,13 +59,13 @@ interface DeviceAction {
               [highlighted]="controlMode() === 'manual'"
               (click)="setControlMode('manual')">
               <mat-icon>pan_tool</mat-icon>
-              Manual
+              {{ 'crops.smartActions.modes.manual' | translate }}
             </mat-chip>
             <mat-chip
               [highlighted]="controlMode() === 'auto'"
               (click)="setControlMode('auto')">
               <mat-icon>auto_mode</mat-icon>
-              Auto
+              {{ 'crops.smartActions.modes.auto' | translate }}
             </mat-chip>
           </mat-chip-set>
         </div>
@@ -70,14 +75,14 @@ interface DeviceAction {
         <!-- Loading State -->
         <div *ngIf="loading()" class="loading-state">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Loading device actions...</p>
+          <p>{{ 'crops.smartActions.loading' | translate }}</p>
         </div>
 
         <!-- Empty State -->
         <div *ngIf="!loading() && deviceActions().length === 0" class="empty-state">
           <mat-icon>devices_off</mat-icon>
-          <h3>No Controllable Devices</h3>
-          <p>No devices are configured for this crop zone.</p>
+          <h3>{{ 'crops.smartActions.empty.title' | translate }}</h3>
+          <p>{{ 'crops.smartActions.empty.description' | translate }}</p>
         </div>
 
         <!-- Actions Grid -->
@@ -93,11 +98,11 @@ interface DeviceAction {
               </div>
               <div class="action-info">
                 <h4>{{ action.device_name }}</h4>
-                <span class="action-type">{{ action.action_type }}</span>
+                <span class="action-type">{{ getActionTypeLabel(action.action_type) }}</span>
               </div>
               <div class="action-status">
                 <span class="status-badge" [class]="action.current_status">
-                  {{ action.current_status }}
+                  {{ getStatusLabel(action.current_status) }}
                 </span>
               </div>
             </div>
@@ -112,13 +117,13 @@ interface DeviceAction {
                 [disabled]="executing().has(action.device_id)"
                 (change)="toggleDevice(action, $event.checked)"
                 color="primary">
-                {{ action.current_status === 'on' ? 'Turn Off' : 'Turn On' }}
+                {{ action.current_status === 'on' ? ('crops.smartActions.actions.turnOff' | translate) : ('crops.smartActions.actions.turnOn' | translate) }}
               </mat-slide-toggle>
 
               <!-- Auto Mode Indicator -->
               <div *ngIf="controlMode() === 'auto'" class="auto-indicator">
                 <mat-icon>auto_mode</mat-icon>
-                <span>Automated Control Active</span>
+                <span>{{ 'crops.smartActions.autoIndicator' | translate }}</span>
               </div>
 
               <!-- Executing Spinner -->
@@ -137,8 +142,8 @@ interface DeviceAction {
                 size="small"
                 [disabled]="controlMode() === 'auto' || executing().has(action.device_id)"
                 (click)="executeCustomAction(action, availableAction)"
-                matTooltip="Execute {{ availableAction }}">
-                {{ availableAction }}
+                [matTooltip]="getAvailableActionTooltip(availableAction)">
+                {{ getAvailableActionLabel(availableAction) }}
               </button>
             </div>
           </div>
@@ -151,24 +156,24 @@ interface DeviceAction {
             color="primary"
             [disabled]="controlMode() === 'auto' || executing().size > 0"
             (click)="executeAllOn()"
-            matTooltip="Turn on all devices">
+            [matTooltip]="'crops.smartActions.quickActions.allOnTooltip' | translate">
             <mat-icon>power_settings_new</mat-icon>
-            All On
+            {{ 'crops.smartActions.quickActions.allOn' | translate }}
           </button>
           <button
             mat-raised-button
             [disabled]="controlMode() === 'auto' || executing().size > 0"
             (click)="executeAllOff()"
-            matTooltip="Turn off all devices">
+            [matTooltip]="'crops.smartActions.quickActions.allOffTooltip' | translate">
             <mat-icon>power_off</mat-icon>
-            All Off
+            {{ 'crops.smartActions.quickActions.allOff' | translate }}
           </button>
           <button
             mat-stroked-button
             (click)="refreshActions()"
-            matTooltip="Refresh device status">
+            [matTooltip]="'crops.smartActions.quickActions.refreshTooltip' | translate">
             <mat-icon>refresh</mat-icon>
-            Refresh
+            {{ 'common.refresh' | translate }}
           </button>
         </div>
       </mat-card-content>
@@ -488,6 +493,7 @@ export class CropSmartActionsComponent implements OnInit {
   private apiService = inject(ApiService);
   private snackBar = inject(MatSnackBar);
   private destroyRef = inject(DestroyRef);
+  private languageService = inject(LanguageService);
 
   // Inputs
   cropId = input.required<string>();
@@ -506,8 +512,10 @@ export class CropSmartActionsComponent implements OnInit {
   setControlMode(mode: 'manual' | 'auto'): void {
     this.controlMode.set(mode);
     this.snackBar.open(
-      mode === 'auto' ? 'Switched to Automatic Control' : 'Switched to Manual Control',
-      'OK',
+      mode === 'auto'
+        ? this.languageService.translate('crops.smartActions.snackbar.autoMode')
+        : this.languageService.translate('crops.smartActions.snackbar.manualMode'),
+      this.languageService.translate('common.ok'),
       { duration: 2000 }
     );
   }
@@ -563,7 +571,11 @@ export class CropSmartActionsComponent implements OnInit {
             error: (err: any) => {
               console.error('Error loading device actions:', err);
               this.loading.set(false);
-              this.snackBar.open('Failed to load device actions', 'Close', { duration: 3000 });
+              this.snackBar.open(
+                this.languageService.translate('crops.smartActions.snackbar.loadError'),
+                this.languageService.translate('common.close'),
+                { duration: 3000 }
+              );
             }
           });
       });
@@ -583,7 +595,7 @@ export class CropSmartActionsComponent implements OnInit {
       current_status: this.getDeviceStatus(device),
       icon,
       color,
-      description: device.description || `Control ${device.name}`,
+      description: device.description || this.languageService.translate('crops.smartActions.defaultDescription', { name: device.name }),
       available_actions: availableActions.length > 0 ? availableActions : ['on', 'off']
     };
   }
@@ -625,8 +637,11 @@ export class CropSmartActionsComponent implements OnInit {
         }
 
         this.snackBar.open(
-          `${action.device_name} turned ${actionType}`,
-          'OK',
+          this.languageService.translate('crops.smartActions.snackbar.deviceSuccess', {
+            device: action.device_name,
+            action: this.getAvailableActionLabel(actionType)
+          }),
+          this.languageService.translate('common.ok'),
           { duration: 2000 }
         );
       },
@@ -638,8 +653,10 @@ export class CropSmartActionsComponent implements OnInit {
 
         console.error('Error executing action:', err);
         this.snackBar.open(
-          `Failed to control ${action.device_name}`,
-          'Close',
+          this.languageService.translate('crops.smartActions.snackbar.deviceError', {
+            device: action.device_name
+          }),
+          this.languageService.translate('common.close'),
           { duration: 3000 }
         );
       }
@@ -664,24 +681,24 @@ export class CropSmartActionsComponent implements OnInit {
     });
   }
 
-  private getDeviceActionType(device: Device): string {
+  private getDeviceActionType(device: Device): DeviceActionTypeKey {
     const name = device.name.toLowerCase();
-    if (name.includes('irrigation') || name.includes('water')) return 'Irrigation';
-    if (name.includes('fan') || name.includes('ventilation')) return 'Ventilation';
-    if (name.includes('light') || name.includes('lamp')) return 'Lighting';
-    if (name.includes('heater') || name.includes('heating')) return 'Heating';
-    if (name.includes('pump')) return 'Pump';
-    return 'Control';
+    if (name.includes('irrigation') || name.includes('water')) return 'irrigation';
+    if (name.includes('fan') || name.includes('ventilation')) return 'ventilation';
+    if (name.includes('light') || name.includes('lamp')) return 'lighting';
+    if (name.includes('heater') || name.includes('heating')) return 'heating';
+    if (name.includes('pump')) return 'pump';
+    return 'control';
   }
 
   private getDeviceIcon(device: Device): string {
     const type = this.getDeviceActionType(device);
     switch (type) {
-      case 'Irrigation': return 'water_drop';
-      case 'Ventilation': return 'air';
-      case 'Lighting': return 'lightbulb';
-      case 'Heating': return 'local_fire_department';
-      case 'Pump': return 'water_pump';
+      case 'irrigation': return 'water_drop';
+      case 'ventilation': return 'air';
+      case 'lighting': return 'lightbulb';
+      case 'heating': return 'local_fire_department';
+      case 'pump': return 'water_pump';
       default: return 'power';
     }
   }
@@ -689,11 +706,11 @@ export class CropSmartActionsComponent implements OnInit {
   private getDeviceColor(device: Device): string {
     const type = this.getDeviceActionType(device);
     switch (type) {
-      case 'Irrigation': return '#2196f3';
-      case 'Ventilation': return '#4caf50';
-      case 'Lighting': return '#ff9800';
-      case 'Heating': return '#f44336';
-      case 'Pump': return '#00bcd4';
+      case 'irrigation': return '#2196f3';
+      case 'ventilation': return '#4caf50';
+      case 'lighting': return '#ff9800';
+      case 'heating': return '#f44336';
+      case 'pump': return '#00bcd4';
       default: return '#9e9e9e';
     }
   }
@@ -703,5 +720,28 @@ export class CropSmartActionsComponent implements OnInit {
     // This is a simplification - adjust based on your backend
     if (device.status === 'active' || device.status === 'online') return 'on';
     return 'off';
+  }
+
+  getActionTypeLabel(type: string): string {
+    const key = `crops.smartActions.actionTypes.${type}`;
+    const translated = this.languageService.translate(key);
+    return translated === key ? type : translated;
+  }
+
+  getStatusLabel(status: string): string {
+    return this.languageService.translate(`crops.smartActions.status.${status}`);
+  }
+
+  getAvailableActionLabel(action: string): string {
+    const normalized = action?.toLowerCase?.() || '';
+    const key = `crops.smartActions.availableActions.${normalized}`;
+    const translated = this.languageService.translate(key, { action });
+    return translated === key ? action : translated;
+  }
+
+  getAvailableActionTooltip(action: string): string {
+    return this.languageService.translate('crops.smartActions.availableActions.tooltip', {
+      action: this.getAvailableActionLabel(action)
+    });
   }
 }

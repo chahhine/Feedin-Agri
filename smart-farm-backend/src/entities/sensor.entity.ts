@@ -1,5 +1,5 @@
 // src/entities/sensor.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Farm } from '../modules/farms/farm.entity';
 import { Crop } from '../entities/crop.entity';
 import { SensorReading } from './sensor-reading.entity';
@@ -27,7 +27,7 @@ export class Sensor {
   @Column({ type: 'varchar', length: 100, nullable: true })
   location: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'varchar', length: 36, nullable: true })
   crop_id: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
@@ -48,10 +48,10 @@ export class Sensor {
   @Column({ type: 'text', nullable: true })
   action_high: string;
 
-  @Column({ type: 'timestamp', precision: 6, default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp', precision: 6 })
   created_at: Date;
 
-  @Column({ type: 'timestamp', precision: 6, default: () => 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp', precision: 6 })
   updated_at: Date;
 
   // Relationship with Farm

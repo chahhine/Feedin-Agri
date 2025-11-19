@@ -31,5 +31,10 @@ export const environment = {
   ui: {
     searchDebounceMs: 300,
     refreshAnimationMs: 1000
+  },
+  
+  // OpenWeatherMap Configuration
+  openWeather: {
+    apiKey: 'YOUR_KEY_HERE' // Replace with your OpenWeatherMap API key
   }
 };

@@ -13,6 +13,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../../../core/services/api.service';
 import { ActionLog } from '../../../core/models/action-log.model';
 import { AppNotification } from '../../../core/models/notification.model';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { LanguageService } from '../../../core/services/language.service';
 
 interface TimelineEvent {
   id: string;
@@ -45,23 +47,24 @@ interface TimelineGroup {
     MatChipsModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
-    MatBadgeModule
+    MatBadgeModule,
+    TranslatePipe
   ],
   template: `
     <mat-card class="events-timeline">
       <mat-card-header>
         <mat-card-title>
           <mat-icon>history</mat-icon>
-          Recent Events
+          {{ 'crops.timeline.title' | translate }}
         </mat-card-title>
         <mat-card-subtitle>
-          Actions, alerts, and notifications
+          {{ 'crops.timeline.subtitle' | translate }}
         </mat-card-subtitle>
         <div class="header-actions">
           <button
             mat-icon-button
             (click)="refreshEvents()"
-            matTooltip="Refresh">
+            [matTooltip]="'common.refresh' | translate">
             <mat-icon>refresh</mat-icon>
           </button>
           <button
@@ -70,7 +73,7 @@ interface TimelineGroup {
             [matBadgeHidden]="unreadCount() === 0"
             matBadgeColor="warn"
             (click)="markAllRead()"
-            matTooltip="Mark all as read">
+            [matTooltip]="'crops.timeline.actions.markAllRead' | translate">
             <mat-icon>done_all</mat-icon>
           </button>
         </div>
@@ -83,25 +86,25 @@ interface TimelineGroup {
             <mat-chip
               [highlighted]="activeFilter() === 'all'"
               (click)="setFilter('all')">
-              All Events
+              {{ 'crops.timeline.filters.all' | translate }}
             </mat-chip>
             <mat-chip
               [highlighted]="activeFilter() === 'actions'"
               (click)="setFilter('actions')">
               <mat-icon>touch_app</mat-icon>
-              Actions
+              {{ 'crops.timeline.filters.actions' | translate }}
             </mat-chip>
             <mat-chip
               [highlighted]="activeFilter() === 'alerts'"
               (click)="setFilter('alerts')">
               <mat-icon>warning</mat-icon>
-              Alerts
+              {{ 'crops.timeline.filters.alerts' | translate }}
             </mat-chip>
             <mat-chip
               [highlighted]="activeFilter() === 'notifications'"
               (click)="setFilter('notifications')">
               <mat-icon>notifications</mat-icon>
-              Notifications
+              {{ 'crops.timeline.filters.notifications' | translate }}
             </mat-chip>
           </mat-chip-set>
         </div>
@@ -109,14 +112,14 @@ interface TimelineGroup {
         <!-- Loading State -->
         <div *ngIf="loading()" class="loading-state">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Loading events...</p>
+          <p>{{ 'crops.timeline.loading' | translate }}</p>
         </div>
 
         <!-- Empty State -->
         <div *ngIf="!loading() && filteredGroups().length === 0" class="empty-state">
           <mat-icon>event_busy</mat-icon>
-          <h3>No Events Found</h3>
-          <p>No {{ activeFilter() === 'all' ? '' : activeFilter() }} events in the last 7 days.</p>
+          <h3>{{ 'crops.timeline.empty.title' | translate }}</h3>
+          <p>{{ getEmptyDescription() }}</p>
         </div>
 
         <!-- Timeline -->
@@ -124,7 +127,7 @@ interface TimelineGroup {
           <div *ngFor="let group of filteredGroups()" class="timeline-group">
             <div class="group-header">
               <span class="group-label">{{ group.label }}</span>
-              <span class="group-count">{{ group.events.length }} events</span>
+              <span class="group-count">{{ 'crops.timeline.groups.count' | translate:{ count: group.events.length } }}</span>
             </div>
 
             <div class="timeline-events">
@@ -159,7 +162,7 @@ interface TimelineGroup {
 
                   <!-- Action Status Badge -->
                   <mat-chip *ngIf="event.status" [class]="'chip-' + event.status">
-                    {{ event.status }}
+                    {{ getEventStatusLabel(event.status) }}
                   </mat-chip>
                 </div>
               </div>
@@ -171,7 +174,7 @@ interface TimelineGroup {
         <div *ngIf="hasMore() && !loading()" class="load-more">
           <button mat-stroked-button (click)="loadMore()">
             <mat-icon>expand_more</mat-icon>
-            Load More Events
+            {{ 'crops.timeline.actions.loadMore' | translate }}
           </button>
         </div>
       </mat-card-content>
@@ -527,6 +530,7 @@ interface TimelineGroup {
 export class CropEventsTimelineComponent implements OnInit {
   private apiService = inject(ApiService);
   private destroyRef = inject(DestroyRef);
+  private languageService = inject(LanguageService);
 
   // Inputs
   cropId = input.required<string>();
@@ -660,14 +664,22 @@ export class CropEventsTimelineComponent implements OnInit {
     return actions.map(action => {
       // Safely parse the date
       const timestamp = action.created_at ? new Date(action.created_at) : new Date();
-      
+      const actionLabel = action.action_type || this.languageService.translate('crops.timeline.events.actionDefault');
+      const deviceLabel = action.device_id || this.languageService.translate('crops.timeline.events.deviceDefault');
+      const sourceLabel = action.trigger_source || this.languageService.translate('crops.timeline.events.systemSource');
+
       return {
         id: action.id,
         type: 'action' as const,
-        title: `${action.action_type || 'Action'} - ${action.device_id || 'Device'}`,
-        description: `Triggered by ${action.trigger_source || 'system'}`,
+        title: this.languageService.translate('crops.timeline.events.actionTitle', {
+          action: actionLabel,
+          device: deviceLabel
+        }),
+        description: this.languageService.translate('crops.timeline.events.actionDescription', {
+          source: sourceLabel
+        }),
         timestamp: isNaN(timestamp.getTime()) ? new Date() : timestamp,
-        source: action.trigger_source || 'system',
+        source: sourceLabel,
         icon: this.getActionIcon(action.action_type || ''),
         color: this.getActionColor(action.status),
         status: this.mapActionStatus(action.status),
@@ -680,14 +692,15 @@ export class CropEventsTimelineComponent implements OnInit {
     return notifications.map(notification => {
       // Safely parse the date
       const timestamp = notification.createdAt ? new Date(notification.createdAt) : new Date();
+      const sourceLabel = notification.source || this.languageService.translate('crops.timeline.events.systemSource');
       
       return {
         id: notification.id,
         type: (notification.level === 'warning' || notification.level === 'critical' ? 'alert' : 'notification') as 'action' | 'alert' | 'notification',
         title: notification.title,
-        description: notification.message || 'No description',
+        description: notification.message || this.languageService.translate('crops.timeline.events.noDescription'),
         timestamp: isNaN(timestamp.getTime()) ? new Date() : timestamp,
-        source: notification.source || 'System',
+        source: sourceLabel,
         icon: this.getNotificationIcon(notification.level),
         color: this.getNotificationColor(notification.level),
         status: this.mapNotificationStatus(notification.level),
@@ -709,15 +722,16 @@ export class CropEventsTimelineComponent implements OnInit {
 
       let label: string;
       if (eventDay.getTime() === today.getTime()) {
-        label = 'Today';
+        label = this.languageService.translate('crops.timeline.groups.today');
       } else if (eventDay.getTime() === yesterday.getTime()) {
-        label = 'Yesterday';
+        label = this.languageService.translate('crops.timeline.groups.yesterday');
       } else {
-        label = eventDate.toLocaleDateString('en-US', {
+        const formatter = new Intl.DateTimeFormat(this.languageService.getCurrentLanguageCode(), {
           weekday: 'long',
           month: 'short',
           day: 'numeric'
         });
+        label = formatter.format(eventDate);
       }
 
       if (!groups.has(label)) {
@@ -740,12 +754,42 @@ export class CropEventsTimelineComponent implements OnInit {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days}d ago`;
-    return new Date(date).toLocaleDateString();
+    if (minutes < 1) {
+      return this.languageService.translate('crops.common.relative.justNow');
+    }
+    if (minutes < 60) {
+      return this.languageService.translate('crops.common.relative.minutesAgo', { count: minutes });
+    }
+    if (hours < 24) {
+      return this.languageService.translate('crops.common.relative.hoursAgo', { count: hours });
+    }
+    if (days === 1) {
+      return this.languageService.translate('crops.common.relative.yesterday');
+    }
+    if (days < 7) {
+      return this.languageService.translate('crops.common.relative.daysAgo', { count: days });
+    }
+
+    const formatter = new Intl.DateTimeFormat(this.languageService.getCurrentLanguageCode(), {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric'
+    });
+    return formatter.format(new Date(date));
+  }
+
+  getEmptyDescription(): string {
+    const filterLabel = this.getFilterLabel(this.activeFilter());
+    return this.languageService.translate('crops.timeline.empty.description', { filter: filterLabel });
+  }
+
+  getEventStatusLabel(status: string): string {
+    return this.languageService.translate(`crops.timeline.status.${status}`);
+  }
+
+  private getFilterLabel(filter: 'all' | 'actions' | 'alerts' | 'notifications'): string {
+    const key = `crops.timeline.filters.${filter}`;
+    return this.languageService.translate(key);
   }
 
   private getActionIcon(actionType: string): string {

@@ -254,3 +254,9 @@ In your codebase:
 
 The fix I applied uses QueryBuilder instead of the simple `find()` method, which properly handles the nested relation filtering for owner-based queries.
 
+
+
+
+
+
+

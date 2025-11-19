@@ -6,13 +6,13 @@ export class Device {
   @PrimaryColumn({ type: 'varchar', length: 100 })
   device_id: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 255 })
   name: string;
 
   @Column({ type: 'varchar', length: 255 })
   location: string;
 
-  @Column({ type: 'varchar', length: 50, default: 'offline' })
+  @Column({ type: 'varchar', length: 255, default: 'offline' })
   status: string; // 'online', 'offline', 'maintenance'
 
   @Column({ type: 'varchar', length: 36 })

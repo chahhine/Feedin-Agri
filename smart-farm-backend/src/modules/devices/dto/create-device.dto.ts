@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateDeviceDto {
   @IsNotEmpty()
@@ -17,7 +17,7 @@ export class CreateDeviceDto {
   @IsString()
   status?: string; // 'online', 'offline', 'maintenance'
 
-  @IsUUID()
+  @IsString()
   farm_id: string;
 
   @IsOptional()

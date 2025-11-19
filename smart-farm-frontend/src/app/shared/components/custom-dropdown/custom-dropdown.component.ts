@@ -250,7 +250,7 @@ export interface DropdownItem {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.05);
+      background: var(--nav-item-hover, rgba(0, 0, 0, 0.05));
       opacity: 0;
       transition: opacity 0.3s ease;
       border-radius: 12px;
@@ -265,8 +265,8 @@ export interface DropdownItem {
     }
 
     .menu-item.selected {
-      background: rgba(46, 125, 50, 0.1);
-      border: 1px solid rgba(46, 125, 50, 0.2);
+      background: var(--nav-item-active, rgba(16, 185, 129, 0.15));
+      border: 1px solid var(--primary-green, rgba(16, 185, 129, 0.3));
     }
 
     .menu-item.selected::before {
@@ -362,20 +362,55 @@ export interface DropdownItem {
 
     /* Dark theme styles - Clean sophisticated greys */
     .dark-theme .menu-header {
-      border-bottom-color: rgba(255, 255, 255, 0.08);
+      border-bottom-color: var(--divider-color, rgba(255, 255, 255, 0.1));
     }
 
     .dark-theme .header-icon {
       background: rgba(255, 255, 255, 0.08);
     }
 
+    .dark-theme .header-icon mat-icon {
+      color: var(--text-primary, #f1f5f9);
+    }
+
     .dark-theme .menu-item::before {
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--nav-item-hover, rgba(255, 255, 255, 0.08));
     }
 
     .dark-theme .menu-item.selected {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.15);
+      background: var(--nav-item-active, rgba(16, 185, 129, 0.2));
+      border-color: var(--primary-green, rgba(16, 185, 129, 0.4));
+    }
+
+    /* Scrollbar in dropdown menu */
+    .dropdown-menu {
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: var(--light-bg, #f1f1f1);
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--border-color, #cbd5e1);
+        border-radius: 3px;
+
+        &:hover {
+          background: var(--text-secondary, #94a3b8);
+        }
+      }
+    }
+
+    .dark-theme .dropdown-menu {
+      &::-webkit-scrollbar-track {
+        background: var(--card-bg, #1e293b);
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--border-color, #475569);
+      }
     }
 
     /* Responsive design */
@@ -524,21 +559,23 @@ export class CustomDropdownComponent {
 
   getMenuBackground(): string {
     const isDarkTheme = document.body.classList.contains('dark-theme');
-    return isDarkTheme ? '#2d2d2d' : '#ffffff';
+    return isDarkTheme 
+      ? 'var(--user-menu-bg, #1e293b)' 
+      : 'var(--user-menu-bg, #ffffff)';
   }
 
   getMenuBorder(): string {
     const isDarkTheme = document.body.classList.contains('dark-theme');
     return isDarkTheme 
-      ? '1px solid rgba(255, 255, 255, 0.1)' 
-      : '1px solid rgba(0, 0, 0, 0.1)';
+      ? '1px solid var(--user-menu-border, rgba(255, 255, 255, 0.1))' 
+      : '1px solid var(--user-menu-border, rgba(0, 0, 0, 0.08))';
   }
 
   getMenuShadow(): string {
     const isDarkTheme = document.body.classList.contains('dark-theme');
     return isDarkTheme 
-      ? '0 8px 32px rgba(0, 0, 0, 0.4)' 
-      : '0 8px 32px rgba(0, 0, 0, 0.12)';
+      ? 'var(--user-menu-shadow, 0 8px 32px rgba(0, 0, 0, 0.4))' 
+      : 'var(--user-menu-shadow, 0 8px 32px rgba(0, 0, 0, 0.12))';
   }
 
   getPrimaryTextColor(): string {

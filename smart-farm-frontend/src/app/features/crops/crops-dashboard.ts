@@ -20,6 +20,8 @@ import { CropHealthAnalyticsComponent } from './component/crop-health-analytics.
 import { CropSmartActionsComponent } from './component/crop-smart-actions.component';
 import { CropEventsTimelineComponent } from './component/crop-events-timeline.component';
 import { Crop } from '../../core/models/farm.model';
+import { TranslatePipe } from '../../core/pipes/translate.pipe';
+import { LanguageService } from '../../core/services/language.service';
 
 /**
  * 🌾 Crops Dashboard Component - TerraFlow Design System
@@ -52,7 +54,8 @@ import { Crop } from '../../core/models/farm.model';
     CropKpiHeaderComponent,
     CropHealthAnalyticsComponent,
     CropSmartActionsComponent,
-    CropEventsTimelineComponent
+    CropEventsTimelineComponent,
+    TranslatePipe
   ],
   animations: [
     // Fade in animation for container
@@ -87,7 +90,7 @@ import { Crop } from '../../core/models/farm.model';
   ],
   template: `
     <!-- 🎨 Main Container - TerraFlow Theme -->
-    <div class="crop-dashboard-container" [@fadeIn]>
+    <div class="crop-dashboard-container" [@fadeIn] [attr.dir]="languageService.getCurrentLanguage().direction">
       
       <!-- ⏳ Loading State - Elegant Spinner -->
       <div *ngIf="loading()" class="state-container loading-state" role="status" aria-live="polite">
@@ -95,8 +98,8 @@ import { Crop } from '../../core/models/farm.model';
           <mat-spinner [diameter]="60" color="primary"></mat-spinner>
           <div class="loading-pulse"></div>
         </div>
-        <h3 class="state-title">Loading Crop Dashboard</h3>
-        <p class="state-subtitle">Fetching your crop data and analytics...</p>
+        <h3 class="state-title">{{ 'crops.dashboard.states.loading.title' | translate }}</h3>
+        <p class="state-subtitle">{{ 'crops.dashboard.states.loading.subtitle' | translate }}</p>
       </div>
 
       <!-- ❌ Error State - User-Friendly Error Display -->
@@ -104,15 +107,15 @@ import { Crop } from '../../core/models/farm.model';
         <div class="error-icon-wrapper">
           <mat-icon class="error-icon">error_outline</mat-icon>
         </div>
-        <h3 class="state-title">Oops! Something Went Wrong</h3>
+        <h3 class="state-title">{{ 'crops.dashboard.states.error.title' | translate }}</h3>
         <p class="state-subtitle">{{ error() }}</p>
         <button 
           mat-raised-button 
           color="primary" 
           (click)="refreshDashboard()"
-          aria-label="Retry loading dashboard">
+          [attr.aria-label]="'crops.dashboard.states.error.retryAria' | translate">
           <mat-icon>refresh</mat-icon>
-          Try Again
+          {{ 'crops.dashboard.states.error.cta' | translate }}
         </button>
       </div>
 
@@ -122,16 +125,16 @@ import { Crop } from '../../core/models/farm.model';
           <mat-icon class="empty-icon">agriculture</mat-icon>
           <div class="icon-decoration"></div>
         </div>
-        <h2 class="state-title">No Crops Found</h2>
-        <p class="state-subtitle">Start by creating your first crop to monitor its health and growth.</p>
+        <h2 class="state-title">{{ 'crops.dashboard.states.empty.title' | translate }}</h2>
+        <p class="state-subtitle">{{ 'crops.dashboard.states.empty.subtitle' | translate }}</p>
         <button 
           mat-raised-button 
           color="primary" 
           routerLink="/crops/create"
           class="cta-button"
-          aria-label="Create your first crop">
+          [attr.aria-label]="'crops.dashboard.states.empty.ctaAria' | translate">
           <mat-icon>add_circle</mat-icon>
-          Create Crop
+          {{ 'crops.dashboard.states.empty.cta' | translate }}
         </button>
       </div>
 
@@ -147,12 +150,12 @@ import { Crop } from '../../core/models/farm.model';
               <mat-form-field appearance="outline" class="crop-selector" subscriptSizing="dynamic">
                 <mat-label>
                   <mat-icon class="selector-icon">agriculture</mat-icon>
-                  Select Crop
+                  {{ 'crops.dashboard.header.selectCrop' | translate }}
                 </mat-label>
                 <mat-select
                   [value]="selectedCropId()"
                   (selectionChange)="onCropChange($event.value)"
-                  aria-label="Select a crop to view">
+                  [attr.aria-label]="'crops.dashboard.header.selectAria' | translate">
                   <mat-option 
                     *ngFor="let crop of crops(); trackBy: trackByCropId" 
                     [value]="crop.crop_id">
@@ -172,7 +175,7 @@ import { Crop } from '../../core/models/farm.model';
                 </h1>
                 <mat-chip 
                   [class]="'status-chip status-' + dashboardData()!.crop.status"
-                  [attr.aria-label]="'Status: ' + dashboardData()!.crop.status">
+                [attr.aria-label]="('crops.dashboard.aria.status' | translate:{ status: (dashboardData()!.crop.status | titlecase) })">
                   <mat-icon class="chip-icon">{{ getStatusIcon(dashboardData()!.crop.status) }}</mat-icon>
                   {{ dashboardData()!.crop.status | titlecase }}
                 </mat-chip>
@@ -184,17 +187,17 @@ import { Crop } from '../../core/models/farm.model';
               <button 
                 mat-icon-button 
                 (click)="refreshDashboard()" 
-                matTooltip="Refresh Data"
+                [matTooltip]="'crops.dashboard.header.actions.refresh' | translate"
                 class="action-btn refresh-btn"
-                aria-label="Refresh dashboard data">
+                [attr.aria-label]="'crops.dashboard.header.actions.refreshAria' | translate">
                 <mat-icon>refresh</mat-icon>
               </button>
               <button 
                 mat-icon-button 
                 (click)="editCrop()" 
-                matTooltip="Edit Crop"
+                [matTooltip]="'crops.dashboard.header.actions.edit' | translate"
                 class="action-btn edit-btn"
-                aria-label="Edit crop details">
+                [attr.aria-label]="'crops.dashboard.header.actions.editAria' | translate">
                 <mat-icon>edit</mat-icon>
               </button>
               <button 
@@ -202,16 +205,16 @@ import { Crop } from '../../core/models/farm.model';
                 color="primary" 
                 routerLink="/crops"
                 class="view-all-btn"
-                aria-label="View all crops">
+                [attr.aria-label]="'crops.dashboard.header.actions.viewAllAria' | translate">
                 <mat-icon>view_list</mat-icon>
-                All Crops
+                {{ 'crops.dashboard.header.actions.viewAll' | translate }}
               </button>
             </div>
           </div>
         </header>
 
         <!-- 📈 KPI Header - Key Performance Indicators -->
-        <section class="kpi-section" role="region" aria-label="Key Performance Indicators">
+        <section class="kpi-section" role="region" [attr.aria-label]="'crops.dashboard.kpi.ariaLabel' | translate">
           <app-crop-kpi-header
             [kpis]="dashboardData()!.kpis"
             [healthStatus]="dashboardData()!.healthStatus"
@@ -232,36 +235,36 @@ import { Crop } from '../../core/models/farm.model';
           </div>
 
           <!-- Right: Details Sidebar -->
-          <aside class="details-sidebar" role="complementary" aria-label="Crop details and sensors">
+          <aside class="details-sidebar" role="complementary" [attr.aria-label]="'crops.dashboard.details.ariaLabel' | translate">
             
             <!-- Crop Details Card -->
             <mat-card class="details-card" appearance="outlined">
               <mat-card-header>
                 <mat-card-title>
                   <mat-icon class="card-icon">info</mat-icon>
-                  Crop Details
+                  {{ 'crops.dashboard.details.title' | translate }}
                 </mat-card-title>
               </mat-card-header>
               <mat-card-content>
                 <dl class="details-list">
                   <div class="detail-row">
-                    <dt class="detail-label">Variety:</dt>
-                    <dd class="detail-value">{{ dashboardData()?.crop?.variety || 'N/A' }}</dd>
+                    <dt class="detail-label">{{ 'crops.dashboard.details.variety' | translate }}</dt>
+                    <dd class="detail-value">{{ dashboardData()?.crop?.variety || ('crops.dashboard.details.notAvailable' | translate) }}</dd>
                   </div>
                   <div class="detail-row">
-                    <dt class="detail-label">Planted:</dt>
+                    <dt class="detail-label">{{ 'crops.dashboard.details.planted' | translate }}</dt>
                     <dd class="detail-value">
-                      {{ dashboardData()?.crop?.planting_date ? (dashboardData()!.crop.planting_date | date:'mediumDate') : 'N/A' }}
+                      {{ dashboardData()?.crop?.planting_date ? (dashboardData()!.crop.planting_date | date:'mediumDate') : ('crops.dashboard.details.notAvailable' | translate) }}
                     </dd>
                   </div>
                   <div class="detail-row">
-                    <dt class="detail-label">Expected Harvest:</dt>
+                    <dt class="detail-label">{{ 'crops.dashboard.details.expectedHarvest' | translate }}</dt>
                     <dd class="detail-value">
-                      {{ dashboardData()?.crop?.expected_harvest_date ? (dashboardData()!.crop.expected_harvest_date | date:'mediumDate') : 'N/A' }}
+                      {{ dashboardData()?.crop?.expected_harvest_date ? (dashboardData()!.crop.expected_harvest_date | date:'mediumDate') : ('crops.dashboard.details.notAvailable' | translate) }}
                     </dd>
                   </div>
                   <div class="detail-row">
-                    <dt class="detail-label">Status:</dt>
+                    <dt class="detail-label">{{ 'crops.dashboard.details.status' | translate }}</dt>
                     <dd class="detail-value">
                       <span class="status-badge" *ngIf="dashboardData()?.crop" [class]="'status-' + dashboardData()!.crop.status">
                         {{ dashboardData()!.crop.status | titlecase }}
@@ -269,11 +272,11 @@ import { Crop } from '../../core/models/farm.model';
                     </dd>
                   </div>
                   <div class="detail-row full-width" *ngIf="dashboardData()?.crop?.description">
-                    <dt class="detail-label">Description:</dt>
+                    <dt class="detail-label">{{ 'crops.dashboard.details.description' | translate }}</dt>
                     <dd class="detail-value description-text">{{ dashboardData()!.crop.description }}</dd>
                   </div>
                   <div class="detail-row full-width" *ngIf="dashboardData()?.crop?.notes">
-                    <dt class="detail-label">Notes:</dt>
+                    <dt class="detail-label">{{ 'crops.dashboard.details.notes' | translate }}</dt>
                     <dd class="detail-value notes-text">{{ dashboardData()!.crop.notes }}</dd>
                   </div>
                 </dl>
@@ -285,7 +288,7 @@ import { Crop } from '../../core/models/farm.model';
               <mat-card-header>
                 <mat-card-title>
                   <mat-icon class="card-icon sensors-icon">sensors</mat-icon>
-                  Connected Sensors
+                  {{ 'crops.dashboard.sensors.title' | translate }}
                   <span class="sensor-count" *ngIf="dashboardData()?.sensors?.length">
                     ({{ dashboardData()!.sensors.length }})
                   </span>
@@ -296,7 +299,7 @@ import { Crop } from '../../core/models/farm.model';
                 <!-- No Sensors State -->
                 <div *ngIf="dashboardData()?.sensors?.length === 0" class="no-sensors">
                   <mat-icon class="no-sensors-icon">sensors_off</mat-icon>
-                  <p class="no-sensors-text">No sensors connected to this crop</p>
+                  <p class="no-sensors-text">{{ 'crops.dashboard.sensors.empty' | translate }}</p>
                 </div>
 
                 <!-- Sensors List -->
@@ -312,7 +315,7 @@ import { Crop } from '../../core/models/farm.model';
                     </mat-icon>
                     <div class="sensor-info">
                       <span class="sensor-type">{{ sensor.type }}</span>
-                      <span class="sensor-location">{{ sensor.location || 'No location' }}</span>
+                      <span class="sensor-location">{{ sensor.location || ('crops.common.noLocation' | translate) }}</span>
                     </div>
                     <span class="sensor-unit">{{ sensor.unit }}</span>
                   </li>
@@ -323,7 +326,7 @@ import { Crop } from '../../core/models/farm.model';
         </section>
 
         <!-- 🎮 Smart Actions Section -->
-        <section class="actions-section" role="region" aria-label="Smart device actions">
+        <section class="actions-section" role="region" [attr.aria-label]="'crops.dashboard.actions.ariaLabel' | translate">
           <app-crop-smart-actions
             [cropId]="selectedCropId()!"
             [sensors]="dashboardData()!.sensors">
@@ -331,16 +334,16 @@ import { Crop } from '../../core/models/farm.model';
         </section>
 
         <!-- 📅 Events Timeline Section with Collapsible Wrapper -->
-        <section class="events-wrapper" role="region" aria-label="Recent events timeline">
+        <section class="events-wrapper" role="region" [attr.aria-label]="'crops.dashboard.timeline.ariaLabel' | translate">
           <div class="section-header collapsible" (click)="toggleTimeline()">
             <div class="header-left">
               <mat-icon class="section-icon">history</mat-icon>
-              <h2>Recent Events</h2>
+              <h2>{{ 'crops.dashboard.timeline.title' | translate }}</h2>
             </div>
             <button 
               mat-icon-button 
               class="toggle-btn" 
-              [attr.aria-label]="timelineExpanded() ? 'Hide timeline' : 'Show timeline'"
+              [attr.aria-label]="timelineExpanded() ? ('crops.dashboard.timeline.hideAria' | translate) : ('crops.dashboard.timeline.showAria' | translate)"
               [attr.aria-expanded]="timelineExpanded()">
               <mat-icon>{{ timelineExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
             </button>
@@ -1345,6 +1348,7 @@ export class CropDashboardComponent implements OnInit {
   private route: ActivatedRoute = inject(ActivatedRoute);
   private router: Router = inject(Router);
   private destroyRef: DestroyRef = inject(DestroyRef);
+  protected languageService = inject(LanguageService);
 
   // Local component state (Signals)
   dashboardData = signal<CropDashboardData | null>(null);
@@ -1396,7 +1400,7 @@ export class CropDashboardComponent implements OnInit {
           }
         },
         error: (err: any) => {
-          this.error.set('Failed to load crops');
+          this.error.set(this.languageService.translate('crops.dashboard.errors.loadCrops'));
           console.error('Error loading crops:', err);
         }
       });
@@ -1419,7 +1423,7 @@ export class CropDashboardComponent implements OnInit {
           console.log('Dashboard data loaded:', data);
         },
         error: (err: any) => {
-          this.error.set('Failed to load crop dashboard');
+          this.error.set(this.languageService.translate('crops.dashboard.errors.loadDashboard'));
           this.loading.set(false);
           console.error('Error loading dashboard:', err);
         }
