@@ -56,17 +56,19 @@
     <div class="center-section">
       <!-- Navigation Links -->
       <nav class="header-nav" role="navigation" aria-label="Main navigation">
-        <a *ngFor="let item of navItems"
-           class="nav-link"
-           [routerLink]="item.route"
-           routerLinkActive="active"
-           [attr.aria-current]="isRouteActive(item.route) ? 'page' : null">
-          <i [class]="item.fontAwesomeIcon" class="nav-icon-fa"></i>
-          <svg class="nav-icon" [class.solid]="isRouteActive(item.route)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.svgPath" />
-          </svg>
-          <span>{{ getNavLabel(item.translationKey) }}</span>
-        </a>
+        <div class="nav-links-wrapper">
+          <a *ngFor="let item of navItems"
+             class="nav-link"
+             [routerLink]="item.route"
+             routerLinkActive="active"
+             [attr.aria-current]="isRouteActive(item.route) ? 'page' : null">
+            <i [class]="item.fontAwesomeIcon" class="nav-icon-fa"></i>
+            <svg class="nav-icon" [class.solid]="isRouteActive(item.route)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.svgPath" />
+            </svg>
+            <span class="nav-text">{{ getNavLabel(item.translationKey) }}</span>
+          </a>
+        </div>
       </nav>
 
       <!-- "More" Menu for Tablet (768px - 1024px) -->

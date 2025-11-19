@@ -81,10 +81,16 @@ body.dark-theme .feedin-header {
     margin-left: 0.75rem;
   }
   
+  // Desktop nav adjustments for medium-large screens
+  .nav-links-wrapper {
+    gap: 0.45rem; // Slightly tighter gap
+    padding: 0.45rem;
+  }
+  
   .nav-link {
     padding: 0.6rem 0.875rem;
     font-size: 0.875rem;
-    gap: 0.4rem;
+    gap: 0.45rem;
   }
 }
 
@@ -109,14 +115,22 @@ body.dark-theme .feedin-header {
     margin-left: 0.75rem;
   }
   
+  // Desktop nav adjustments for medium screens
+  .nav-links-wrapper {
+    gap: 0.4rem; // Tighter gap for smaller screens
+    padding: 0.4rem;
+  }
+  
   .nav-link {
     padding: 0.55rem 0.75rem;
     font-size: 0.85rem;
-    gap: 0.35rem;
+    gap: 0.4rem;
     
-    .nav-icon {
+    .nav-icon,
+    .nav-icon-fa {
       width: 18px;
       height: 18px;
+      font-size: 0.9rem;
     }
   }
 }
@@ -189,12 +203,12 @@ body.dark-theme .feedin-header {
   align-items: center;
   justify-content: flex-start;
   gap: 1rem;
-  flex-shrink: 1; // Allow shrinking but with min-width constraint
-  min-width: 0; // Allow flex item to shrink below content size
-  overflow: hidden; // Prevent overflow
+  flex: 0 0 auto;
+  min-width: 220px;
+  max-width: 360px;
+  overflow: visible;
   flex-basis: auto;
   margin-right: 1.5rem; // Extra spacing from navigation tabs
-  max-width: fit-content; // Prevent excessive width
 }
 
 .logo-wrapper {
@@ -337,8 +351,8 @@ body.dark-theme .mobile-farm-selector {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 auto; // Allow growing and shrinking
-  min-width: 0; // Allow flex item to shrink below content size
+  flex: 1 1 auto;
+  min-width: 320px;
   max-width: none; // Let flexbox handle it naturally
   overflow: visible; // Allow underline to be visible below
   margin-left: 1rem; // Extra spacing from farm selector
@@ -349,11 +363,14 @@ body.dark-theme .mobile-farm-selector {
 
 // Farm Selector in Left (Desktop)
 .nav-farm-selector {
-  flex-shrink: 1;
-  min-width: 0;
-  max-width: 100%;
+  flex-shrink: 0;
+  min-width: 170px;
+  max-width: 220px;
 
   .farm-selector-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
     background: var(--light-bg, #f9fafb);
@@ -361,6 +378,9 @@ body.dark-theme .mobile-farm-selector {
     border-radius: 0.75rem;
     // Allow button to shrink and text to wrap
     flex-shrink: 1;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
 
     &:hover {
       background: rgba(16, 185, 129, 0.05);
@@ -382,30 +402,11 @@ body.dark-theme .mobile-farm-selector {
       font-weight: 500;
       flex: 1;
       min-width: 0;
-      max-width: 180px;
+      max-width: 150px;
       overflow: hidden;
-      // Allow word wrapping for better readability with spaces
-      white-space: normal;
-      word-wrap: break-word;
-      word-break: break-word;
-      // Limit to 2 lines max with ellipsis for desktop
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      line-height: 1.3;
-      max-height: 2.6em; // 2 lines * 1.3 line-height
-
-      @media (max-width: 1200px) {
-        max-width: 150px;
-        -webkit-line-clamp: 1; // Single line on smaller screens
-        max-height: 1.3em;
-      }
-
-      @media (max-width: 768px) {
-        max-width: 120px;
-        -webkit-line-clamp: 1; // Single line on mobile
-        max-height: 1.3em;
-      }
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      display: block;
     }
 
     .selector-arrow {
@@ -477,33 +478,22 @@ body.dark-theme .nav-farm-selector {
   .selector-text {
     flex: 1;
     min-width: 0;
-    max-width: 200px; // Prevent excessive width
+    max-width: 220px;
     overflow: hidden;
-    // Allow word wrapping for better readability with spaces
-    white-space: normal;
-    word-wrap: break-word;
-    word-break: break-word;
-    // Limit to 2 lines max with ellipsis
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-height: 1.3;
-    max-height: 2.6em; // 2 lines * 1.3 line-height
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
 
     @media (max-width: 1400px) {
-      max-width: 180px;
+      max-width: 200px;
     }
 
     @media (max-width: 1200px) {
-      max-width: 150px;
-      -webkit-line-clamp: 1; // Single line on smaller screens
-      max-height: 1.3em;
+      max-width: 160px;
     }
 
     @media (max-width: 768px) {
       max-width: 120px;
-      -webkit-line-clamp: 1; // Single line on mobile
-      max-height: 1.3em;
     }
   }
 
@@ -734,17 +724,15 @@ body.dark-theme .hamburger-line {
   background: var(--text-primary, #f1f5f9);
 }
 
-// ===== NAVIGATION (Inside Center Section) =====
+// ===== NAVIGATION (Inside Center Section) - DESKTOP ONLY =====
 .header-nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
   flex: 1;
-  min-width: 0; // Allow navigation to shrink
-  flex-wrap: nowrap; // Keep items in one line
-  overflow: visible; // Allow active tab underline to be visible
-  max-width: 100%; // Ensure it doesn't exceed parent
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible; // Allow underline to be visible
 }
 
 // Hide navigation tabs below 900px (collapse completely on mobile)
@@ -754,58 +742,59 @@ body.dark-theme .hamburger-line {
   }
 }
 
-
-.nav-link {
+// Wrapper for nav links + animated underline (DESKTOP ONLY)
+.nav-links-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1rem;
+  justify-content: center;
+  gap: 0.5rem; // Consistent spacing between nav items
+  padding: 0.5rem;
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.dark-theme .nav-links-wrapper {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+// Individual nav link (DESKTOP ONLY)
+.nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; // Consistent gap between icon and text
+  padding: 0.625rem 1rem; // Balanced, stable padding
   border-radius: 0.75rem;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary, #6b7280);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
   white-space: nowrap;
-  flex-shrink: 1; // Allow shrinking when needed
-  min-width: 0; // Allow shrinking below content size
-  max-width: 100%; // Prevent overflow
+  flex-shrink: 0; // CRITICAL: Prevent nav items from shrinking
+  min-width: fit-content; // Ensure stable width
+  cursor: pointer;
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -0.75rem;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #10b981, #3b82f6);
-    border-radius: 2px;
-    opacity: 0;
-    transform: scaleX(0);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
+  // Subtle hover effect (no translateY to prevent jumping)
   &:hover {
     color: #10b981;
     background: rgba(16, 185, 129, 0.08);
-    transform: translateY(-1px);
 
     .nav-icon {
-      transform: scale(1.1);
+      color: #10b981;
+    }
+
+    .nav-icon-fa {
       color: #10b981;
     }
   }
 
+  // Active state without individual underline (handled by .nav-underline)
   &.active {
     color: #10b981;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.08));
     font-weight: 600;
-
-    &::after {
-      opacity: 1;
-      transform: scaleX(1);
-    }
 
     .nav-icon {
       color: #10b981;
@@ -816,7 +805,20 @@ body.dark-theme .hamburger-line {
         fill: #10b981;
       }
     }
+
+    .nav-icon-fa {
+      color: #10b981;
+    }
   }
+}
+
+// Icons and text baseline alignment
+.nav-icon,
+.nav-icon-fa {
+  flex-shrink: 0; // Icons should never shrink
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-icon {
@@ -832,22 +834,19 @@ body.dark-theme .hamburger-line {
   font-size: 1rem;
   width: 20px;
   height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: var(--text-secondary, #6b7280);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1; // Ensure proper baseline alignment
 }
 
-.nav-link:hover .nav-icon-fa {
-  transform: scale(1.1);
-  color: #10b981;
+// Text styling for consistent baseline
+.nav-text {
+  line-height: 1.5; // Match icon height for baseline alignment
+  display: inline-flex;
+  align-items: center;
 }
 
-.nav-link.active .nav-icon-fa {
-  color: #10b981;
-}
-
+// Dark theme adjustments for nav links
 body.dark-theme .nav-link {
   color: var(--text-secondary, #cbd5e1);
 

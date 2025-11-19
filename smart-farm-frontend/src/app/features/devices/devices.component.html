@@ -240,27 +240,15 @@
 
       <mat-card-actions class="device-card__actions" [attr.aria-label]="languageService.t()('devices.card.actionsAria')">
         <button
-          mat-stroked-button
+          mat-raised-button
           color="primary"
+          class="view-details-btn"
           (click)="viewDeviceDetails(device)"
           appTooltip="{{ languageService.t()('devices.viewDetailsTooltip') }}"
           [tooltipOptions]="{ placement: 'top', delay: 300 }"
           [attr.aria-label]="languageService.t()('devices.card.viewDetailsAria', { name: device.name })">
           <mat-icon>visibility</mat-icon>
           {{ languageService.t()('common.view') }}
-        </button>
-
-        <button
-          mat-flat-button
-          color="accent"
-          (click)="toggleDeviceStatus(device)"
-          [disabled]="device.status === 'maintenance' || isTogglingStatus[device.device_id]"
-          appTooltip="{{ getToggleActionTooltip(device) }}"
-          [tooltipOptions]="{ placement: 'top', delay: 300 }"
-          [attr.aria-label]="getDeviceToggleAriaLabel(device)">
-          <mat-spinner *ngIf="isTogglingStatus[device.device_id]" diameter="20" class="button-spinner" aria-hidden="true"></mat-spinner>
-          <mat-icon *ngIf="!isTogglingStatus[device.device_id]">{{ getToggleActionIcon(device) }}</mat-icon>
-          {{ getToggleActionText(device) }}
         </button>
       </mat-card-actions>
     </mat-card>
@@ -391,7 +379,7 @@
 
   <!-- No Devices State -->
   <div class="empty-state" *ngIf="!isLoading && devices.length === 0">
-    <mat-icon class="empty-icon">devices_other</mat-icon>
+    <mat-icon class="empty-icon">sensors</mat-icon>
     <h3>{{ languageService.t()('devices.noDevicesFound') }}</h3>
     <p>{{ languageService.t()('devices.noDevicesDescription') }}</p>
     <button mat-raised-button color="primary" (click)="refreshDevices()">

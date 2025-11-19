@@ -667,7 +667,7 @@ export class CropEventsTimelineComponent implements OnInit {
       const actionLabel = action.action_type || this.languageService.translate('crops.timeline.events.actionDefault');
       const deviceLabel = action.device_id || this.languageService.translate('crops.timeline.events.deviceDefault');
       const sourceLabel = action.trigger_source || this.languageService.translate('crops.timeline.events.systemSource');
-
+      
       return {
         id: action.id,
         type: 'action' as const,

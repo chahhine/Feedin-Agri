@@ -130,9 +130,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
       id: 'devices',
       label: 'Devices',
       route: '/devices',
-      icon: 'devices',
-      svgPath: 'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z',
-      fontAwesomeIcon: 'fa-solid fa-box',
+      icon: 'precision_manufacturing',
+      svgPath: 'M3 7.5A2.25 2.25 0 015.25 5.25h13.5A2.25 2.25 0 0121 7.5v1.5A2.25 2.25 0 0118.75 11.25H5.25A2.25 2.25 0 013 9V7.5zM3 15.75A2.25 2.25 0 015.25 13.5h13.5A2.25 2.25 0 0121 15.75v1.5A2.25 2.25 0 0118.75 19.5H5.25A2.25 2.25 0 013 17.25v-1.5zM7.5 7.5h1.5v1.5H7.5V7.5zm0 8.25h1.5v1.5H7.5v-1.5zm7.5-8.25h1.5v1.5H15V7.5zm0 8.25h1.5v1.5H15v-1.5z',
+      fontAwesomeIcon: 'fa-solid fa-diagram-project',
       priority: 'primary',
       translationKey: 'navigation.devices'
     },
