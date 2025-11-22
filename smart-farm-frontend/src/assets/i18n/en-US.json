@@ -205,7 +205,17 @@
         "temperature": "Temperature",
         "humidity": "Humidity"
       },
-      "chartPlaceholder": "Chart visualization ready - Install ngx-echarts to enable"
+      "chartPlaceholder": "Chart visualization ready - Install ngx-echarts to enable",
+      "chartTitles": {
+        "soilMoisture": "Soil Moisture Over Time",
+        "temperature": "Temperature Over Time",
+        "humidity": "Humidity Over Time"
+      },
+      "chartLabels": {
+        "unknown": "Unknown",
+        "minWarning": "Min Warning",
+        "maxWarning": "Max Warning"
+      }
     },
     "smartActions": {
       "title": "Smart Actions",
@@ -945,8 +955,18 @@
     "mapView": "Map View",
     "farm": "Farm",
     "allFarms": "All Farms",
+    "selectFarm": "Select a farm",
     "device": "Device",
     "allDevices": "All Devices",
+    "selectDevice": "Select a device",
+    "sensor": "Sensor",
+    "allSensors": "All Sensors",
+    "selectSensor": "Select a sensor",
+    "startDate": "Start Date",
+    "selectStartDate": "Select start date",
+    "endDate": "End Date",
+    "selectEndDate": "Select end date",
+    "sensorFilterApplied": "Sensor filter applied: {{sensor}}",
     "search": "Search",
     "searchPlaceholder": "Search notifications...",
     "preparingInsights": "Preparing your insights...",
@@ -984,7 +1004,25 @@
     "allClear": "All Clear",
     "allCaughtUp": "You're all caught up with your notifications",
     "upToDate": "Up to Date",
-    "noCriticalIssues": "No critical issues detected"
+    "noCriticalIssues": "No critical issues detected",
+    "activeFilters": "active filter(s)",
+    "suggestedActions": {
+      "checkVentilation": "Check if ventilation is working. Consider opening windows if it's cooler outside.",
+      "checkHeating": "Check if heating is working. Consider closing windows or adding insulation.",
+      "improveCirculation": "Improve air circulation. Check if dehumidifier is working properly.",
+      "checkWater": "Check water levels. Consider misting plants or adding a humidifier.",
+      "checkDevicePower": "Check device power and WiFi connection. Try restarting the device.",
+      "retryAction": "Try the action again in a few minutes. Check if the device is responding."
+    },
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo_one": "{{count}} minute ago",
+      "minutesAgo_other": "{{count}} minutes ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "hoursAgo_other": "{{count}} hours ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago"
+    }
   },
   "actions": {
     "title": "Actions Center",
@@ -1294,7 +1332,6 @@
         "loadCrops": "Failed to load crops",
         "loadDashboard": "Failed to load crop dashboard"
       },
-      "header": "Crop Overview",
       "selectCrop": "Select Crop",
       "healthAnalytics": "Health & Analytics",
       "cropDetails": "Crop Details",
@@ -1331,7 +1368,6 @@
       "recentEvents": "Recent Events",
       "actionsAlertsNotifications": "Actions, alerts, and notifications",
       "allEvents": "All Events",
-      "actions": "Actions",
       "alerts": "Alerts",
       "notifications": "Notifications",
       "loadingEvents": "Loading events...",
@@ -1368,9 +1404,37 @@
       "plantingDate": "Planting Date",
       "expectedHarvest": "Expected Harvest"
     },
+    "statuses": {
+      "planted": "Planted",
+      "growing": "Growing",
+      "harvested": "Harvested",
+      "failed": "Failed"
+    },
     "analytics": {
       "title": "Analytics",
       "loading": "Loading analytics..."
+    },
+    "kpi": {
+      "tooltips": {
+        "all": "View all crops",
+        "healthRatio": "Healthy vs stressed crops",
+        "growthStage": "Current growth stage",
+        "soilMoisture": "Average soil moisture across all sensors",
+        "temperature": "Average temperature across all sensors",
+        "humidity": "Average humidity across all sensors"
+      },
+      "labels": {
+        "total": "Total Crops",
+        "healthRatio": "Health Ratio",
+        "growthStage": "Growth Stage",
+        "soilMoisture": "Soil Moisture",
+        "temperature": "Temperature",
+        "humidity": "Humidity",
+        "lastUpdated": "Last Updated"
+      },
+      "relative": {
+        "never": "Never"
+      }
     },
     "kpis": {
       "yield": "Yield",
@@ -1396,6 +1460,42 @@
       "confirmTurnOnIrrigation": "Are you sure you want to start irrigation?"
     },
     "timeline": {
+      "title": "Recent Events",
+      "subtitle": "Actions, alerts, and notifications",
+      "actions": {
+        "markAllRead": "Mark all as read",
+        "loadMore": "Load More Events"
+      },
+      "filters": {
+        "all": "All Events",
+        "actions": "Actions",
+        "alerts": "Alerts",
+        "notifications": "Notifications"
+      },
+      "loading": "Loading events...",
+      "empty": {
+        "title": "No Events Found",
+        "description": "No {{filter}} events in the last 7 days."
+      },
+      "groups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "count": "{{count}} events"
+      },
+      "status": {
+        "success": "Success",
+        "warning": "Warning",
+        "error": "Error",
+        "info": "Info"
+      },
+      "events": {
+        "actionTitle": "{{action}} on {{device}}",
+        "actionDefault": "Action",
+        "deviceDefault": "Device",
+        "actionDescription": "Triggered by {{source}}",
+        "systemSource": "System",
+        "noDescription": "No description available"
+      },
       "irrigationStarted": "Irrigation started",
       "fertilizerAdded": "Fertilizer added",
       "diseaseAlert": "Disease alert",

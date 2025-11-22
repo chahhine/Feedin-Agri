@@ -6,15 +6,18 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
-// Modern Glassmorphic Toast Notifications - MUST be at top before any other rules
-@use './app/core/styles/toast-notifications.scss';
-
 // Font Awesome Icons - Using @use instead of deprecated @import
 // Must be at top before any other CSS rules
 @use '@fortawesome/fontawesome-free/scss/fontawesome' as *;
 @use '@fortawesome/fontawesome-free/scss/solid' as *;
 @use '@fortawesome/fontawesome-free/scss/regular' as *;
 @use '@fortawesome/fontawesome-free/scss/brands' as *;
+
+// Modern Glassmorphic Toast Notifications - MUST be at top before any other rules
+@use './app/core/styles/toast-notifications.scss';
+
+// Design Tokens - Single Source of Truth (using @use instead of deprecated @import)
+@use './app/core/styles/design-tokens' as *;
 
 html {
   @include mat.theme((
@@ -785,7 +788,7 @@ body.dark-theme .mat-datepicker-popup {
     .mat-mdc-button.mat-mdc-snack-bar-action,
     .mdc-snackbar__actions button {
       color: white !important;
-      
+
       &:hover {
         background: rgba(255, 255, 255, 0.2) !important;
       }
@@ -809,7 +812,7 @@ body.dark-theme .mat-datepicker-popup {
     .mat-mdc-button.mat-mdc-snack-bar-action,
     .mdc-snackbar__actions button {
       color: white !important;
-      
+
       &:hover {
         background: rgba(255, 255, 255, 0.2) !important;
       }
@@ -833,7 +836,7 @@ body.dark-theme .mat-datepicker-popup {
     .mat-mdc-button.mat-mdc-snack-bar-action,
     .mdc-snackbar__actions button {
       color: white !important;
-      
+
       &:hover {
         background: rgba(255, 255, 255, 0.2) !important;
       }
@@ -857,7 +860,7 @@ body.dark-theme .mat-datepicker-popup {
     .mat-mdc-button.mat-mdc-snack-bar-action,
     .mdc-snackbar__actions button {
       color: white !important;
-      
+
       &:hover {
         background: rgba(255, 255, 255, 0.2) !important;
       }

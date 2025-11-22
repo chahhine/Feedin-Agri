@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig, MatSnackBarRef, SimpleSnackBar } from '@angular/material/snack-bar';
 import { LanguageService } from './language.service';
 import { ThemeService } from './theme.service';
+import { TOAST_DURATIONS } from '../config/notification.config';
 
 /**
  * Unified Toast Notification Service
@@ -25,9 +26,9 @@ export class ToastNotificationService {
    * Show a success toast notification
    * @param message Translation key or message text
    * @param details Optional additional details (translation key or text)
-   * @param duration Duration in milliseconds (default: 3000)
+   * @param duration Duration in milliseconds (default: from config)
    */
-  success(message: string, details?: string, duration: number = 3000): MatSnackBarRef<SimpleSnackBar> {
+  success(message: string, details?: string, duration: number = TOAST_DURATIONS.SUCCESS): MatSnackBarRef<SimpleSnackBar> {
     const translatedMessage = this.translateMessage(message);
     const translatedDetails = details ? this.translateMessage(details) : undefined;
     
@@ -42,9 +43,9 @@ export class ToastNotificationService {
    * Show an error toast notification
    * @param message Translation key or message text
    * @param details Optional additional details (translation key or text)
-   * @param duration Duration in milliseconds (default: 5000)
+   * @param duration Duration in milliseconds (default: from config)
    */
-  error(message: string, details?: string, duration: number = 5000): MatSnackBarRef<SimpleSnackBar> {
+  error(message: string, details?: string, duration: number = TOAST_DURATIONS.ERROR): MatSnackBarRef<SimpleSnackBar> {
     const translatedMessage = this.translateMessage(message);
     const translatedDetails = details ? this.translateMessage(details) : undefined;
     
@@ -59,9 +60,9 @@ export class ToastNotificationService {
    * Show a warning toast notification
    * @param message Translation key or message text
    * @param details Optional additional details (translation key or text)
-   * @param duration Duration in milliseconds (default: 4000)
+   * @param duration Duration in milliseconds (default: from config)
    */
-  warning(message: string, details?: string, duration: number = 4000): MatSnackBarRef<SimpleSnackBar> {
+  warning(message: string, details?: string, duration: number = TOAST_DURATIONS.WARNING): MatSnackBarRef<SimpleSnackBar> {
     const translatedMessage = this.translateMessage(message);
     const translatedDetails = details ? this.translateMessage(details) : undefined;
     
@@ -76,9 +77,9 @@ export class ToastNotificationService {
    * Show an info toast notification
    * @param message Translation key or message text
    * @param details Optional additional details (translation key or text)
-   * @param duration Duration in milliseconds (default: 3000)
+   * @param duration Duration in milliseconds (default: from config)
    */
-  info(message: string, details?: string, duration: number = 3000): MatSnackBarRef<SimpleSnackBar> {
+  info(message: string, details?: string, duration: number = TOAST_DURATIONS.INFO): MatSnackBarRef<SimpleSnackBar> {
     const translatedMessage = this.translateMessage(message);
     const translatedDetails = details ? this.translateMessage(details) : undefined;
     

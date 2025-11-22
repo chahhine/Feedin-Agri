@@ -204,7 +204,17 @@
         "temperature": "Température",
         "humidity": "Humidité"
       },
-      "chartPlaceholder": "Graphique prêt - installez ngx-echarts pour l'activer"
+      "chartPlaceholder": "Graphique prêt - installez ngx-echarts pour l'activer",
+      "chartTitles": {
+        "soilMoisture": "Humidité du sol au fil du temps",
+        "temperature": "Température au fil du temps",
+        "humidity": "Humidité au fil du temps"
+      },
+      "chartLabels": {
+        "unknown": "Inconnu",
+        "minWarning": "Avertissement minimum",
+        "maxWarning": "Avertissement maximum"
+      }
     },
     "smartActions": {
       "title": "Actions intelligentes",
@@ -919,8 +929,18 @@
     "mapView": "Vue carte",
     "farm": "Ferme",
     "allFarms": "Toutes les fermes",
+    "selectFarm": "Sélectionner une ferme",
     "device": "Appareil",
     "allDevices": "Tous les appareils",
+    "selectDevice": "Sélectionner un appareil",
+    "sensor": "Capteur",
+    "allSensors": "Tous les capteurs",
+    "selectSensor": "Sélectionner un capteur",
+    "startDate": "Date de début",
+    "selectStartDate": "Sélectionner la date de début",
+    "endDate": "Date de fin",
+    "selectEndDate": "Sélectionner la date de fin",
+    "sensorFilterApplied": "Filtre capteur appliqué : {{sensor}}",
     "search": "Rechercher",
     "searchPlaceholder": "Rechercher des notifications...",
     "preparingInsights": "Préparation de vos informations...",
@@ -1306,9 +1326,37 @@
       "plantingDate": "Date de plantation",
       "expectedHarvest": "Récolte attendue"
     },
+    "statuses": {
+      "planted": "Planté",
+      "growing": "En croissance",
+      "harvested": "Récolté",
+      "failed": "Échoué"
+    },
     "analytics": {
       "title": "Analyses",
       "loading": "Chargement des analyses..."
+    },
+    "kpi": {
+      "tooltips": {
+        "all": "Voir toutes les cultures",
+        "healthRatio": "Cultures saines vs stressées",
+        "growthStage": "Stade de croissance actuel",
+        "soilMoisture": "Humidité moyenne du sol sur tous les capteurs",
+        "temperature": "Température moyenne sur tous les capteurs",
+        "humidity": "Humidité moyenne sur tous les capteurs"
+      },
+      "labels": {
+        "total": "Total des cultures",
+        "healthRatio": "Ratio de santé",
+        "growthStage": "Stade de croissance",
+        "soilMoisture": "Humidité du sol",
+        "temperature": "Température",
+        "humidity": "Humidité",
+        "lastUpdated": "Dernière mise à jour"
+      },
+      "relative": {
+        "never": "Jamais"
+      }
     },
     "kpis": {
       "yield": "Rendement",
@@ -1333,6 +1381,42 @@
       "confirmTurnOnIrrigation": "Êtes-vous sûr de vouloir démarrer l'irrigation ?"
     },
     "timeline": {
+      "title": "Événements récents",
+      "subtitle": "Actions, alertes et notifications",
+      "actions": {
+        "markAllRead": "Tout marquer comme lu",
+        "loadMore": "Charger plus d'événements"
+      },
+      "filters": {
+        "all": "Tous les événements",
+        "actions": "Actions",
+        "alerts": "Alertes",
+        "notifications": "Notifications"
+      },
+      "loading": "Chargement des événements...",
+      "empty": {
+        "title": "Aucun événement trouvé",
+        "description": "Aucun événement {{filter}} au cours des 7 derniers jours."
+      },
+      "groups": {
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "count": "{{count}} événements"
+      },
+      "status": {
+        "success": "Succès",
+        "warning": "Avertissement",
+        "error": "Erreur",
+        "info": "Information"
+      },
+      "events": {
+        "actionTitle": "{{action}} sur {{device}}",
+        "actionDefault": "Action",
+        "deviceDefault": "Appareil",
+        "actionDescription": "Déclenché par {{source}}",
+        "systemSource": "Système",
+        "noDescription": "Aucune description disponible"
+      },
       "irrigationStarted": "Irrigation démarrée",
       "fertilizerAdded": "Engrais ajouté",
       "diseaseAlert": "Alerte de maladie",

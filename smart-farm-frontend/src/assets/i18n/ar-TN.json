@@ -663,21 +663,6 @@
       "OFFLINE": "غير متصل"
     }
   },
-  "manualControl": {
-    "title": "مركز تحكم الأجهزة",
-    "subtitle": "تنفيذ إجراءات يدوية على أجهزة المزرعة الذكية",
-    "onlineDevices": "الأجهزة المتصلة",
-    "pendingActions": "الإجراءات المعلقة",
-    "statusPending": "في الانتظار",
-    "statusSuccess": "نجح",
-    "statusFailed": "فشل",
-    "statusTimeout": "انتهت المهلة",
-    "actionSentMessage": "تم إرسال الإجراء \"{{actionName}}\" إلى الجهاز - في انتظار التأكيد...",
-    "actionSuccessMessage": "✅ تم تنفيذ الإجراء \"{{actionName}}\" بنجاح!",
-    "actionFailedMessage": "❌ فشل الإجراء \"{{actionName}}\": {{error}}",
-    "actionTimeoutMessage": "⏰ انتهت مهلة الإجراء \"{{actionName}}\"",
-    "loadDevicesError": "فشل في تحميل الأجهزة"
-  },
   "notifications": {
     "title": "تنبيهات المزرعة",
     "subtitle": "ابق على اطلاع بما يحدث في مزرعتك",
@@ -823,8 +808,18 @@
     "mapView": "عرض الخريطة",
     "farm": "المزرعة",
     "allFarms": "جميع المزارع",
+    "selectFarm": "اختر مزرعة",
     "device": "الجهاز",
     "allDevices": "جميع الأجهزة",
+    "selectDevice": "اختر جهاز",
+    "sensor": "المستشعر",
+    "allSensors": "جميع المستشعرات",
+    "selectSensor": "اختر مستشعر",
+    "startDate": "تاريخ البداية",
+    "selectStartDate": "اختر تاريخ البداية",
+    "endDate": "تاريخ النهاية",
+    "selectEndDate": "اختر تاريخ النهاية",
+    "sensorFilterApplied": "تم تطبيق فلتر المستشعر: {{sensor}}",
     "search": "بحث",
     "searchPlaceholder": "البحث في الإشعارات...",
     "preparingInsights": "جارٍ تحضير رؤيتك...",
@@ -861,7 +856,25 @@
     "allClear": "كل شيء واضح",
     "allCaughtUp": "لقد اطلعت على جميع إشعاراتك",
     "upToDate": "محدّث",
-    "noCriticalIssues": "لم يتم اكتشاف مشاكل حرجة"
+    "noCriticalIssues": "لم يتم اكتشاف مشاكل حرجة",
+    "activeFilters": "فلتر نشط",
+    "suggestedActions": {
+      "checkVentilation": "تحقق من عمل التهوية. فكر في فتح النوافذ إذا كان الجو أبرد بالخارج.",
+      "checkHeating": "تحقق من عمل التدفئة. فكر في إغلاق النوافذ أو إضافة عزل.",
+      "improveCirculation": "حسّن دوران الهواء. تحقق من عمل جهاز إزالة الرطوبة بشكل صحيح.",
+      "checkWater": "تحقق من مستويات المياه. فكر في رش النباتات أو إضافة جهاز ترطيب.",
+      "checkDevicePower": "تحقق من طاقة الجهاز واتصال الواي فاي. حاول إعادة تشغيل الجهاز.",
+      "retryAction": "حاول الإجراء مرة أخرى بعد بضع دقائق. تحقق مما إذا كان الجهاز يستجيب."
+    },
+    "time": {
+      "justNow": "الآن",
+      "minutesAgo_one": "منذ دقيقة واحدة",
+      "minutesAgo_other": "منذ {{count}} دقيقة",
+      "hoursAgo_one": "منذ ساعة واحدة",
+      "hoursAgo_other": "منذ {{count}} ساعة",
+      "daysAgo_one": "منذ يوم واحد",
+      "daysAgo_other": "منذ {{count}} يوم"
+    }
   },
   "actions": {
     "title": "مركز الإجراءات",
@@ -1134,7 +1147,6 @@
         "loadCrops": "تعذّر تحميل المحاصيل",
         "loadDashboard": "تعذّر تحميل لوحة المحاصيل"
       },
-      "header": "نظرة عامة على المحاصيل",
       "selectCrop": "اختر محصولاً",
       "healthAnalytics": "الصحة والتحليلات",
       "cropDetails": "تفاصيل المحصول",
@@ -1171,7 +1183,6 @@
       "recentEvents": "الأحداث الأخيرة",
       "actionsAlertsNotifications": "الإجراءات والتنبيهات والإشعارات",
       "allEvents": "جميع الأحداث",
-      "actions": "الإجراءات",
       "alerts": "التنبيهات",
       "notifications": "الإشعارات",
       "loadingEvents": "جاري تحميل الأحداث...",
@@ -1242,7 +1253,17 @@
         "temperature": "الحرارة",
         "humidity": "الرطوبة"
       },
-      "chartPlaceholder": "الرسوم جاهزة - ثبّت ngx-echarts للتفعيل"
+      "chartPlaceholder": "الرسوم جاهزة - ثبّت ngx-echarts للتفعيل",
+      "chartTitles": {
+        "soilMoisture": "رطوبة التربة مع مرور الوقت",
+        "temperature": "درجة الحرارة مع مرور الوقت",
+        "humidity": "الرطوبة مع مرور الوقت"
+      },
+      "chartLabels": {
+        "unknown": "غير معروف",
+        "minWarning": "تحذير أدنى",
+        "maxWarning": "تحذير أقصى"
+      }
     },
     "smartActions": {
       "title": "الإجراءات الذكية",
@@ -1335,7 +1356,13 @@
         "actionDescription": "تم التشغيل بواسطة {{source}}",
         "systemSource": "النظام",
         "noDescription": "لا توجد تفاصيل"
-      }
+      },
+      "irrigationStarted": "بدأ الري",
+      "fertilizerAdded": "تمت إضافة السماد",
+      "diseaseAlert": "تنبيه مرض",
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "noEvents": "لا توجد أحداث حديثة"
     },
     "details": {
       "name": "الاسم",
@@ -1343,6 +1370,12 @@
       "status": "الحالة",
       "plantingDate": "تاريخ الزراعة",
       "expectedHarvest": "الحصاد المتوقع"
+    },
+    "statuses": {
+      "planted": "مزروع",
+      "growing": "في النمو",
+      "harvested": "محصود",
+      "failed": "فشل"
     },
     "analytics": {
       "title": "التحليلات",
@@ -1369,14 +1402,6 @@
       "actionExecuted": "تم تنفيذ الإجراء بنجاح",
       "actionFailed": "فشل الإجراء",
       "confirmTurnOnIrrigation": "هل أنت متأكد من بدء الري؟"
-    },
-    "timeline": {
-      "irrigationStarted": "بدأ الري",
-      "fertilizerAdded": "تمت إضافة السماد",
-      "diseaseAlert": "تنبيه مرض",
-      "today": "اليوم",
-      "yesterday": "أمس",
-      "noEvents": "لا توجد أحداث حديثة"
     },
     "sustainability": {
       "waterSaved": "المياه الموفرة",

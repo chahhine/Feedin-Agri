@@ -175,9 +175,9 @@ import { LanguageService } from '../../core/services/language.service';
                 </h1>
                 <mat-chip 
                   [class]="'status-chip status-' + dashboardData()!.crop.status"
-                [attr.aria-label]="('crops.dashboard.aria.status' | translate:{ status: (dashboardData()!.crop.status | titlecase) })">
+                [attr.aria-label]="('crops.dashboard.aria.status' | translate:{ status: getStatusLabel(dashboardData()!.crop.status) })">
                   <mat-icon class="chip-icon">{{ getStatusIcon(dashboardData()!.crop.status) }}</mat-icon>
-                  {{ dashboardData()!.crop.status | titlecase }}
+                  {{ getStatusLabel(dashboardData()!.crop.status) }}
                 </mat-chip>
               </div>
             </div>
@@ -267,7 +267,7 @@ import { LanguageService } from '../../core/services/language.service';
                     <dt class="detail-label">{{ 'crops.dashboard.details.status' | translate }}</dt>
                     <dd class="detail-value">
                       <span class="status-badge" *ngIf="dashboardData()?.crop" [class]="'status-' + dashboardData()!.crop.status">
-                        {{ dashboardData()!.crop.status | titlecase }}
+                        {{ getStatusLabel(dashboardData()!.crop.status) }}
                       </span>
                     </dd>
                   </div>
@@ -1510,6 +1510,18 @@ export class CropDashboardComponent implements OnInit {
       case 'failed': return 'error';
       default: return 'help_outline';
     }
+  }
+
+  /**
+   * 🌍 Translation Helper: Get translated status label
+   */
+  getStatusLabel(status: string): string {
+    if (!status) return '';
+    const statusKey = status.toLowerCase();
+    const translationKey = `crops.statuses.${statusKey}`;
+    const translated = this.languageService.translate(translationKey);
+    // If translation not found, return the original status with titlecase as fallback
+    return translated !== translationKey ? translated : status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   }
 
   /**

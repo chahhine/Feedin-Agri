@@ -3,6 +3,8 @@
 import { Component, inject, OnInit, OnDestroy, computed, signal, effect, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -15,12 +17,17 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { ConfirmDeleteDialogComponent } from './confirm-delete-dialog.component';
 import { NotificationService } from '../../core/services/notification.service';
 import { ApiService } from '../../core/services/api.service';
 import { FarmManagementService } from '../../core/services/farm-management.service';
 import { LanguageService } from '../../core/services/language.service';
+import { LoggerService } from '../../core/services/logger.service';
+import { AuthService } from '../../core/services/auth.service';
 import { AppNotification } from '../../core/models/notification.model';
+import { NOTIFICATION_CONFIG } from '../../core/config/notification.config';
 
 // Date grouping helper
 type DateGroup = 'today-morning' | 'today-afternoon' | 'yesterday' | 'this-week' | 'older';
@@ -49,7 +56,9 @@ interface GroupedNotifications {
     MatInputModule,
     MatSelectModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    MatDatepickerModule,
+    MatNativeDateModule
   ],
   template: `
     <div class="insight-stream-container" [attr.dir]="currentDirection()">
@@ -57,7 +66,7 @@ interface GroupedNotifications {
       <!-- 1️⃣ KPI HEADER BAR - Enhanced with better empty states -->
       <div class="kpi-bar glass-panel">
         <div class="kpi-stats">
-          <div class="kpi-item" 
+          <div class="kpi-item"
                [class.zero-state]="kpiStats().total === 0"
                [matTooltip]="kpiStats().total === 0 ? languageService.t()('notifications.noNotificationsYet') : languageService.t()('notifications.totalNotifications')">
             <mat-icon>{{ kpiStats().total === 0 ? 'notifications_none' : 'notifications' }}</mat-icon>
@@ -68,7 +77,7 @@ interface GroupedNotifications {
             </div>
           </div>
 
-          <div class="kpi-item unread" 
+          <div class="kpi-item unread"
                [class.zero-state]="kpiStats().unread === 0"
                [matTooltip]="kpiStats().unread === 0 ? languageService.t()('notifications.allCaughtUp') : languageService.t()('notifications.unread')">
             <mat-icon>{{ kpiStats().unread === 0 ? 'mark_email_read' : 'mark_email_unread' }}</mat-icon>
@@ -79,7 +88,7 @@ interface GroupedNotifications {
             </div>
           </div>
 
-          <div class="kpi-item critical" 
+          <div class="kpi-item critical"
                [class.zero-state]="kpiStats().critical === 0"
                [matTooltip]="kpiStats().critical === 0 ? languageService.t()('notifications.noCriticalIssues') : languageService.t()('notifications.critical')">
             <mat-icon>{{ kpiStats().critical === 0 ? 'check_circle' : 'priority_high' }}</mat-icon>
@@ -124,7 +133,7 @@ interface GroupedNotifications {
                 (click)="onFilterChange(filter.value)">
                 <mat-icon>{{ filter.icon }}</mat-icon>
                 {{ filter.label }}
-                <span class="chip-badge" *ngIf="filter.count && filter.count > 0">{{ filter.count }}</span>
+                <span class="chip-badge">{{ filter.count }}</span>
               </mat-chip-option>
             </mat-chip-listbox>
           </div>
@@ -185,30 +194,31 @@ interface GroupedNotifications {
           <div class="filter-controls-wrapper">
             <!-- Filter Inputs Grid -->
             <div class="filter-controls-grid">
-              <!-- Farm Filter -->
-              <div class="filter-group" *ngIf="availableFarms().length > 0">
+              <!-- First Row: Sensor, Device, Start Date, End Date (4 equal columns) -->
+              <!-- Sensor Filter -->
+              <div class="filter-group">
                 <label class="filter-group-label">
-                  <mat-icon>agriculture</mat-icon>
-                  <span>{{ languageService.t()('notifications.farm') }}</span>
+                  <mat-icon>sensors</mat-icon>
+                  <span>{{ languageService.t()('notifications.sensor') }}</span>
                 </label>
                 <mat-form-field appearance="outline" class="filter-field">
-                  <mat-select [(ngModel)]="selectedFarm" (selectionChange)="onFarmChange()">
-                    <mat-option [value]="null">{{ languageService.t()('notifications.allFarms') }}</mat-option>
-                    <mat-option *ngFor="let farm of availableFarms()" [value]="farm">
-                      {{ farm }}
+                  <mat-select [ngModel]="selectedSensor()" (ngModelChange)="selectedSensor.set($event); onSensorChange()" [placeholder]="languageService.t()('notifications.selectSensor')">
+                    <mat-option [value]="null">{{ languageService.t()('notifications.allSensors') }}</mat-option>
+                    <mat-option *ngFor="let sensor of availableSensors()" [value]="sensor">
+                      {{ sensor }}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
               </div>
 
               <!-- Device Filter -->
-              <div class="filter-group" *ngIf="availableDevices().length > 0">
+              <div class="filter-group">
                 <label class="filter-group-label">
                   <mat-icon>devices</mat-icon>
                   <span>{{ languageService.t()('notifications.device') }}</span>
                 </label>
                 <mat-form-field appearance="outline" class="filter-field">
-                  <mat-select [(ngModel)]="selectedDevice" (selectionChange)="onDeviceChange()">
+                  <mat-select [(ngModel)]="selectedDevice" (selectionChange)="onDeviceChange()" [placeholder]="languageService.t()('notifications.selectDevice')">
                     <mat-option [value]="null">{{ languageService.t()('notifications.allDevices') }}</mat-option>
                     <mat-option *ngFor="let device of availableDevices()" [value]="device">
                       {{ device }}
@@ -217,8 +227,42 @@ interface GroupedNotifications {
                 </mat-form-field>
               </div>
 
-              <!-- Search Filter -->
-              <div class="filter-group search-group">
+              <!-- Date Range Filter - Start Date -->
+              <div class="filter-group">
+                <label class="filter-group-label">
+                  <mat-icon>event</mat-icon>
+                  <span>{{ languageService.t()('notifications.startDate') }}</span>
+                </label>
+                <mat-form-field appearance="outline" class="filter-field">
+                  <mat-datepicker-toggle matIconSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #startDatePicker></mat-datepicker>
+                  <input matInput
+                         [matDatepicker]="startDatePicker"
+                         [ngModel]="dateRangeStart()"
+                         (ngModelChange)="dateRangeStart.set($event); onDateRangeChange()"
+                         [placeholder]="languageService.t()('notifications.selectStartDate')">
+                </mat-form-field>
+              </div>
+
+              <!-- Date Range Filter - End Date -->
+              <div class="filter-group">
+                <label class="filter-group-label">
+                  <mat-icon>event</mat-icon>
+                  <span>{{ languageService.t()('notifications.endDate') }}</span>
+                </label>
+                <mat-form-field appearance="outline" class="filter-field">
+                  <mat-datepicker-toggle matIconSuffix [for]="endDatePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #endDatePicker></mat-datepicker>
+                  <input matInput
+                         [matDatepicker]="endDatePicker"
+                         [ngModel]="dateRangeEnd()"
+                         (ngModelChange)="dateRangeEnd.set($event); onDateRangeChange()"
+                         [placeholder]="languageService.t()('notifications.selectEndDate')">
+                </mat-form-field>
+              </div>
+
+              <!-- Second Row: Search Filter (Full Width) -->
+              <div class="filter-group search-group search-full-width">
                 <label class="filter-group-label">
                   <mat-icon>search</mat-icon>
                   <span>{{ languageService.t()('notifications.search') }}</span>
@@ -279,7 +323,7 @@ interface GroupedNotifications {
       <!-- 3️⃣ NOTIFICATION STREAM - LIST VIEW -->
       <div class="notification-stream" *ngIf="cacheReady && activeView() === 'list'">
         <div *ngFor="let group of groupedNotifications()" class="date-group">
-          <div class="date-group-header" 
+          <div class="date-group-header"
                (click)="toggleDateGroup(group.group)"
                [class.expanded]="isDateGroupExpanded(group.group)">
             <mat-icon class="expand-icon">{{ isDateGroupExpanded(group.group) ? 'expand_less' : 'expand_more' }}</mat-icon>
@@ -287,7 +331,7 @@ interface GroupedNotifications {
             <span class="date-count">{{ group.notifications.length }}</span>
           </div>
 
-          <div class="notifications-grid" 
+          <div class="notifications-grid"
                [class.collapsed]="!isDateGroupExpanded(group.group)">
             <div *ngFor="let n of group.notifications; trackBy: trackById"
                  class="notification-card glass-card"
@@ -476,7 +520,7 @@ interface GroupedNotifications {
           {{ loadingMore ? languageService.t()('notifications.loading') : languageService.t()('notifications.showMore') }}
         </button>
         <p class="load-info">
-          {{ languageService.t()('notifications.showing') }} {{ list.length }} {{ languageService.t()('notifications.of') }} {{ total }}
+          {{ languageService.t()('notifications.showing') }} {{ list().length }} {{ languageService.t()('notifications.of') }} {{ total }}
         </p>
       </div>
 
@@ -494,7 +538,7 @@ interface GroupedNotifications {
         <h3>{{ languageService.t()('notifications.noNotifications') }}</h3>
         <p class="calm-message">{{ languageService.t()('notifications.everythingCalm') }} 🌿</p>
 
-        <div class="empty-tips" *ngIf="list.length === 0">
+        <div class="empty-tips" *ngIf="list().length === 0">
           <p>{{ languageService.t()('notifications.youWillGetNotified') }}</p>
         </div>
       </div>
@@ -506,14 +550,17 @@ interface GroupedNotifications {
   styleUrls: ['./notifications.component.scss']
 })
 export class NotificationsComponent implements OnInit, OnDestroy {
+  // Destroy subject for cleanup
+  private destroy$ = new Subject<void>();
+
   constructor() {
-    console.log('🏗️ [NOTIFICATIONS] Component constructor called');
+    this.logger.debug('🏗️ [NOTIFICATIONS] Component constructor called');
 
     // React to language changes
     effect(() => {
       const lang = this.languageService.currentLanguage();
       this.triggerTransition();
-      console.log('🌐 Language changed to:', lang);
+      this.logger.debug('🌐 Language changed to:', lang);
     });
   }
 
@@ -524,11 +571,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   public languageService = inject(LanguageService);
+  private logger = inject(LoggerService);
+  private authService = inject(AuthService);
 
   // EXISTING DATA STATE (PRESERVED)
-  list: AppNotification[] = [];
+  list = signal<AppNotification[]>([]);
   total = 0;
-  pageSize = 20;
+  pageSize = NOTIFICATION_CONFIG.CACHE.PAGE_SIZE;
   loading = false;
   loadingMore = false;
   hasMoreNotifications = false;
@@ -543,6 +592,9 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   activeFilters = 'all';
   selectedFarm = signal<string | null>(null);
   selectedDevice = signal<string | null>(null);
+  selectedSensor = signal<string | null>(null);
+  dateRangeStart = signal<Date | null>(null);
+  dateRangeEnd = signal<Date | null>(null);
   searchQuery = '';
   expandedCardId = signal<string | null>(null);
   showTransition = signal(false);
@@ -551,18 +603,18 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   @ViewChild('scrollSentinel') scrollSentinel?: ElementRef;
   private intersectionObserver?: IntersectionObserver;
-  
+
   // Auto-refresh functionality
   private autoRefreshInterval?: number;
   public autoRefreshEnabled = signal(true);
   private lastRefreshTime = signal<Date | null>(null);
-  
+
   // Search debouncing
   private searchTimeout?: number;
 
   // COMPUTED SIGNALS FOR UI
   kpiStats = computed(() => {
-    const notifications = this.list;
+    const notifications = this.list();
     const unread = notifications.filter(n => !n.read).length;
     const critical = notifications.filter(n => n.level === 'critical').length;
     const lastNotification = notifications[0];
@@ -580,12 +632,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   availableFilters = computed(() => {
     const t = this.languageService.t();
+    const notifications = this.list();
     return [
-      { value: 'all', label: t('notifications.all'), icon: 'apps', count: this.list.length },
-      { value: 'critical', label: t('notifications.critical'), icon: 'priority_high', count: this.list.filter(n => n.level === 'critical').length },
-      { value: 'warning', label: t('notifications.warning'), icon: 'warning', count: this.list.filter(n => n.level === 'warning').length },
-      { value: 'unread', label: t('notifications.unread'), icon: 'mark_email_unread', count: this.list.filter(n => !n.read).length },
-      { value: 'read', label: t('notifications.read'), icon: 'mark_email_read', count: this.list.filter(n => n.read).length },
+      { value: 'all', label: t('notifications.all'), icon: 'apps', count: notifications.length },
+      { value: 'critical', label: t('notifications.critical'), icon: 'priority_high', count: notifications.filter(n => n.level === 'critical').length },
+      { value: 'warning', label: t('notifications.warning'), icon: 'warning', count: notifications.filter(n => n.level === 'warning').length },
+      { value: 'unread', label: t('notifications.unread'), icon: 'mark_email_unread', count: notifications.filter(n => !n.read).length },
+      { value: 'read', label: t('notifications.read'), icon: 'mark_email_read', count: notifications.filter(n => n.read).length },
     ];
   });
 
@@ -601,8 +654,10 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     return Array.from(devices).sort();
   });
 
+  availableSensors = signal<string[]>([]);
+
   filteredNotifications = computed(() => {
-    let filtered = [...this.list];
+    let filtered = [...this.list()];
 
     // Filter by level or read status
     if (this.activeFilters !== 'all') {
@@ -630,6 +685,31 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(n => {
         const deviceId = n.context?.deviceId || n.context?.device_id;
         return deviceId === device;
+      });
+    }
+
+    // Filter by sensor
+    const sensor = this.selectedSensor();
+    if (sensor) {
+      filtered = filtered.filter(n => {
+        const sensorId = n.context?.sensorId || n.context?.sensor_id || n.context?.sensor?.sensor_id;
+        return sensorId === sensor;
+      });
+    }
+
+    // Filter by date range
+    const startDate = this.dateRangeStart();
+    const endDate = this.dateRangeEnd();
+    if (startDate || endDate) {
+      filtered = filtered.filter(n => {
+        const notificationDate = new Date(n.createdAt);
+        if (startDate && notificationDate < startDate) return false;
+        if (endDate) {
+          const endDateWithTime = new Date(endDate);
+          endDateWithTime.setHours(23, 59, 59, 999); // Include entire end date
+          if (notificationDate > endDateWithTime) return false;
+        }
+        return true;
       });
     }
 
@@ -732,7 +812,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   // PRESERVED LIFECYCLE
   async ngOnInit() {
-    console.log('🏗️ [NOTIFICATIONS] ngOnInit called');
+    this.logger.debug('🏗️ [NOTIFICATIONS] ngOnInit called');
 
     // Initialize expanded date groups (all expanded by default)
     if (this.expandedDateGroups().size === 0) {
@@ -740,44 +820,53 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       this.expandedDateGroups.set(expanded);
     }
 
-    if (this.list.length > 0) {
-      console.log('🏗️ [NOTIFICATIONS] Notifications already loaded, skipping');
+    // Only skip if we already have notifications AND cache is ready (already initialized)
+    if (this.list().length > 0 && this.cacheReady) {
+      this.logger.debug('🏗️ [NOTIFICATIONS] Notifications already loaded, skipping');
       return;
     }
 
     this.locationCache.clear();
     this.farmDeviceCache.clear();
     this.deviceLocationCache.clear();
-    this.cacheReady = false;
 
-    console.log('🏗️ [NOTIFICATIONS] Building farm device cache...');
-    await this.buildFarmDeviceCache();
+    // Start with cache ready = true to allow UI to display
+    this.cacheReady = true;
 
-    console.log('🏗️ [NOTIFICATIONS] Cache ready:', this.cacheReady);
-    if (this.cacheReady) {
-      console.log('🏗️ [NOTIFICATIONS] Loading notifications with default farm...');
-      await this.loadDefaultNotifications();
-      this.setupIntersectionObserver();
-    } else {
-      console.log('🏗️ [NOTIFICATIONS] Cache not ready, notifications not loaded');
-    }
-
-    this.svc.newNotification$.subscribe(n => {
-      console.log('🔔 [NOTIFICATIONS] New notification received:', n);
-      this.locationCache.delete(n.id);
-      this.list = [n, ...this.list];
-      this.showNotificationSnackbar(n);
+    this.logger.debug('🏗️ [NOTIFICATIONS] Building farm device cache in background...');
+    // Build cache in background - don't await to avoid blocking
+    this.buildFarmDeviceCache().catch(err => {
+      this.logger.error('❌ [NOTIFICATIONS] Cache build error (non-blocking)', err);
     });
 
-    // Setup auto-refresh (every 30 seconds)
+    this.logger.debug('🏗️ [NOTIFICATIONS] Loading notifications immediately...');
+    await this.loadDefaultNotifications();
+    this.loadSensors();
+    this.setupIntersectionObserver();
+
+    // ✅ FIX: Add takeUntil to prevent memory leak
+    this.svc.newNotification$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(n => {
+        this.logger.debug('🔔 [NOTIFICATIONS] New notification received:', n);
+        this.locationCache.delete(n.id);
+        this.list.set([n, ...this.list()]);
+        this.showNotificationSnackbar(n);
+      });
+
+    // Setup auto-refresh
     this.setupAutoRefresh();
   }
 
   ngOnDestroy() {
+    // ✅ FIX: Complete the destroy$ subject to unsubscribe all
+    this.destroy$.next();
+    this.destroy$.complete();
+
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
-    
+
     // Clean up auto-refresh
     if (this.autoRefreshInterval) {
       clearInterval(this.autoRefreshInterval);
@@ -787,27 +876,27 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   // PRESERVED CACHE BUILD LOGIC
   private async buildFarmDeviceCache() {
     try {
-      console.log('🏗️ [NOTIFICATIONS] Building farm device cache...');
+      this.logger.debug('🏗️ [NOTIFICATIONS] Building farm device cache...');
       this.locationCache.clear();
 
       const farms = await this.farmManagement.farms();
-      console.log('🏗️ [NOTIFICATIONS] Farms from farm management:', farms);
+      this.logger.debug('🏗️ [NOTIFICATIONS] Farms from farm management:', farms);
 
       if (!farms || farms.length === 0) {
-        console.log('🏗️ [NOTIFICATIONS] No farms from farm management, trying API...');
+        this.logger.debug('🏗️ [NOTIFICATIONS] No farms from farm management, trying API...');
         try {
           const directFarms = await this.api.getFarms().toPromise();
-          console.log('🏗️ [NOTIFICATIONS] Farms from API:', directFarms);
+          this.logger.debug('🏗️ [NOTIFICATIONS] Farms from API:', directFarms);
 
           if (directFarms && directFarms.length > 0) {
             await this.processFarmsForCache(directFarms);
           } else {
-            console.log('🏗️ [NOTIFICATIONS] No farms found, marking cache ready');
+            this.logger.debug('🏗️ [NOTIFICATIONS] No farms found, marking cache ready');
             this.cacheReady = true;
             return;
           }
         } catch (apiError) {
-          console.error('🏗️ [NOTIFICATIONS] Error getting farms from API:', apiError);
+          this.logger.error('🏗️ [NOTIFICATIONS] Error getting farms from API', apiError);
           this.cacheReady = true;
           return;
         }
@@ -816,10 +905,10 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       }
 
       this.cacheReady = true;
-      console.log('🏗️ [NOTIFICATIONS] Farm device cache built successfully');
+      this.logger.debug('🏗️ [NOTIFICATIONS] Farm device cache built successfully');
 
     } catch (error) {
-      console.error('❌ [NOTIFICATIONS] Error building farm-device cache:', error);
+      this.logger.error('❌ [NOTIFICATIONS] Error building farm-device cache', error);
       this.cacheReady = false;
     }
   }
@@ -838,17 +927,14 @@ export class NotificationsComponent implements OnInit, OnDestroy {
           });
         }
       } catch (deviceError) {
-        console.error(`Error getting devices for farm ${farm.name}:`, deviceError);
+        this.logger.error(`Error getting devices for farm ${farm.name}`, deviceError);
       }
     }
   }
 
   // PRESERVED LOAD LOGIC
   async load(offset = 0, append = false) {
-    if (!this.cacheReady) {
-      console.log('🚫 [NOTIFICATIONS] Cache not ready, skipping load');
-      return;
-    }
+    // Allow loading regardless of cache state - cache is for enriching data, not blocking loads
 
     if (append) {
       this.loadingMore = true;
@@ -857,12 +943,12 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     }
 
     try {
-      console.log('📡 [NOTIFICATIONS] Loading notifications from API...');
+      this.logger.debug('📡 [NOTIFICATIONS] Loading notifications from API...');
       const res = await this.api.getNotifications({ limit: this.pageSize, offset }).toPromise();
-      console.log('📡 [NOTIFICATIONS] API response:', res);
+      this.logger.debug('📡 [NOTIFICATIONS] API response:', res);
 
       const items = res?.items ?? [];
-      console.log('📡 [NOTIFICATIONS] Raw items:', items);
+      this.logger.debug('📡 [NOTIFICATIONS] Raw items:', items);
 
       const mappedItems = items.map((n: any) => ({
         id: n.id,
@@ -875,22 +961,22 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         context: n.context,
       }));
 
-      console.log('📡 [NOTIFICATIONS] Mapped items:', mappedItems);
+      this.logger.debug('📡 [NOTIFICATIONS] Mapped items:', mappedItems);
 
       if (append) {
-        this.list = [...this.list, ...mappedItems];
+        this.list.set([...this.list(), ...mappedItems]);
       } else {
-        this.list = mappedItems;
+        this.list.set(mappedItems);
       }
 
       this.total = res?.total ?? 0;
-      this.hasMoreNotifications = this.list.length < this.total;
+      this.hasMoreNotifications = this.list().length < this.total;
 
-      console.log('📡 [NOTIFICATIONS] Final list length:', this.list.length);
-      console.log('📡 [NOTIFICATIONS] Total notifications:', this.total);
+      this.logger.debug('📡 [NOTIFICATIONS] Final list length:', this.list().length);
+      this.logger.debug('📡 [NOTIFICATIONS] Total notifications:', this.total);
 
     } catch (error) {
-      console.error('❌ [NOTIFICATIONS] Error loading notifications:', error);
+      this.logger.error('❌ [NOTIFICATIONS] Error loading notifications', error);
     } finally {
       this.loading = false;
       this.loadingMore = false;
@@ -899,7 +985,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   async loadMore() {
     if (this.loadingMore || !this.hasMoreNotifications) return;
-    const currentOffset = this.list.length;
+    const currentOffset = this.list().length;
     await this.load(currentOffset, true);
   }
 
@@ -911,13 +997,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       this.selectedDevice.set(null);
       this.activeFilters = 'all';
       this.searchQuery = '';
-      
-      console.log('🏗️ [NOTIFICATIONS] Loading all notifications without filters');
-      
+
+      this.logger.debug('🏗️ [NOTIFICATIONS] Loading all notifications without filters');
+
       // Load notifications without any filters
       await this.load();
     } catch (error) {
-      console.error('❌ [NOTIFICATIONS] Error in loadDefaultNotifications:', error);
+      this.logger.error('❌ [NOTIFICATIONS] Error in loadDefaultNotifications', error);
       // Fallback to loading all notifications
       this.selectedFarm.set(null);
       this.selectedDevice.set(null);
@@ -936,13 +1022,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     if (this.autoRefreshInterval) {
       clearInterval(this.autoRefreshInterval);
     }
-    
-    // Auto-refresh every 30 seconds
+
+    // Auto-refresh using config
     this.autoRefreshInterval = window.setInterval(() => {
       if (this.autoRefreshEnabled() && !this.loading) {
         this.refreshNotifications();
       }
-    }, 30000);
+    }, NOTIFICATION_CONFIG.AUTO_REFRESH.INTERVAL_MS);
   }
 
   toggleAutoRefresh() {
@@ -953,11 +1039,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   getLastRefreshTime(): string {
     const lastRefresh = this.lastRefreshTime();
     if (!lastRefresh) return '';
-    
+
     const now = new Date();
     const diffMs = now.getTime() - lastRefresh.getTime();
     const diffSeconds = Math.floor(diffMs / 1000);
-    
+
     if (diffSeconds < 60) {
       return `${diffSeconds}s ago`;
     } else if (diffSeconds < 3600) {
@@ -967,16 +1053,16 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     }
   }
 
-  notifications() { return this.list; }
+  notifications() { return this.list(); }
   trackById(index: number, n: AppNotification) { return n.id; }
 
   // PRESERVED FARMER-FRIENDLY METHODS
   getUrgentCount(): number {
-    return this.list.filter(n => n.level === 'critical').length;
+    return this.list().filter(n => n.level === 'critical').length;
   }
 
   getUnreadCount(): number {
-    return this.list.filter(n => !n.read).length;
+    return this.list().filter(n => !n.read).length;
   }
 
   getNotificationClass(n: AppNotification): string {
@@ -1146,27 +1232,28 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   getFarmerAction(n: AppNotification): string | null {
     const title = n.title || '';
     const message = n.message || '';
+    const t = this.languageService.t();
 
     if (title.includes('temperature') && title.includes('high')) {
-      return 'Check if ventilation is working. Consider opening windows if it\'s cooler outside.';
+      return t('notifications.suggestedActions.checkVentilation');
     }
     if (title.includes('temperature') && title.includes('low')) {
-      return 'Check if heating is working. Consider closing windows or adding insulation.';
+      return t('notifications.suggestedActions.checkHeating');
     }
 
     if (title.includes('humidity') && title.includes('high')) {
-      return 'Improve air circulation. Check if dehumidifier is working properly.';
+      return t('notifications.suggestedActions.improveCirculation');
     }
     if (title.includes('humidity') && title.includes('low')) {
-      return 'Check water levels. Consider misting plants or adding a humidifier.';
+      return t('notifications.suggestedActions.checkWater');
     }
 
     if (title.includes('device') && (message.includes('offline') || message.includes('disconnected'))) {
-      return 'Check device power and WiFi connection. Try restarting the device.';
+      return t('notifications.suggestedActions.checkDevicePower');
     }
 
     if (title.includes('Action') && message.includes('failed')) {
-      return 'Try the action again in a few minutes. Check if the device is responding.';
+      return t('notifications.suggestedActions.retryAction');
     }
 
     return null;
@@ -1181,11 +1268,24 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const t = this.languageService.t();
 
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    if (diffMinutes < 1) return t('notifications.time.justNow');
+    if (diffMinutes < 60) {
+      return diffMinutes === 1
+        ? t('notifications.time.minutesAgo_one', { count: diffMinutes })
+        : t('notifications.time.minutesAgo_other', { count: diffMinutes });
+    }
+    if (diffHours < 24) {
+      return diffHours === 1
+        ? t('notifications.time.hoursAgo_one', { count: diffHours })
+        : t('notifications.time.hoursAgo_other', { count: diffHours });
+    }
+    if (diffDays < 7) {
+      return diffDays === 1
+        ? t('notifications.time.daysAgo_one', { count: diffDays })
+        : t('notifications.time.daysAgo_other', { count: diffDays });
+    }
 
     return date.toLocaleDateString();
   }
@@ -1295,7 +1395,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   async markRead(n: AppNotification) {
     try {
       await this.api.markNotificationsRead([n.id]).toPromise();
-      n.read = true;
+      this.list.update(list => list.map(item => item.id === n.id ? { ...item, read: true } : item));
       this.svc.decrementUnread(1);
       this.snackBar.open(
         this.languageService.t()('notifications.markedAsRead'),
@@ -1316,7 +1416,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     try {
       // Note: This assumes there's an API endpoint to mark as unread
       // If not available, we'll just update locally
-      n.read = false;
+      this.list.update(list => list.map(item => item.id === n.id ? { ...item, read: false } : item));
       this.svc.incrementUnread(1);
       this.snackBar.open(
         this.languageService.t()('notifications.markedAsUnread'),
@@ -1340,11 +1440,12 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     try {
       const ids = unreadFiltered.map(n => n.id);
       await this.api.markNotificationsRead(ids).toPromise();
-      
+
       // Update all filtered notifications
-      unreadFiltered.forEach(n => n.read = true);
+      const idsSet = new Set(ids);
+      this.list.update(list => list.map(item => idsSet.has(item.id) ? { ...item, read: true } : item));
       this.svc.decrementUnread(unreadFiltered.length);
-      
+
       this.snackBar.open(
         this.languageService.t()('notifications.markedFilteredAsRead', { count: unreadFiltered.length }),
         '',
@@ -1383,7 +1484,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     const confirmed = await ref.afterClosed().toPromise();
     if (!confirmed) return;
     await this.api.deleteNotification(n.id).toPromise();
-    this.list = this.list.filter(x => x.id !== n.id);
+    this.list.set(this.list().filter(x => x.id !== n.id));
     this.snackBar.open(
       this.languageService.t()('notifications.dismissed'),
       '',
@@ -1392,14 +1493,42 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   async markAllRead() {
-    await this.api.markAllNotificationsRead().toPromise();
-    this.list = this.list.map(n => ({ ...n, read: true }));
-    this.svc.setUnreadCountFromApi(0);
-    this.snackBar.open(
-      this.languageService.t()('notifications.allMarkedRead'),
-      '',
-      { duration: 2000, panelClass: 'success-snackbar' }
-    );
+    // Check if user is authenticated before making the request
+    if (!this.authService.isAuthenticated()) {
+      this.snackBar.open(
+        this.languageService.t()('notifications.authenticationRequired') || 'Please log in to mark notifications as read',
+        '',
+        { duration: 3000, panelClass: 'error-snackbar' }
+      );
+      return;
+    }
+
+    try {
+      await this.api.markAllNotificationsRead().toPromise();
+      this.list.set(this.list().map(n => ({ ...n, read: true })));
+      this.svc.setUnreadCountFromApi(0);
+      this.snackBar.open(
+        this.languageService.t()('notifications.allMarkedRead'),
+        '',
+        { duration: 2000, panelClass: 'success-snackbar' }
+      );
+    } catch (error: any) {
+      this.logger.error('❌ [NOTIFICATIONS] Error marking all as read:', error);
+
+      if (error?.status === 401) {
+        this.snackBar.open(
+          this.languageService.t()('notifications.authenticationRequired') || 'Please log in to mark notifications as read',
+          '',
+          { duration: 3000, panelClass: 'error-snackbar' }
+        );
+      } else {
+        this.snackBar.open(
+          this.languageService.t()('notifications.markAllReadError') || 'Failed to mark all notifications as read',
+          '',
+          { duration: 3000, panelClass: 'error-snackbar' }
+        );
+      }
+    }
   }
 
   // NEW UI METHODS
@@ -1413,11 +1542,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   onFilterChange(filter: string) {
     this.activeFilters = filter;
-    console.log('🔍 [FILTER] Active filter changed to:', filter);
-    
+    this.logger.debug('🔍 [FILTER] Active filter changed to:', filter);
+
     // Scroll to top when filter changes for better UX
     this.scrollToTop();
-    
+
     // Show filter feedback
     this.snackBar.open(
       this.languageService.t()('notifications.filterApplied', { filter: this.getFilterLabel(filter) }),
@@ -1427,11 +1556,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   onFarmChange() {
-    console.log('🏡 [FILTER] Farm changed to:', this.selectedFarm());
-    
+    this.logger.debug('🏡 [FILTER] Farm changed to:', this.selectedFarm());
+
     // Scroll to top when farm filter changes
     this.scrollToTop();
-    
+
     // Show farm filter feedback
     const farmName = this.selectedFarm() || this.languageService.t()('notifications.allFarms');
     this.snackBar.open(
@@ -1442,11 +1571,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   onDeviceChange() {
-    console.log('📱 [FILTER] Device changed to:', this.selectedDevice());
-    
+    this.logger.debug('📱 [FILTER] Device changed to:', this.selectedDevice());
+
     // Scroll to top when device filter changes
     this.scrollToTop();
-    
+
     // Show device filter feedback
     const deviceName = this.selectedDevice() || this.languageService.t()('notifications.allDevices');
     this.snackBar.open(
@@ -1456,14 +1585,39 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     );
   }
 
+  onSensorChange() {
+    this.logger.debug('🔬 [FILTER] Sensor changed to:', this.selectedSensor());
+
+    // Scroll to top when sensor filter changes
+    this.scrollToTop();
+
+    // Show sensor filter feedback
+    const sensorName = this.selectedSensor() || this.languageService.t()('notifications.allSensors');
+    this.snackBar.open(
+      this.languageService.t()('notifications.sensorFilterApplied', { sensor: sensorName }),
+      '',
+      { duration: 1500, panelClass: 'info-snackbar' }
+    );
+  }
+
+  onDateRangeChange() {
+    this.logger.debug('📅 [FILTER] Date range changed:', {
+      start: this.dateRangeStart(),
+      end: this.dateRangeEnd()
+    });
+
+    // Scroll to top when date range changes
+    this.scrollToTop();
+  }
+
   onSearchChange() {
-    console.log('🔍 [FILTER] Search query changed to:', this.searchQuery);
-    
+    this.logger.debug('🔍 [FILTER] Search query changed to:', this.searchQuery);
+
     // Debounce search to avoid too many updates
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
-    
+
     this.searchTimeout = setTimeout(() => {
       if (this.searchQuery.trim()) {
         this.snackBar.open(
@@ -1472,18 +1626,18 @@ export class NotificationsComponent implements OnInit, OnDestroy {
           { duration: 1500, panelClass: 'info-snackbar' }
         );
       }
-    }, 300);
+    }, NOTIFICATION_CONFIG.UI.SEARCH_DEBOUNCE_MS);
   }
 
   clearSearch() {
     this.searchQuery = '';
-    console.log('🔍 [FILTER] Search cleared');
-    
+    this.logger.debug('🔍 [FILTER] Search cleared');
+
     // Clear any pending search timeout
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
-    
+
     this.snackBar.open(
       this.languageService.t()('notifications.searchCleared'),
       '',
@@ -1508,16 +1662,19 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     this.activeFilters = 'all';
     this.selectedFarm.set(null);
     this.selectedDevice.set(null);
+    this.selectedSensor.set(null);
+    this.dateRangeStart.set(null);
+    this.dateRangeEnd.set(null);
     this.searchQuery = '';
-    
-    console.log('🔍 [FILTER] All filters cleared');
-    
+
+    this.logger.debug('🔍 [FILTER] All filters cleared');
+
     this.snackBar.open(
       this.languageService.t()('notifications.allFiltersCleared'),
       '',
       { duration: 1500, panelClass: 'success-snackbar' }
     );
-    
+
     this.scrollToTop();
   }
 
@@ -1529,6 +1686,9 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     let count = 0;
     if (this.selectedFarm()) count++;
     if (this.selectedDevice()) count++;
+    if (this.selectedSensor()) count++;
+    if (this.dateRangeStart()) count++;
+    if (this.dateRangeEnd()) count++;
     if (this.searchQuery && this.searchQuery.trim().length > 0) count++;
     return count;
   }
@@ -1597,5 +1757,20 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     );
 
     this.intersectionObserver.observe(this.scrollSentinel.nativeElement);
+  }
+
+  // Load available sensors for filtering
+  private async loadSensors() {
+    try {
+      const sensors = await this.api.getSensors().toPromise();
+      if (sensors && sensors.length > 0) {
+        const sensorIds = sensors.map((s: any) => s.sensor_id || s.id).filter(Boolean);
+        this.availableSensors.set(sensorIds);
+        this.logger.debug('🔬 [NOTIFICATIONS] Loaded sensors for filtering:', sensorIds.length);
+      }
+    } catch (error) {
+      this.logger.error('❌ [NOTIFICATIONS] Error loading sensors:', error);
+      // Don't show error to user, just log it
+    }
   }
 }

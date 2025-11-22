@@ -135,13 +135,14 @@
       <!-- Notifications -->
       <button
         class="action-btn"
+        [class.active]="isRouteActive('/notifications')"
         (click)="navigateToNotifications()"
         [attr.aria-label]="'Notifications'"
         [attr.title]="'View notifications'"
         [matTooltip]="'Notifications'"
         matTooltipPosition="below"
         type="button">
-        <svg class="action-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <svg class="action-icon" [class.active]="isRouteActive('/notifications')" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
         </svg>
         <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
@@ -292,11 +293,11 @@
     </div>
   </div>
   <mat-divider class="menu-divider"></mat-divider>
-  
+
   <!-- Profile with Active Route Highlighting -->
-  <button 
-    mat-menu-item 
-    routerLink="/profile" 
+  <button
+    mat-menu-item
+    routerLink="/profile"
     class="menu-item-compact"
     [class.active]="isRouteActive('/profile')"
     [matTooltip]="languageService.t()('navigation.profile')"
@@ -311,11 +312,11 @@
     <span class="menu-item-label">{{ languageService.t()('navigation.profile') }}</span>
     <div class="active-indicator" *ngIf="isRouteActive('/profile')"></div>
   </button>
-  
+
   <!-- Settings with Active Route Highlighting -->
-  <button 
-    mat-menu-item 
-    routerLink="/settings" 
+  <button
+    mat-menu-item
+    routerLink="/settings"
     class="menu-item-compact"
     [class.active]="isRouteActive('/settings')"
     [matTooltip]="languageService.t()('navigation.settings')"
@@ -331,13 +332,13 @@
     <span class="menu-item-label">{{ languageService.t()('navigation.settings') }}</span>
     <div class="active-indicator" *ngIf="isRouteActive('/settings')"></div>
   </button>
-  
+
   <mat-divider class="menu-divider"></mat-divider>
-  
+
   <!-- Theme Toggle in Menu -->
-  <button 
-    mat-menu-item 
-    (click)="toggleTheme()" 
+  <button
+    mat-menu-item
+    (click)="toggleTheme()"
     class="menu-item-compact theme-toggle-item"
     [matTooltip]="currentTheme() === 'light' ? 'Switch to dark mode' : 'Switch to light mode'"
     matTooltipPosition="right"
@@ -352,13 +353,13 @@
     </div>
     <span class="menu-item-label">{{ currentTheme() === 'light' ? 'Dark Mode' : 'Light Mode' }}</span>
   </button>
-  
+
   <mat-divider class="menu-divider"></mat-divider>
-  
+
   <!-- Logout -->
-  <button 
-    mat-menu-item 
-    (click)="logout()" 
+  <button
+    mat-menu-item
+    (click)="logout()"
     class="menu-item-compact logout-item"
     [matTooltip]="languageService.t()('navigation.logout')"
     matTooltipPosition="right"

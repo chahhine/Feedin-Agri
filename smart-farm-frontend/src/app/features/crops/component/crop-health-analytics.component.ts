@@ -13,6 +13,7 @@ import { map, catchError } from 'rxjs/operators';
 import { CropService, SensorWithReading } from '../../../core/services/crop.service';
 import { SensorReading } from '../../../core/models/farm.model';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { LanguageService } from '../../../core/services/language.service';
 
 // Lazy load echarts for better initial bundle size
 // import type { EChartsOption } from 'echarts';
@@ -401,6 +402,7 @@ type EChartsOption = any; // Placeholder until echarts is installed
 export class CropHealthAnalyticsComponent implements OnInit {
   private cropService = inject(CropService);
   private destroyRef = inject(DestroyRef);
+  private languageService = inject(LanguageService);
 
   // Inputs
   cropId = input.required<string>();
@@ -428,21 +430,21 @@ export class CropHealthAnalyticsComponent implements OnInit {
   // Chart options
   moistureChartOptions = computed(() => this.buildChartOptions(
     this.moistureSensors(),
-    'Soil Moisture Over Time',
+    this.languageService.translate('crops.health.chartTitles.soilMoisture'),
     '%',
     '#2196f3'
   ));
 
   temperatureChartOptions = computed(() => this.buildChartOptions(
     this.temperatureSensors(),
-    'Temperature Over Time',
+    this.languageService.translate('crops.health.chartTitles.temperature'),
     '°C',
     '#ff9800'
   ));
 
   humidityChartOptions = computed(() => this.buildChartOptions(
     this.humiditySensors(),
-    'Humidity Over Time',
+    this.languageService.translate('crops.health.chartTitles.humidity'),
     '%',
     '#4caf50'
   ));
@@ -529,7 +531,7 @@ export class CropHealthAnalyticsComponent implements OnInit {
       ]);
 
       return {
-        name: `${sensor.type} (${sensor.location || 'Unknown'})`,
+        name: `${sensor.type} (${sensor.location || this.languageService.translate('crops.health.chartLabels.unknown')})`,
         type: 'line',
         smooth: true,
         data,
@@ -553,8 +555,8 @@ export class CropHealthAnalyticsComponent implements OnInit {
             width: 1
           },
           data: [
-            sensor.min_warning ? { yAxis: sensor.min_warning, name: 'Min Warning' } : null,
-            sensor.max_warning ? { yAxis: sensor.max_warning, name: 'Max Warning' } : null
+            sensor.min_warning ? { yAxis: sensor.min_warning, name: this.languageService.translate('crops.health.chartLabels.minWarning') } : null,
+            sensor.max_warning ? { yAxis: sensor.max_warning, name: this.languageService.translate('crops.health.chartLabels.maxWarning') } : null
           ].filter(Boolean)
         } : undefined
       };
